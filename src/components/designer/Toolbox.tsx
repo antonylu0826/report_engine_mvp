@@ -90,11 +90,6 @@ export const Toolbox: React.FC = () => {
           icon: Type,
         },
         {
-          type: 'Field' as ControlType,
-          name: '資料欄位 (Field)',
-          icon: Database,
-        },
-        {
           type: 'Label' as ControlType,
           name: '複選方塊 (CheckBox - 標籤範本)',
           icon: CheckSquare,
