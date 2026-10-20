@@ -782,20 +782,20 @@ export const sampleOrderReport: ReportDefinition = {
 };
 
 const baseProducts = [
-  { sku: 'IT-MBP16-M3M', productName: 'Apple MacBook Pro 16" (M3 Max / 36GB / 1TB)', unit: '台', unitPrice: 104900 },
-  { sku: 'IT-DELL-U2723QE', productName: 'Dell UltraSharp 27" 4K HDR USB-C 專業顯示器', unit: '台', unitPrice: 18900 },
-  { sku: 'IT-MX-MASTER3S', productName: 'Logitech MX Master 3S 無線人體工學靜音滑鼠', unit: '隻', unitPrice: 3290 },
-  { sku: 'IT-KEYCHRON-Q1', productName: 'Keychron Q1 Pro 客製化全鋁機械鍵盤 (紅軸)', unit: '把', unitPrice: 5680 },
-  { sku: 'IT-CALDIGIT-TS4', productName: 'CalDigit TS4 Thunderbolt 4 旗艦擴充基座', unit: '組', unitPrice: 12500 },
-  { sku: 'IT-SONY-WH1000XM5', productName: 'Sony WH-1000XM5 頂級智慧降噪耳罩耳機', unit: '支', unitPrice: 10900 },
-  { sku: 'IT-HERMAN-AERON', productName: 'Herman Miller Aeron 人體工學辦公椅 (旗艦版)', unit: '張', unitPrice: 48000 },
-  { sku: 'IT-UGREEN-TB4', productName: 'UGREEN 40Gbps 雷電4 高速編織傳輸線 (1M)', unit: '條', unitPrice: 799 },
-  { sku: 'IT-SAN-EXTREME-2T', productName: 'SanDisk Extreme PRO 2TB 便攜式高速固態硬碟', unit: '個', unitPrice: 6290 },
-  { sku: 'IT-ANKER-PRIME-250', productName: 'Anker Prime 250W 多孔氮化鎵旗艦桌面充電器', unit: '個', unitPrice: 4290 },
-  { sku: 'IT-EPSON-ECOTANK', productName: 'Epson EcoTank L6580 旗艦商用彩色連續供墨事務機', unit: '台', unitPrice: 32900 },
-  { sku: 'IT-APPLE-STUDIO-DSP', productName: 'Apple Studio Display 27" 5K Retina 顯示器', unit: '台', unitPrice: 52900 },
-  { sku: 'IT-SYNOLOGY-DS923', productName: 'Synology DS923+ 4-Bay 高效能企業級網路儲存伺服器', unit: '台', unitPrice: 18999 },
-  { sku: 'IT-SEAGATE-IRONWOLF', productName: 'Seagate IronWolf Pro 16TB 企業級 NAS 專用硬碟', unit: '顆', unitPrice: 11500 },
+  { sku: 'IT-MBP16-M3M', productName: 'Apple MacBook Pro 16" (M3 Max / 36GB / 1TB)', unit: '台', unitPrice: 104900, category: '資訊運算設備' },
+  { sku: 'IT-DELL-U2723QE', productName: 'Dell UltraSharp 27" 4K HDR USB-C 專業顯示器', unit: '台', unitPrice: 18900, category: '螢幕與視訊' },
+  { sku: 'IT-MX-MASTER3S', productName: 'Logitech MX Master 3S 無線人體工學靜音滑鼠', unit: '隻', unitPrice: 3290, category: '周邊配件' },
+  { sku: 'IT-KEYCHRON-Q1', productName: 'Keychron Q1 Pro 客製化全鋁機械鍵盤 (紅軸)', unit: '把', unitPrice: 5680, category: '周邊配件' },
+  { sku: 'IT-CALDIGIT-TS4', productName: 'CalDigit TS4 Thunderbolt 4 旗艦擴充基座', unit: '組', unitPrice: 12500, category: '周邊配件' },
+  { sku: 'IT-SONY-WH1000XM5', productName: 'Sony WH-1000XM5 頂級智慧降噪耳罩耳機', unit: '支', unitPrice: 10900, category: '視聽設備' },
+  { sku: 'IT-HERMAN-AERON', productName: 'Herman Miller Aeron 人體工學辦公椅 (旗艦版)', unit: '張', unitPrice: 48000, category: '辦公設備' },
+  { sku: 'IT-UGREEN-TB4', productName: 'UGREEN 40Gbps 雷電4 高速編織傳輸線 (1M)', unit: '條', unitPrice: 799, category: '周邊配件' },
+  { sku: 'IT-SAN-EXTREME-2T', productName: 'SanDisk Extreme PRO 2TB 便攜式高速固態硬碟', unit: '個', unitPrice: 6290, category: '資訊運算設備' },
+  { sku: 'IT-ANKER-PRIME-250', productName: 'Anker Prime 250W 多孔氮化鎵旗艦桌面充電器', unit: '個', unitPrice: 4290, category: '周邊配件' },
+  { sku: 'IT-EPSON-ECOTANK', productName: 'Epson EcoTank L6580 旗艦商用彩色連續供墨事務機', unit: '台', unitPrice: 32900, category: '辦公設備' },
+  { sku: 'IT-APPLE-STUDIO-DSP', productName: 'Apple Studio Display 27" 5K Retina 顯示器', unit: '台', unitPrice: 52900, category: '螢幕與視訊' },
+  { sku: 'IT-SYNOLOGY-DS923', productName: 'Synology DS923+ 4-Bay 高效能企業級網路儲存伺服器', unit: '台', unitPrice: 18999, category: '資訊運算設備' },
+  { sku: 'IT-SEAGATE-IRONWOLF', productName: 'Seagate IronWolf Pro 16TB 企業級 NAS 專用硬碟', unit: '顆', unitPrice: 11500, category: '資訊運算設備' },
 ];
 
 export function generateOrderItems(count: number): Record<string, unknown>[] {
@@ -806,6 +806,7 @@ export function generateOrderItems(count: number): Record<string, unknown>[] {
     result.push({
       index: i + 1,
       sku: p.sku,
+      category: p.category,
       productName: p.productName,
       unit: p.unit,
       quantity,

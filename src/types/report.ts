@@ -48,7 +48,14 @@ export interface ControlStyle {
   paddingVertical?: number;
 }
 
-export type ControlType = 'Label' | 'Field' | 'Expression' | 'Line' | 'Image';
+export type ControlType =
+  | 'Label'
+  | 'Field'
+  | 'Expression'
+  | 'Line'
+  | 'Image'
+  | 'Barcode'
+  | 'QRCode';
 
 export interface ControlDefinition {
   id: string;
@@ -60,12 +67,17 @@ export interface ControlDefinition {
   style?: ControlStyle;
 
   // Specific content and data binding properties
-  text?: string;            // Static text for Label
-  fieldName?: string;       // Data field path for Field (e.g. "code", "customer.name", "amount")
+  text?: string;            // Static text for Label, Barcode, QRCode
+  fieldName?: string;       // Data field path for Field, Barcode, QRCode (e.g. "code", "sku")
   expression?: string;      // Calculation formula (e.g. "=SUM(amount)", "=PAGE_NUMBER + '/' + TOTAL_PAGES")
   formatString?: string;    // Formatting directive (e.g. "currency", "date:YYYY-MM-DD", "number:0.00")
   src?: string;             // Image source URL / base64
   lineOrientation?: 'horizontal' | 'vertical'; // For Line control
+
+  // Barcode and QRCode specific configurations
+  barcodeFormat?: 'CODE128' | 'EAN13' | 'UPC' | 'CODE39';
+  displayValue?: boolean;   // Whether to show barcode human-readable text below
+  qrErrorLevel?: 'L' | 'M' | 'Q' | 'H'; // QR Code error correction level
 }
 
 export interface BandDefinition {
@@ -74,6 +86,12 @@ export interface BandDefinition {
   height: number; // pt
   keepTogether?: boolean; // Prevent page break inside this band instance
   controls: ControlDefinition[];
+
+  // Grouping properties (for GroupHeader / GroupFooter)
+  groupBy?: string;           // Field to group by (e.g. "category", "customerName")
+  groupSortOrder?: 'asc' | 'desc'; // Sort order for groups
+  pageBreakBefore?: boolean;  // Insert page break before this group
+  pageBreakAfter?: boolean;   // Insert page break after this group
 }
 
 export interface ReportDefinition {

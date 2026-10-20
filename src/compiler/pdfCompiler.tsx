@@ -7,14 +7,14 @@ import {
   Font,
   StyleSheet,
 } from '@react-pdf/renderer';
-import type { Style } from '@react-pdf/types';
 import type {
   ReportDefinition,
   BandDefinition,
   ControlDefinition,
 } from '../types/report';
-import { formatValue } from './formatters';
-import { evaluateExpression, type EvalContext } from './evaluator';
+import { type EvalContext } from './evaluator';
+import { controlRegistry } from '../controls/registry';
+import { groupDataRows } from './grouping';
 
 // Construct font URL supporting both browser (origin) and Node/MCP (process.cwd)
 const getFontUrl = () => {
@@ -37,90 +37,30 @@ Font.register({
 Font.registerHyphenationCallback((word) => [word]);
 
 /**
- * Maps ControlStyle to react-pdf compatible styles
- */
-function mapControlStyle(control: ControlDefinition): Style {
-  const s = control.style || {};
-  return {
-    position: 'absolute',
-    left: control.x,
-    top: control.y,
-    width: control.width,
-    height: control.height,
-    fontFamily: 'AppChineseFont',
-    fontSize: s.fontSize ?? 9,
-    fontWeight: s.fontWeight ?? 'normal',
-    color: s.color || '#1e293b',
-    backgroundColor: s.backgroundColor || 'transparent',
-    textAlign: s.textAlign || 'left',
-    borderTopWidth: s.borderTopWidth ?? (s.borderWidth ?? 0),
-    borderBottomWidth: s.borderBottomWidth ?? (s.borderWidth ?? 0),
-    borderLeftWidth: s.borderLeftWidth ?? (s.borderWidth ?? 0),
-    borderRightWidth: s.borderRightWidth ?? (s.borderWidth ?? 0),
-    borderColor: s.borderColor || '#cbd5e1',
-    borderStyle: s.borderStyle || 'solid',
-    padding: s.padding ?? 0,
-    paddingHorizontal: s.paddingHorizontal,
-    paddingVertical: s.paddingVertical,
-  };
-}
-
-/**
- * Render a single control
+ * Render a single control using standardized Control Registry
  */
 function renderControl(
   control: ControlDefinition,
   context: EvalContext
 ): React.ReactElement {
-  const style = mapControlStyle(control);
-
-  if (control.type === 'Line') {
-    const isVertical = control.lineOrientation === 'vertical';
-    return (
-      <View
-        key={control.id}
-        style={{
-          position: 'absolute',
-          left: control.x,
-          top: control.y,
-          width: isVertical ? 1 : control.width,
-          height: isVertical ? control.height : 1,
-          backgroundColor: control.style?.color || '#cbd5e1',
-        }}
-      />
-    );
+  const plugin = controlRegistry.get(control.type);
+  if (plugin) {
+    const rendered = plugin.renderPdf({ control, context });
+    return <React.Fragment key={control.id}>{rendered}</React.Fragment>;
   }
 
-  // Calculate text content
-  let text = '';
-  if (control.type === 'Label') {
-    text = control.text ?? '';
-  } else if (control.type === 'Field') {
-    const rawVal = evaluateExpression(undefined, control.fieldName, context);
-    text = formatValue(rawVal, control.formatString);
-  } else if (control.type === 'Expression') {
-    // Check special dynamic page number pattern: e.g. "[PageNumber] / [TotalPages]"
-    if (control.expression?.includes('[PageNumber]') || control.expression?.includes('[TotalPages]')) {
-      return (
-        <Text
-          key={control.id}
-          style={style}
-          render={({ pageNumber, totalPages }) => {
-            const pattern = control.expression ?? '';
-            return pattern
-              .replace(/\[PageNumber\]/g, String(pageNumber))
-              .replace(/\[TotalPages\]/g, String(totalPages));
-          }}
-        />
-      );
-    }
-    const rawVal = evaluateExpression(control.expression, undefined, context);
-    text = formatValue(rawVal, control.formatString);
-  }
-
+  // Fallback if plugin not found
   return (
-    <Text key={control.id} style={style}>
-      {text}
+    <Text
+      key={control.id}
+      style={{
+        position: 'absolute',
+        left: control.x,
+        top: control.y,
+        fontSize: control.style?.fontSize ?? 9,
+      }}
+    >
+      {control.text ?? ''}
     </Text>
   );
 }
@@ -142,6 +82,7 @@ function renderBand(
         height: band.height,
       }}
       wrap={!band.keepTogether}
+      break={band.pageBreakBefore}
     >
       {band.controls.map((control) => renderControl(control, context))}
     </View>
@@ -155,7 +96,7 @@ export interface PDFCompilerProps {
 }
 
 /**
- * Report PDF Document Component
+ * Report PDF Document Component with Standardized Band Pipeline
  */
 export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
   report,
@@ -167,8 +108,8 @@ export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
   const reportHeaderBand = bands.find((b) => b.type === 'ReportHeader');
   const pageHeaderBand = bands.find((b) => b.type === 'PageHeader');
   const detailBand = bands.find((b) => b.type === 'Detail');
-  const groupHeaderBands = bands.filter((b) => b.type === 'GroupHeader');
-  const groupFooterBands = bands.filter((b) => b.type === 'GroupFooter');
+  const groupHeaderBand = bands.find((b) => b.type === 'GroupHeader');
+  const groupFooterBand = bands.find((b) => b.type === 'GroupFooter');
   const reportFooterBand = bands.find((b) => b.type === 'ReportFooter');
   const pageFooterBand = bands.find((b) => b.type === 'PageFooter');
 
@@ -186,6 +127,16 @@ export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
 
   const pdfPageSize = pageSettings.size === 'Letter' ? 'LETTER' : pageSettings.size;
 
+  // Determine grouping field from GroupHeader or GroupFooter
+  const groupByField = groupHeaderBand?.groupBy || groupFooterBand?.groupBy;
+  const groupSortOrder = groupHeaderBand?.groupSortOrder || groupFooterBand?.groupSortOrder || 'asc';
+  const hasGrouping = Boolean(groupHeaderBand || groupFooterBand);
+
+  // Group data rows
+  const groups = hasGrouping
+    ? groupDataRows(data, groupByField, groupSortOrder)
+    : [{ key: 'all', field: '', rows: data }];
+
   return (
     <Document title={report.name}>
       <Page
@@ -196,41 +147,60 @@ export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
           pagePadding,
         ]}
       >
-        {/* 1. Report Header (報表主標題/抬頭封面) */}
+        {/* 1. Report Header (報表主抬頭/首頁封面) */}
         {reportHeaderBand && renderBand(reportHeaderBand, globalContext, 'report-header')}
 
-        {/* 2. Page Header (表格標題列，跨頁時每頁頂部自動重複) */}
+        {/* 2. Page Header (表格欄位標題，跨頁時固定於每頁頂端) */}
         {pageHeaderBand && (
           <View fixed style={{ width: '100%', height: pageHeaderBand.height }}>
             {renderBand(pageHeaderBand, globalContext, 'fixed-page-header')}
           </View>
         )}
 
-        {/* 3. Group Header */}
-        {groupHeaderBands.map((gh, idx) =>
-          renderBand(gh, globalContext, `gh-${idx}`)
-        )}
+        {/* 3. Group & Detail Pipeline (分組表頭 -> 明細資料列 -> 分組小計) */}
+        {groups.map((group, gIdx) => {
+          const groupContext: EvalContext = {
+            ...globalContext,
+            groupRows: group.rows,
+            currentRow: group.rows[0] || {},
+          };
 
-        {/* 4. Detail Band: 逐筆展開所有資料列 */}
-        {detailBand &&
-          data.map((row, idx) => {
-            const rowContext: EvalContext = {
-              ...globalContext,
-              currentRow: row,
-              rowIndex: idx,
-            };
-            return renderBand(detailBand, rowContext, `detail-row-${idx}`);
-          })}
+          return (
+            <View
+              key={`group-${group.key}-${gIdx}`}
+              break={gIdx > 0 && (groupHeaderBand?.pageBreakBefore ?? false)}
+            >
+              {/* Group Header (群組表頭) */}
+              {groupHeaderBand &&
+                renderBand(groupHeaderBand, groupContext, `gh-${gIdx}`)}
 
-        {/* 5. Group Footer */}
-        {groupFooterBands.map((gf, idx) =>
-          renderBand(gf, globalContext, `gf-${idx}`)
-        )}
+              {/* Detail Rows for this group */}
+              {detailBand &&
+                group.rows.map((row, rIdx) => {
+                  const rowContext: EvalContext = {
+                    ...groupContext,
+                    currentRow: row,
+                    rowIndex: rIdx,
+                  };
+                  return renderBand(detailBand, rowContext, `detail-${gIdx}-${rIdx}`);
+                })}
 
-        {/* 6. Report Footer (全表總計與簽章區塊) */}
+              {/* Group Footer (群組小計/統計) */}
+              {groupFooterBand &&
+                renderBand(groupFooterBand, groupContext, `gf-${gIdx}`)}
+
+              {/* Optional page break after group */}
+              {groupFooterBand?.pageBreakAfter && gIdx < groups.length - 1 && (
+                <View break />
+              )}
+            </View>
+          );
+        })}
+
+        {/* 4. Report Footer (全表總計與簽章區塊) */}
         {reportFooterBand && renderBand(reportFooterBand, globalContext, 'report-footer')}
 
-        {/* 7. Page Footer (固定在每頁最底端) */}
+        {/* 5. Page Footer (固定在每頁最底端) */}
         {pageFooterBand && (
           <View
             fixed

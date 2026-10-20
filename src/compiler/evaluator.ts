@@ -24,6 +24,7 @@ export function getNestedValue(obj: unknown, path: string): unknown {
 export interface EvalContext {
   currentRow?: Record<string, unknown>;
   rowIndex?: number;
+  groupRows?: Record<string, unknown>[];
   dataSource?: Record<string, unknown>[];
   reportParameters?: Record<string, unknown>;
 }
@@ -48,12 +49,13 @@ export function evaluateExpression(
   }
 
   const expr = expression.trim();
+  const dataset = context.groupRows || context.dataSource;
 
   // Aggregate: SUM(fieldname)
   const sumMatch = expr.match(/^=?(?:SUM|sum)\s*\(\s*([a-zA-Z0-9_.]+)\s*\)$/);
-  if (sumMatch && context.dataSource) {
+  if (sumMatch && dataset) {
     const targetField = sumMatch[1];
-    return context.dataSource.reduce((acc, row) => {
+    return dataset.reduce((acc, row) => {
       const val = Number(getNestedValue(row, targetField)) || 0;
       return acc + val;
     }, 0);
@@ -61,19 +63,19 @@ export function evaluateExpression(
 
   // Aggregate: COUNT()
   const countMatch = expr.match(/^=?(?:COUNT|count)\s*\(\s*\)$/);
-  if (countMatch && context.dataSource) {
-    return context.dataSource.length;
+  if (countMatch && dataset) {
+    return dataset.length;
   }
 
   // Aggregate: AVG(fieldname)
   const avgMatch = expr.match(/^=?(?:AVG|avg)\s*\(\s*([a-zA-Z0-9_.]+)\s*\)$/);
-  if (avgMatch && context.dataSource && context.dataSource.length > 0) {
+  if (avgMatch && dataset && dataset.length > 0) {
     const targetField = avgMatch[1];
-    const total = context.dataSource.reduce((acc, row) => {
+    const total = dataset.reduce((acc, row) => {
       const val = Number(getNestedValue(row, targetField)) || 0;
       return acc + val;
     }, 0);
-    return total / context.dataSource.length;
+    return total / dataset.length;
   }
 
   // Row Index: ROW_INDEX or INDEX

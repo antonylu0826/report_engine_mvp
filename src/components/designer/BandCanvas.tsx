@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useReportStore } from '@/store/useReportStore';
 import type { ControlDefinition } from '@/types/report';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Layers, ArrowDownUp } from 'lucide-react';
+import { controlRegistry } from '@/controls/registry';
+import { mapDesignerControlStyle } from '@/controls/styleUtils';
 
 export const BandCanvas: React.FC = () => {
   const {
@@ -95,64 +97,65 @@ export const BandCanvas: React.FC = () => {
   const pageWidth = pageSettings.size === 'A4' ? 595.28 : 612;
   const contentWidth = pageWidth - pageSettings.margins.left - pageSettings.margins.right;
 
+  // Clean, professional band styles that preserve white paper contrast
   const bandMeta: Record<
     string,
     { nameTw: string; dotColor: string; stripBg: string; textColor: string; border: string }
   > = {
     ReportHeader: {
-      nameTw: '報表首頁/封面',
-      dotColor: 'bg-slate-600',
-      stripBg: 'bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80',
-      textColor: 'text-slate-800 dark:text-slate-100',
-      border: 'border-slate-300 dark:border-slate-700',
+      nameTw: '報表主抬頭/首頁封面',
+      dotColor: 'bg-slate-700',
+      stripBg: 'bg-slate-100 hover:bg-slate-200/90 text-slate-800',
+      textColor: 'text-slate-800',
+      border: 'border-slate-300',
     },
     PageHeader: {
-      nameTw: '每頁頁首表頭',
+      nameTw: '每頁頁首表頭 (重複)',
       dotColor: 'bg-blue-600',
-      stripBg: 'bg-blue-50/80 hover:bg-blue-100/80 dark:bg-blue-950/40 dark:hover:bg-blue-900/50',
-      textColor: 'text-blue-900 dark:text-blue-200',
-      border: 'border-blue-200 dark:border-blue-800',
+      stripBg: 'bg-blue-50/90 hover:bg-blue-100/90 text-blue-900',
+      textColor: 'text-blue-900',
+      border: 'border-blue-300',
     },
     GroupHeader: {
-      nameTw: '群組開頭',
+      nameTw: '群組開頭/類別標題',
       dotColor: 'bg-cyan-600',
-      stripBg: 'bg-cyan-50/80 hover:bg-cyan-100/80 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/50',
-      textColor: 'text-cyan-900 dark:text-cyan-200',
-      border: 'border-cyan-200 dark:border-cyan-800',
+      stripBg: 'bg-cyan-50/90 hover:bg-cyan-100/90 text-cyan-900',
+      textColor: 'text-cyan-900',
+      border: 'border-cyan-300',
     },
     Detail: {
-      nameTw: '資料列逐筆明細',
+      nameTw: '資料列逐筆明細 (動態迴圈)',
       dotColor: 'bg-emerald-600',
-      stripBg: 'bg-emerald-50/80 hover:bg-emerald-100/80 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50',
-      textColor: 'text-emerald-900 dark:text-emerald-200',
-      border: 'border-emerald-300 dark:border-emerald-800',
+      stripBg: 'bg-emerald-50/90 hover:bg-emerald-100/90 text-emerald-900',
+      textColor: 'text-emerald-900',
+      border: 'border-emerald-300',
     },
     GroupFooter: {
       nameTw: '群組小計/統計',
       dotColor: 'bg-amber-600',
-      stripBg: 'bg-amber-50/80 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/50',
-      textColor: 'text-amber-900 dark:text-amber-200',
-      border: 'border-amber-200 dark:border-amber-800',
+      stripBg: 'bg-amber-50/90 hover:bg-amber-100/90 text-amber-900',
+      textColor: 'text-amber-900',
+      border: 'border-amber-300',
     },
     ReportFooter: {
-      nameTw: '全表總計/簽核',
+      nameTw: '全表總計/簽核區',
       dotColor: 'bg-purple-600',
-      stripBg: 'bg-purple-50/80 hover:bg-purple-100/80 dark:bg-purple-950/40 dark:hover:bg-purple-900/50',
-      textColor: 'text-purple-900 dark:text-purple-200',
-      border: 'border-purple-200 dark:border-purple-800',
+      stripBg: 'bg-purple-50/90 hover:bg-purple-100/90 text-purple-900',
+      textColor: 'text-purple-900',
+      border: 'border-purple-300',
     },
     PageFooter: {
       nameTw: '每頁頁尾/頁碼',
       dotColor: 'bg-orange-600',
-      stripBg: 'bg-orange-50/80 hover:bg-orange-100/80 dark:bg-orange-950/40 dark:hover:bg-orange-900/50',
-      textColor: 'text-orange-900 dark:text-orange-200',
-      border: 'border-orange-200 dark:border-orange-800',
+      stripBg: 'bg-orange-50/90 hover:bg-orange-100/90 text-orange-900',
+      textColor: 'text-orange-900',
+      border: 'border-orange-300',
     },
   };
 
   return (
     <main
-      className="flex-1 overflow-auto bg-slate-100/70 p-8 flex justify-center items-start select-none dark:bg-slate-900/60"
+      className="flex-1 overflow-auto bg-slate-200/80 p-8 flex justify-center items-start select-none dark:bg-slate-950/80 designer-grid"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onClick={() => selectControl(null, null)}
@@ -161,9 +164,9 @@ export const BandCanvas: React.FC = () => {
         className="transition-transform duration-75 origin-top"
         style={{ transform: `scale(${zoom})` }}
       >
-        {/* Paper Container */}
+        {/* Paper Container: ALWAYS pure white paper with realistic sheet shadow */}
         <div
-          className="bg-white shadow-xl border border-slate-200 rounded-sm overflow-hidden text-slate-900 relative dark:bg-slate-950 dark:border-slate-800"
+          className="bg-white shadow-2xl border border-slate-300/80 rounded-xs overflow-hidden text-slate-900 relative"
           style={{
             width: `${pageWidth}pt`,
             minHeight: '842pt',
@@ -173,9 +176,9 @@ export const BandCanvas: React.FC = () => {
             paddingRight: `${pageSettings.margins.right}pt`,
           }}
         >
-          {/* Visual Margin Guides */}
+          {/* Visual Margin Guides (Red Dashed Line) */}
           <div
-            className="absolute inset-0 pointer-events-none border border-dashed border-red-200/50"
+            className="absolute inset-0 pointer-events-none border border-dashed border-red-300/60"
             style={{
               top: `${pageSettings.margins.top}pt`,
               bottom: `${pageSettings.margins.bottom}pt`,
@@ -185,7 +188,7 @@ export const BandCanvas: React.FC = () => {
           />
 
           {/* Bands Render */}
-          <div className="flex flex-col space-y-3">
+          <div className="flex flex-col space-y-3 relative z-10">
             {bands.map((band) => {
               const isBandSelected = selectedBandId === band.id;
               const meta = bandMeta[band.type] || {
@@ -199,14 +202,14 @@ export const BandCanvas: React.FC = () => {
               return (
                 <div
                   key={band.id}
-                  className={`flex flex-col rounded-sm border transition-shadow ${
+                  className={`flex flex-col rounded-xs border transition-shadow ${
                     isBandSelected
-                      ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-sm'
+                      ? 'border-blue-500 ring-2 ring-blue-500/30 shadow-md'
                       : meta.border
                   }`}
                   style={{ width: `${contentWidth}pt` }}
                 >
-                  {/* 1. Band Strip Header: 點擊選取該 Band */}
+                  {/* 1. Band Strip Header */}
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
@@ -219,39 +222,53 @@ export const BandCanvas: React.FC = () => {
                       <span className={`text-[11px] font-bold tracking-wide ${meta.textColor}`}>
                         {band.type}
                       </span>
-                      <span className="text-[10px] text-slate-500 font-medium">
+                      <span className="text-[10px] text-slate-600 font-medium">
                         • {meta.nameTw}
                       </span>
+                      {band.groupBy && (
+                        <span className="flex items-center space-x-1 text-[9px] bg-cyan-100 text-cyan-900 border border-cyan-300 px-1.5 py-0.2 rounded font-mono">
+                          <Layers className="h-2.5 w-2.5 text-cyan-700" />
+                          <span>分組欄位: {band.groupBy}</span>
+                        </span>
+                      )}
                     </div>
 
-                    <div className="flex items-center space-x-2 text-[10px] text-slate-500 font-mono">
+                    <div className="flex items-center space-x-2 text-[10px] text-slate-600 font-mono">
+                      {band.pageBreakAfter && (
+                        <span className="flex items-center space-x-0.5 text-[9px] bg-amber-50 text-amber-800 border border-amber-300 px-1 py-0.2 rounded">
+                          <ArrowDownUp className="h-2.5 w-2.5 text-amber-700" />
+                          <span>組後換頁</span>
+                        </span>
+                      )}
                       {band.keepTogether && (
-                        <span className="flex items-center space-x-0.5 text-[9px] bg-white/80 border border-slate-200 px-1 py-0.2 rounded dark:bg-slate-900 dark:border-slate-800">
+                        <span className="flex items-center space-x-0.5 text-[9px] bg-white border border-slate-300 px-1 py-0.2 rounded text-emerald-800">
                           <ShieldCheck className="h-2.5 w-2.5 text-emerald-600" />
                           <span>不跨頁</span>
                         </span>
                       )}
-                      <span className="bg-white/80 px-1.5 py-0.2 rounded border border-slate-200/80 dark:bg-slate-900 dark:border-slate-800">
+                      <span className="bg-white px-1.5 py-0.2 rounded border border-slate-300 text-slate-700">
                         {band.height} pt
                       </span>
                     </div>
                   </div>
 
-                  {/* 2. Band Content Workspace: 點擊空白處選取該 Band */}
+                  {/* 2. Band Content Workspace: ALWAYS pure white paper background */}
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
                       selectControl(band.id, null);
                     }}
-                    className="relative bg-white dark:bg-slate-950 transition-colors"
+                    className="relative bg-white"
                     style={{
                       height: `${band.height}pt`,
                       width: '100%',
                     }}
                   >
-                    {/* Render Controls inside Band */}
+                    {/* Render Controls inside Band using standardized registry */}
                     {band.controls.map((control) => {
                       const isControlSelected = selectedControlId === control.id;
+                      const plugin = controlRegistry.get(control.type);
+                      const baseStyle = mapDesignerControlStyle(control);
 
                       return (
                         <div
@@ -264,61 +281,14 @@ export const BandCanvas: React.FC = () => {
                           className={`absolute cursor-move select-none transition-shadow ${
                             isControlSelected
                               ? 'ring-2 ring-blue-600 ring-offset-1 z-20 shadow-md bg-blue-50/20'
-                              : 'hover:ring-1 hover:ring-slate-400/60 z-10'
+                              : 'hover:ring-1 hover:ring-slate-400/80 z-10'
                           }`}
-                          style={{
-                            left: `${control.x}pt`,
-                            top: `${control.y}pt`,
-                            width: `${control.width}pt`,
-                            height: `${control.height}pt`,
-                            fontSize: `${control.style?.fontSize ?? 9}pt`,
-                            fontWeight: control.style?.fontWeight ?? 'normal',
-                            color: control.style?.color ?? '#0f172a',
-                            backgroundColor: control.style?.backgroundColor ?? 'transparent',
-                            textAlign: control.style?.textAlign ?? 'left',
-                            borderTopWidth: `${control.style?.borderTopWidth ?? (control.style?.borderWidth ?? 0)}pt`,
-                            borderBottomWidth: `${control.style?.borderBottomWidth ?? (control.style?.borderWidth ?? 0)}pt`,
-                            borderLeftWidth: `${control.style?.borderLeftWidth ?? (control.style?.borderWidth ?? 0)}pt`,
-                            borderRightWidth: `${control.style?.borderRightWidth ?? (control.style?.borderWidth ?? 0)}pt`,
-                            borderColor: control.style?.borderColor ?? '#cbd5e1',
-                            overflow: 'hidden',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent:
-                              control.style?.textAlign === 'center'
-                                ? 'center'
-                                : control.style?.textAlign === 'right'
-                                ? 'flex-end'
-                                : 'flex-start',
-                            padding: '0 2pt',
-                          }}
+                          style={baseStyle}
                         >
-                          {control.type === 'Line' ? (
-                            <div
-                              className="w-full"
-                              style={{
-                                height: `${control.height}pt`,
-                                backgroundColor: control.style?.color || '#cbd5e1',
-                              }}
-                            />
-                          ) : control.type === 'Field' ? (
-                            <span className="truncate font-mono text-[10px] text-emerald-800 bg-emerald-50/80 px-1 py-0.5 rounded border border-emerald-200/60 dark:text-emerald-300 dark:bg-emerald-950/60 dark:border-emerald-800">
-                              [{control.fieldName}]
-                            </span>
-                          ) : control.type === 'Expression' ? (
-                            <span className="truncate font-mono text-[10px] text-purple-800 bg-purple-50/80 px-1 py-0.5 rounded border border-purple-200/60 dark:text-purple-300 dark:bg-purple-950/60 dark:border-purple-800">
-                              {control.expression}
-                            </span>
+                          {plugin ? (
+                            <plugin.DesignerComponent control={control} isSelected={isControlSelected} />
                           ) : (
-                            <span
-                              className="truncate"
-                              style={{
-                                width: control.style?.textAlign ? '100%' : undefined,
-                                textAlign: control.style?.textAlign ?? 'left',
-                              }}
-                            >
-                              {control.text}
-                            </span>
+                            <span className="truncate">{control.text}</span>
                           )}
 
                           {/* Selected Resize Handles */}
@@ -340,7 +310,7 @@ export const BandCanvas: React.FC = () => {
                       className="absolute -bottom-1.5 left-0 right-0 h-3 cursor-row-resize flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-20 group"
                       title="拖曳以調整 Band 高度"
                     >
-                      <div className="h-1 w-16 bg-slate-400/80 rounded-full group-hover:bg-blue-500 transition-colors shadow-xs" />
+                      <div className="h-1 w-16 bg-slate-400 rounded-full group-hover:bg-blue-600 transition-colors shadow-xs" />
                     </div>
                   </div>
                 </div>
