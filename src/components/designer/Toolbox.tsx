@@ -242,14 +242,6 @@ export const Toolbox: React.FC = () => {
           ))}
         </div>
 
-        {/* Bottom Current Band Indicator Pill */}
-        <div
-          className="mt-auto px-1 py-1 w-full flex flex-col items-center border-t border-slate-200/80 pt-2 text-[8px] text-slate-400 font-mono text-center truncate"
-          title={`目前目標區塊：${targetBand?.type}`}
-        >
-          <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mb-0.5" />
-          <span className="truncate max-w-[44px]">{targetBand?.type?.slice(0, 6)}</span>
-        </div>
       </aside>
 
       {/* Flyout Drawer for Data Fields & Search (Toggle with Hamburger ≡) */}
