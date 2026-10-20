@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useReportStore } from '@/store/useReportStore';
 import type { ControlDefinition, BandDefinition } from '@/types/report';
 import {
@@ -11,6 +11,20 @@ import {
 } from 'lucide-react';
 import { controlRegistry } from '@/controls/registry';
 import { mapDesignerControlStyle } from '@/controls/styleUtils';
+
+export type ResizeDirection = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
+
+interface ResizingControlState {
+  bandId: string;
+  controlId: string;
+  direction: ResizeDirection;
+  startX: number;
+  startY: number;
+  initialX: number;
+  initialY: number;
+  initialWidth: number;
+  initialHeight: number;
+}
 
 export const BandCanvas: React.FC = () => {
   const {
@@ -37,6 +51,9 @@ export const BandCanvas: React.FC = () => {
     initialY: number;
   } | null>(null);
 
+  // Track resizing of controls
+  const [resizingControl, setResizingControl] = useState<ResizingControlState | null>(null);
+
   // Track resizing of bands
   const [resizingBand, setResizingBand] = useState<{
     bandId: string;
@@ -62,6 +79,29 @@ export const BandCanvas: React.FC = () => {
     });
   };
 
+  const handleResizeMouseDown = (
+    e: React.MouseEvent,
+    bandId: string,
+    control: ControlDefinition,
+    direction: ResizeDirection
+  ) => {
+    e.stopPropagation();
+    e.preventDefault();
+    selectControl(bandId, control.id);
+
+    setResizingControl({
+      bandId,
+      controlId: control.id,
+      direction,
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: control.x,
+      initialY: control.y,
+      initialWidth: control.width,
+      initialHeight: control.height,
+    });
+  };
+
   const handleBandResizeMouseDown = (
     e: React.MouseEvent,
     bandId: string,
@@ -75,32 +115,92 @@ export const BandCanvas: React.FC = () => {
     });
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    // 1. Handle control dragging
-    if (draggingControl) {
-      const dx = (e.clientX - draggingControl.startX) / zoom;
-      const dy = (e.clientY - draggingControl.startY) / zoom;
-      const nextX = Math.max(0, Math.round(draggingControl.initialX + dx));
-      const nextY = Math.max(0, Math.round(draggingControl.initialY + dy));
+  // Window-level mouse move & up listeners to prevent jerky dragging or losing focus
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      // 1. Control Resizing via 8-way drag handles
+      if (resizingControl) {
+        const dx = (e.clientX - resizingControl.startX) / zoom;
+        const dy = (e.clientY - resizingControl.startY) / zoom;
 
-      updateControl(draggingControl.bandId, draggingControl.controlId, {
-        x: nextX,
-        y: nextY,
-      });
+        let newX = resizingControl.initialX;
+        let newY = resizingControl.initialY;
+        let newWidth = resizingControl.initialWidth;
+        let newHeight = resizingControl.initialHeight;
+
+        const dir = resizingControl.direction;
+
+        // Horizontal size & position
+        if (dir.includes('e')) {
+          newWidth = Math.max(10, Math.round(resizingControl.initialWidth + dx));
+        }
+        if (dir.includes('w')) {
+          const potentialWidth = Math.round(resizingControl.initialWidth - dx);
+          if (potentialWidth >= 10) {
+            newWidth = potentialWidth;
+            newX = Math.round(resizingControl.initialX + dx);
+          }
+        }
+
+        // Vertical size & position
+        if (dir.includes('s')) {
+          newHeight = Math.max(4, Math.round(resizingControl.initialHeight + dy));
+        }
+        if (dir.includes('n')) {
+          const potentialHeight = Math.round(resizingControl.initialHeight - dy);
+          if (potentialHeight >= 4) {
+            newHeight = potentialHeight;
+            newY = Math.round(resizingControl.initialY + dy);
+          }
+        }
+
+        updateControl(resizingControl.bandId, resizingControl.controlId, {
+          x: Math.max(0, newX),
+          y: Math.max(0, newY),
+          width: newWidth,
+          height: newHeight,
+        });
+        return;
+      }
+
+      // 2. Control Move Dragging
+      if (draggingControl) {
+        const dx = (e.clientX - draggingControl.startX) / zoom;
+        const dy = (e.clientY - draggingControl.startY) / zoom;
+        const nextX = Math.max(0, Math.round(draggingControl.initialX + dx));
+        const nextY = Math.max(0, Math.round(draggingControl.initialY + dy));
+
+        updateControl(draggingControl.bandId, draggingControl.controlId, {
+          x: nextX,
+          y: nextY,
+        });
+        return;
+      }
+
+      // 3. Band Height Resizing
+      if (resizingBand) {
+        const dy = (e.clientY - resizingBand.startY) / zoom;
+        const nextHeight = Math.max(16, Math.round(resizingBand.initialHeight + dy));
+        updateBandHeight(resizingBand.bandId, nextHeight);
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      setDraggingControl(null);
+      setResizingBand(null);
+      setResizingControl(null);
+    };
+
+    if (draggingControl || resizingBand || resizingControl) {
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+      window.addEventListener('mouseup', handleGlobalMouseUp);
     }
 
-    // 2. Handle band height resizing
-    if (resizingBand) {
-      const dy = (e.clientY - resizingBand.startY) / zoom;
-      const nextHeight = Math.max(16, Math.round(resizingBand.initialHeight + dy));
-      updateBandHeight(resizingBand.bandId, nextHeight);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setDraggingControl(null);
-    setResizingBand(null);
-  };
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [draggingControl, resizingBand, resizingControl, zoom, updateControl, updateBandHeight]);
 
   // Printable page width in pt
   const pageWidth = pageSettings.size === 'A4' ? 595.28 : 612;
@@ -264,8 +364,6 @@ export const BandCanvas: React.FC = () => {
   return (
     <main
       className="flex-1 overflow-auto bg-slate-200/80 p-8 flex justify-center items-start select-none dark:bg-slate-950/80 designer-grid"
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
       onClick={() => selectControl(null, null)}
     >
       <div
@@ -459,15 +557,89 @@ export const BandCanvas: React.FC = () => {
                             <span className="truncate">{control.text}</span>
                           )}
 
-                          {/* Selected Resize Handles */}
-                          {isControlSelected && (
-                            <>
-                              <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-600 rounded-full" />
-                              <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-600 rounded-full" />
-                              <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-blue-600 rounded-full" />
-                              <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-blue-600 rounded-full" />
-                            </>
-                          )}
+                          {/* Interactive Resize Handles (when control is selected) */}
+                          {isControlSelected && (() => {
+                            const isLine = control.type === 'Line';
+                            const isVerticalLine = isLine && control.lineOrientation === 'vertical';
+                            const isHorizontalLine = isLine && !isVerticalLine;
+
+                            // 1. Horizontal Line: Only Left & Right length handles
+                            if (isHorizontalLine) {
+                              return (
+                                <>
+                                  <div
+                                    onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 'w')}
+                                    className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white border border-blue-600 rounded-2xs cursor-ew-resize z-30 shadow-xs hover:scale-125 hover:bg-blue-600 transition-all"
+                                    title="拖曳調整線條長度 (左端)"
+                                  />
+                                  <div
+                                    onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 'e')}
+                                    className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white border border-blue-600 rounded-2xs cursor-ew-resize z-30 shadow-xs hover:scale-125 hover:bg-blue-600 transition-all"
+                                    title="拖曳調整線條長度 (右端)"
+                                  />
+                                  {resizingControl?.controlId === control.id && (
+                                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-[9px] font-mono px-1.5 py-0.5 rounded shadow pointer-events-none z-40 whitespace-nowrap">
+                                      寬度: {control.width} pt
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            }
+
+                            // 2. Vertical Line: Only Top & Bottom length handles
+                            if (isVerticalLine) {
+                              return (
+                                <>
+                                  <div
+                                    onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 'n')}
+                                    className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-white border border-blue-600 rounded-2xs cursor-ns-resize z-30 shadow-xs hover:scale-125 hover:bg-blue-600 transition-all"
+                                    title="拖曳調整線條長度 (頂端)"
+                                  />
+                                  <div
+                                    onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 's')}
+                                    className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-white border border-blue-600 rounded-2xs cursor-ns-resize z-30 shadow-xs hover:scale-125 hover:bg-blue-600 transition-all"
+                                    title="拖曳調整線條長度 (底端)"
+                                  />
+                                  {resizingControl?.controlId === control.id && (
+                                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-[9px] font-mono px-1.5 py-0.5 rounded shadow pointer-events-none z-40 whitespace-nowrap">
+                                      高度: {control.height} pt
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            }
+
+                            // 3. All standard controls (Label, Field, Expression, Image, Panel, Barcode, QRCode): Full 8-direction handles
+                            const handles: { dir: ResizeDirection; pos: string; cursor: string }[] = [
+                              { dir: 'nw', pos: '-top-1.5 -left-1.5', cursor: 'cursor-nwse-resize' },
+                              { dir: 'n',  pos: '-top-1.5 left-1/2 -translate-x-1/2', cursor: 'cursor-ns-resize' },
+                              { dir: 'ne', pos: '-top-1.5 -right-1.5', cursor: 'cursor-nesw-resize' },
+                              { dir: 'e',  pos: 'top-1/2 -translate-y-1/2 -right-1.5', cursor: 'cursor-ew-resize' },
+                              { dir: 'se', pos: '-bottom-1.5 -right-1.5', cursor: 'cursor-nwse-resize' },
+                              { dir: 's',  pos: '-bottom-1.5 left-1/2 -translate-x-1/2', cursor: 'cursor-ns-resize' },
+                              { dir: 'sw', pos: '-bottom-1.5 -left-1.5', cursor: 'cursor-nesw-resize' },
+                              { dir: 'w',  pos: 'top-1/2 -translate-y-1/2 -left-1.5', cursor: 'cursor-ew-resize' },
+                            ];
+
+                            return (
+                              <>
+                                {handles.map(({ dir, pos, cursor }) => (
+                                  <div
+                                    key={dir}
+                                    onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, dir)}
+                                    className={`absolute ${pos} w-2.5 h-2.5 bg-white border border-blue-600 rounded-2xs ${cursor} z-30 shadow-xs hover:scale-125 hover:bg-blue-600 transition-all`}
+                                  />
+                                ))}
+
+                                {/* Live dimension badge during resizing */}
+                                {resizingControl?.controlId === control.id && (
+                                  <div className="absolute -top-5 left-0 bg-slate-900/90 text-white text-[9px] font-mono px-1.5 py-0.5 rounded shadow pointer-events-none z-40 whitespace-nowrap">
+                                    {control.width} × {control.height} pt
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       );
                     })}
