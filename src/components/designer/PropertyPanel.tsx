@@ -14,6 +14,8 @@ import {
   CheckSquare,
   Square,
   Minus,
+  Barcode as BarcodeIcon,
+  QrCode as QrCodeIcon,
   Upload,
   Layers,
   ArrowDownUp,
@@ -101,7 +103,7 @@ export const PropertyPanel: React.FC = () => {
     return (
       <aside className="w-72 border-l border-slate-200 bg-white flex flex-col h-[calc(100vh-3.25rem)] select-none dark:border-slate-800 dark:bg-slate-950 shadow-2xs overflow-y-auto">
         <div className="p-3 border-b border-slate-200 flex items-center space-x-1.5 dark:border-slate-800">
-          <FileText className="h-4 w-4 text-blue-600" />
+          <FileText className="h-4 w-4 text-slate-500" />
           <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
             報表與版面設定 (Report Settings)
           </span>
@@ -199,12 +201,12 @@ export const PropertyPanel: React.FC = () => {
           </div>
 
           {/* Helper Tips */}
-          <div className="p-2.5 rounded-md bg-blue-50/70 border border-blue-200/80 text-blue-900 dark:bg-blue-950/40 dark:border-blue-900 dark:text-blue-200 space-y-1">
-            <div className="flex items-center space-x-1 font-semibold text-[11px]">
-              <Compass className="h-3.5 w-3.5 text-blue-600" />
+          <div className="p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 space-y-1">
+            <div className="flex items-center space-x-1 font-semibold text-[11px] text-slate-700 dark:text-slate-300">
+              <Compass className="h-3.5 w-3.5 text-slate-500" />
               <span>操作小提示</span>
             </div>
-            <p className="text-[10px] leading-relaxed text-blue-700 dark:text-blue-300">
+            <p className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">
               點選畫布上的任何控制項或帶狀區塊 (Band)，即可於此處檢視與設定個別物件專屬座標、資料綁定與樣式。
             </p>
           </div>
@@ -240,17 +242,17 @@ export const PropertyPanel: React.FC = () => {
 
       <div className="p-3 space-y-4 text-xs">
         {/* Selected Object Tag with Dynamic Plugin Info */}
-        <div className="bg-white p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+        <div className="bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
           <div className="text-[10px] text-slate-400 uppercase font-mono">目前選取物件</div>
           <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5 mt-0.5">
             {selectedControl ? (
               <>
-                <ControlIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <ControlIcon className="h-4 w-4 text-slate-600 dark:text-slate-300" />
                 <span>{controlPlugin?.displayName || `${selectedControl.type} 控制項`}</span>
               </>
             ) : (
               <>
-                <Layers className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                <Layers className="h-4 w-4 text-slate-600 dark:text-slate-300" />
                 <span>{BAND_META_NAMES[selectedBand?.type || ''] || `${selectedBand?.type} 區塊`}</span>
               </>
             )}
@@ -397,11 +399,11 @@ export const PropertyPanel: React.FC = () => {
                 </div>
               )}
 
-              {/* Line Specific Inspector */}
+              {/* Line Specific Inspector (Neutral Slate) */}
               {selectedControl.type === 'Line' && (
-                <div className="space-y-2 bg-slate-100/70 p-2 rounded border border-slate-300 dark:bg-slate-900 dark:border-slate-800">
+                <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
                   <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3.5 w-3.5 text-slate-500" />
                     <span>線條設定 (Line)</span>
                   </div>
 
@@ -451,11 +453,11 @@ export const PropertyPanel: React.FC = () => {
                 </div>
               )}
 
-              {/* Image Specific Inspector */}
+              {/* Image Specific Inspector (Neutral Slate) */}
               {selectedControl.type === 'Image' && (
-                <div className="space-y-2 bg-emerald-50/50 p-2 rounded border border-emerald-200/80 dark:bg-emerald-950/30 dark:border-emerald-900">
-                  <div className="flex items-center space-x-1.5 text-emerald-800 dark:text-emerald-300 font-semibold text-[11px]">
-                    <ImageIcon className="h-3.5 w-3.5" />
+                <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+                  <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
+                    <ImageIcon className="h-3.5 w-3.5 text-slate-500" />
                     <span>圖片來源與縮放 (Image)</span>
                   </div>
 
@@ -475,7 +477,7 @@ export const PropertyPanel: React.FC = () => {
                   {/* Local Image File Upload */}
                   <div>
                     <Label className="text-[10px] text-slate-500">或上傳本機圖檔 (轉 DataURL)</Label>
-                    <label className="flex items-center justify-center space-x-1.5 px-2 py-1.5 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-50 cursor-pointer text-[11px] shadow-2xs">
+                    <label className="flex items-center justify-center space-x-1.5 px-2 py-1.5 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 cursor-pointer text-[11px] shadow-2xs transition-colors">
                       <Upload className="h-3.5 w-3.5 text-slate-500" />
                       <span>選擇圖檔...</span>
                       <input
@@ -519,11 +521,11 @@ export const PropertyPanel: React.FC = () => {
                 </div>
               )}
 
-              {/* CheckBox Specific Inspector */}
+              {/* CheckBox Specific Inspector (Neutral Slate) */}
               {selectedControl.type === 'CheckBox' && (
-                <div className="space-y-2 bg-amber-50/50 p-2 rounded border border-amber-200/80 dark:bg-amber-950/30 dark:border-amber-900">
-                  <div className="flex items-center space-x-1.5 text-amber-800 dark:text-amber-300 font-semibold text-[11px]">
-                    <CheckSquare className="h-3.5 w-3.5" />
+                <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+                  <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
+                    <CheckSquare className="h-3.5 w-3.5 text-slate-500" />
                     <span>核取方塊設定 (CheckBox)</span>
                   </div>
 
@@ -591,11 +593,11 @@ export const PropertyPanel: React.FC = () => {
                 </div>
               )}
 
-              {/* Panel Specific Inspector */}
+              {/* Panel Specific Inspector (Neutral Slate) */}
               {selectedControl.type === 'Panel' && (
-                <div className="space-y-2 bg-slate-100/70 p-2 rounded border border-slate-300 dark:bg-slate-900 dark:border-slate-800">
+                <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
                   <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
-                    <Square className="h-3.5 w-3.5" />
+                    <Square className="h-3.5 w-3.5 text-slate-500" />
                     <span>面板框線與圓角 (Panel)</span>
                   </div>
 
@@ -659,9 +661,14 @@ export const PropertyPanel: React.FC = () => {
                 </div>
               )}
 
-              {/* Barcode Specific Inspector */}
+              {/* Barcode Specific Inspector (Neutral Slate) */}
               {selectedControl.type === 'Barcode' && (
-                <div className="space-y-2 bg-blue-50/50 p-2 rounded border border-blue-200/80 dark:bg-blue-950/30 dark:border-blue-900">
+                <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+                  <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
+                    <BarcodeIcon className="h-3.5 w-3.5 text-slate-500" />
+                    <span>條碼格式與編碼 (Barcode)</span>
+                  </div>
+
                   <div>
                     <Label className="text-[10px] text-slate-500">條碼碼別 (Format)</Label>
                     <select
@@ -744,9 +751,14 @@ export const PropertyPanel: React.FC = () => {
                 </div>
               )}
 
-              {/* QRCode Specific Inspector */}
+              {/* QRCode Specific Inspector (Neutral Slate) */}
               {selectedControl.type === 'QRCode' && (
-                <div className="space-y-2 bg-purple-50/50 p-2 rounded border border-purple-200/80 dark:bg-purple-950/30 dark:border-purple-900">
+                <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+                  <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
+                    <QrCodeIcon className="h-3.5 w-3.5 text-slate-500" />
+                    <span>二維碼設定 (QR Code)</span>
+                  </div>
+
                   <div>
                     <Label className="text-[10px] text-slate-500">容錯率等級 (Error Level)</Label>
                     <select
@@ -799,7 +811,7 @@ export const PropertyPanel: React.FC = () => {
                               fieldName: e.target.value,
                             })
                           }
-                          className="w-24 text-[10px] font-mono rounded border border-slate-300 p-1 bg-white dark:bg-slate-850"
+                          className="w-24 text-[10px] font-mono rounded border border-slate-300 p-1 bg-white dark:bg-slate-800"
                           title="快速套用欄位"
                         >
                           <option value="">選擇欄位▾</option>
@@ -1001,9 +1013,9 @@ export const PropertyPanel: React.FC = () => {
               />
             </div>
 
-            {/* Grouping Settings for GroupHeader / GroupFooter */}
+            {/* Grouping Settings for GroupHeader / GroupFooter (Neutral Slate) */}
             {['GroupHeader', 'GroupFooter'].includes(selectedBand.type) && (
-              <div className="p-2.5 rounded-md bg-slate-100/80 border border-slate-200 space-y-2 dark:bg-slate-900 dark:border-slate-800">
+              <div className="p-2.5 rounded-md bg-slate-50 border border-slate-200 space-y-2 dark:bg-slate-900 dark:border-slate-800">
                 <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200 flex items-center space-x-1">
                   <Layers className="h-3.5 w-3.5 text-slate-500" />
                   <span>分組小計與換頁設定 (Grouping)</span>
@@ -1062,13 +1074,13 @@ export const PropertyPanel: React.FC = () => {
                       className="rounded border-slate-300"
                     />
                     <span className="flex items-center space-x-1">
-                      <ArrowDownUp className="h-3 w-3 text-cyan-700" />
+                      <ArrowDownUp className="h-3 w-3 text-slate-500" />
                       <span>每組結束後獨立分頁 (Page Break)</span>
                     </span>
                   </label>
                 </div>
 
-                <div className="pt-2 border-t border-cyan-200/80">
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
                   <Button
                     variant="outline"
                     size="sm"
