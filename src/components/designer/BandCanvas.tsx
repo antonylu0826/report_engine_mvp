@@ -557,11 +557,12 @@ export const BandCanvas: React.FC = () => {
                             <span className="truncate">{control.text}</span>
                           )}
 
-                          {/* Interactive Resize Handles (when control is selected) */}
+                          {/* Interactive Resize Handles (Permanently visible when control is selected) */}
                           {isControlSelected && (() => {
                             const isLine = control.type === 'Line';
                             const isVerticalLine = isLine && control.lineOrientation === 'vertical';
                             const isHorizontalLine = isLine && !isVerticalLine;
+                            const handleStyle = "w-2.5 h-2.5 bg-blue-600 border-2 border-white rounded-[1.5px] shadow-md z-30 transition-transform hover:scale-125";
 
                             // 1. Horizontal Line: Only Left & Right length handles
                             if (isHorizontalLine) {
@@ -569,12 +570,12 @@ export const BandCanvas: React.FC = () => {
                                 <>
                                   <div
                                     onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 'w')}
-                                    className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white border border-blue-600 rounded-2xs cursor-ew-resize z-30 shadow-xs hover:scale-125 hover:bg-blue-600 transition-all"
+                                    className={`absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 ${handleStyle} cursor-ew-resize`}
                                     title="拖曳調整線條長度 (左端)"
                                   />
                                   <div
                                     onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 'e')}
-                                    className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white border border-blue-600 rounded-2xs cursor-ew-resize z-30 shadow-xs hover:scale-125 hover:bg-blue-600 transition-all"
+                                    className={`absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 ${handleStyle} cursor-ew-resize`}
                                     title="拖曳調整線條長度 (右端)"
                                   />
                                   {resizingControl?.controlId === control.id && (
@@ -592,12 +593,12 @@ export const BandCanvas: React.FC = () => {
                                 <>
                                   <div
                                     onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 'n')}
-                                    className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-white border border-blue-600 rounded-2xs cursor-ns-resize z-30 shadow-xs hover:scale-125 hover:bg-blue-600 transition-all"
+                                    className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 ${handleStyle} cursor-ns-resize`}
                                     title="拖曳調整線條長度 (頂端)"
                                   />
                                   <div
                                     onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 's')}
-                                    className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-white border border-blue-600 rounded-2xs cursor-ns-resize z-30 shadow-xs hover:scale-125 hover:bg-blue-600 transition-all"
+                                    className={`absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 ${handleStyle} cursor-ns-resize`}
                                     title="拖曳調整線條長度 (底端)"
                                   />
                                   {resizingControl?.controlId === control.id && (
@@ -611,14 +612,14 @@ export const BandCanvas: React.FC = () => {
 
                             // 3. All standard controls (Label, Field, Expression, Image, Panel, Barcode, QRCode): Full 8-direction handles
                             const handles: { dir: ResizeDirection; pos: string; cursor: string }[] = [
-                              { dir: 'nw', pos: '-top-1.5 -left-1.5', cursor: 'cursor-nwse-resize' },
-                              { dir: 'n',  pos: '-top-1.5 left-1/2 -translate-x-1/2', cursor: 'cursor-ns-resize' },
-                              { dir: 'ne', pos: '-top-1.5 -right-1.5', cursor: 'cursor-nesw-resize' },
-                              { dir: 'e',  pos: 'top-1/2 -translate-y-1/2 -right-1.5', cursor: 'cursor-ew-resize' },
-                              { dir: 'se', pos: '-bottom-1.5 -right-1.5', cursor: 'cursor-nwse-resize' },
-                              { dir: 's',  pos: '-bottom-1.5 left-1/2 -translate-x-1/2', cursor: 'cursor-ns-resize' },
-                              { dir: 'sw', pos: '-bottom-1.5 -left-1.5', cursor: 'cursor-nesw-resize' },
-                              { dir: 'w',  pos: 'top-1/2 -translate-y-1/2 -left-1.5', cursor: 'cursor-ew-resize' },
+                              { dir: 'nw', pos: 'top-0 left-0 -translate-x-1/2 -translate-y-1/2', cursor: 'cursor-nwse-resize' },
+                              { dir: 'n',  pos: 'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2', cursor: 'cursor-ns-resize' },
+                              { dir: 'ne', pos: 'top-0 right-0 translate-x-1/2 -translate-y-1/2', cursor: 'cursor-nesw-resize' },
+                              { dir: 'e',  pos: 'top-1/2 right-0 translate-x-1/2 -translate-y-1/2', cursor: 'cursor-ew-resize' },
+                              { dir: 'se', pos: 'bottom-0 right-0 translate-x-1/2 translate-y-1/2', cursor: 'cursor-nwse-resize' },
+                              { dir: 's',  pos: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2', cursor: 'cursor-ns-resize' },
+                              { dir: 'sw', pos: 'bottom-0 left-0 -translate-x-1/2 translate-y-1/2', cursor: 'cursor-nesw-resize' },
+                              { dir: 'w',  pos: 'top-1/2 left-0 -translate-x-1/2 -translate-y-1/2', cursor: 'cursor-ew-resize' },
                             ];
 
                             return (
@@ -627,7 +628,7 @@ export const BandCanvas: React.FC = () => {
                                   <div
                                     key={dir}
                                     onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, dir)}
-                                    className={`absolute ${pos} w-2.5 h-2.5 bg-white border border-blue-600 rounded-2xs ${cursor} z-30 shadow-xs hover:scale-125 hover:bg-blue-600 transition-all`}
+                                    className={`absolute ${pos} ${handleStyle} ${cursor}`}
                                   />
                                 ))}
 
@@ -644,13 +645,17 @@ export const BandCanvas: React.FC = () => {
                       );
                     })}
 
-                    {/* Band Height Resize Handle (Bottom Edge) */}
+                    {/* Band Height Resize Handle (Bottom Edge) - Permanently visible when band is selected */}
                     <div
                       onMouseDown={(e) => handleBandResizeMouseDown(e, band.id, band.height)}
-                      className="absolute -bottom-1.5 left-0 right-0 h-3 cursor-row-resize flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-20 group"
+                      className={`absolute -bottom-1.5 left-0 right-0 h-3 cursor-row-resize flex items-center justify-center z-20 group transition-opacity ${
+                        isBandSelected ? 'opacity-100' : 'opacity-0 hover:opacity-100'
+                      }`}
                       title="拖曳以調整 Band 高度"
                     >
-                      <div className="h-1 w-16 bg-slate-400 rounded-full group-hover:bg-blue-600 transition-colors shadow-xs" />
+                      <div className={`h-1.5 w-20 rounded-full transition-colors shadow-xs ${
+                        isBandSelected ? 'bg-blue-600 ring-2 ring-blue-300' : 'bg-slate-400 group-hover:bg-blue-600'
+                      }`} />
                     </div>
                   </div>
                 </div>
