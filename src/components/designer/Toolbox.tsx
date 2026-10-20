@@ -9,9 +9,6 @@ import {
   Image as ImageIcon,
   CheckSquare,
   Square,
-  Table,
-  BarChart3,
-  PenTool,
   CheckCircle2,
   X,
   Plus,
@@ -56,6 +53,10 @@ export const Toolbox: React.FC = () => {
       text: defaults.text,
       fieldName: defaults.fieldName,
       expression: defaults.expression,
+      src: defaults.src,
+      objectFit: defaults.objectFit,
+      checked: defaults.checked,
+      checkText: defaults.checkText,
       barcodeFormat: defaults.barcodeFormat,
       displayValue: defaults.displayValue,
       qrErrorLevel: defaults.qrErrorLevel,
@@ -78,10 +79,10 @@ export const Toolbox: React.FC = () => {
     ? sampleFields.filter((f) => f.toLowerCase().includes(fieldSearch.toLowerCase()))
     : sampleFields;
 
-  // Professional Palette Groups matching DevExpress Report Designer
+  // Fully implemented 8-control palette (DevExpress 2-column layout)
   const paletteGroups = [
     {
-      id: 'basic-inputs',
+      id: 'basic-and-shapes',
       items: [
         {
           type: 'Label' as ControlType,
@@ -89,49 +90,24 @@ export const Toolbox: React.FC = () => {
           icon: Type,
         },
         {
-          type: 'Label' as ControlType,
-          name: '複選方塊 (CheckBox - 標籤範本)',
+          type: 'CheckBox' as ControlType,
+          name: '核取方塊 (CheckBox)',
           icon: CheckSquare,
-          customAdd: () =>
-            addControl(targetBand.id, {
-              type: 'Label',
-              x: 20,
-              y: 6,
-              width: 80,
-              height: 16,
-              text: '☑ 已確認',
-              style: { fontSize: 9, color: '#0f172a' },
-            }),
         },
         {
-          type: 'Label' as ControlType,
+          type: 'Panel' as ControlType,
           name: '面板容器 / 框線 (Panel)',
           icon: Square,
-          customAdd: () =>
-            addControl(targetBand.id, {
-              type: 'Label',
-              x: 10,
-              y: 4,
-              width: 200,
-              height: 40,
-              text: '',
-              style: { borderWidth: 1, borderColor: '#cbd5e1', backgroundColor: '#ffffff' },
-            }),
         },
         {
-          type: 'Label' as ControlType,
-          name: '表格矩陣 (Table)',
-          icon: Table,
-        },
-        {
-          type: 'Label' as ControlType,
-          name: '靜態影像 (Picture / Image)',
+          type: 'Image' as ControlType,
+          name: '靜態影像 (Image)',
           icon: ImageIcon,
         },
       ],
     },
     {
-      id: 'lines-codes',
+      id: 'lines-codes-expressions',
       items: [
         {
           type: 'Line' as ControlType,
@@ -148,41 +124,10 @@ export const Toolbox: React.FC = () => {
           name: '二維碼 (QR Code)',
           icon: QrCodeIcon,
         },
-      ],
-    },
-    {
-      id: 'analytics-signatures',
-      items: [
         {
           type: 'Expression' as ControlType,
           name: '計算與統計式 (Expression ∑)',
           icon: Calculator,
-        },
-        {
-          type: 'Expression' as ControlType,
-          name: '分析圖表 (Chart)',
-          icon: BarChart3,
-        },
-        {
-          type: 'Label' as ControlType,
-          name: '簽章章格 (Signature Pad)',
-          icon: PenTool,
-          customAdd: () =>
-            addControl(targetBand.id, {
-              type: 'Label',
-              x: 20,
-              y: 6,
-              width: 100,
-              height: 45,
-              text: '簽章處',
-              style: {
-                fontSize: 8,
-                color: '#94a3b8',
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                textAlign: 'center',
-              },
-            }),
         },
       ],
     },
@@ -214,12 +159,12 @@ export const Toolbox: React.FC = () => {
               <div className="grid grid-cols-2 gap-1 place-items-center">
                 {group.items.map((item, idx) => {
                   const Icon = item.icon;
-                  const isJustAdded = justAddedControlId === item.type && !item.customAdd;
+                  const isJustAdded = justAddedControlId === item.type;
 
                   return (
                     <button
                       key={`${group.id}-${idx}`}
-                      onClick={() => (item.customAdd ? item.customAdd() : handleAddControl(item.type))}
+                      onClick={() => handleAddControl(item.type)}
                       title={`${item.name}\n(加入至：${targetBand?.type || 'Detail'})`}
                       className="w-5.5 h-7 rounded flex items-center justify-center text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-2xs active:bg-slate-200 transition-all dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                     >

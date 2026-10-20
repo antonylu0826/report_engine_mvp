@@ -12,6 +12,10 @@ import {
   Bold,
   Barcode as BarcodeIcon,
   QrCode as QrCodeIcon,
+  Image as ImageIcon,
+  CheckSquare,
+  Square,
+  Upload,
   Layers,
   ArrowDownUp,
 } from 'lucide-react';
@@ -309,6 +313,192 @@ export const PropertyPanel: React.FC = () => {
                         })
                       }
                     />
+                  </div>
+                </div>
+              )}
+
+              {/* Image Specific Inspector */}
+              {selectedControl.type === 'Image' && (
+                <div className="space-y-2 bg-emerald-50/50 p-2 rounded border border-emerald-200/80 dark:bg-emerald-950/30 dark:border-emerald-900">
+                  <div className="flex items-center space-x-1.5 text-emerald-800 dark:text-emerald-300 font-semibold text-[11px]">
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    <span>圖片來源與縮放 (Image)</span>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] text-slate-500">圖片網址 (URL)</Label>
+                    <Input
+                      value={selectedControl.src ?? ''}
+                      placeholder="https://... 或 Base64"
+                      onChange={(e) =>
+                        updateControl(selectedBand.id, selectedControl.id, {
+                          src: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* Local Image File Upload */}
+                  <div>
+                    <Label className="text-[10px] text-slate-500">或上傳本機圖檔 (轉 DataURL)</Label>
+                    <label className="flex items-center justify-center space-x-1.5 px-2 py-1.5 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-50 cursor-pointer text-[11px] shadow-2xs">
+                      <Upload className="h-3.5 w-3.5 text-slate-500" />
+                      <span>選擇圖檔...</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = (uploadEvent) => {
+                            const result = uploadEvent.target?.result as string;
+                            if (result) {
+                              updateControl(selectedBand.id, selectedControl.id, {
+                                src: result,
+                              });
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] text-slate-500">縮放適應方式 (Fit)</Label>
+                    <select
+                      value={selectedControl.objectFit || 'contain'}
+                      onChange={(e) =>
+                        updateControl(selectedBand.id, selectedControl.id, {
+                          objectFit: e.target.value as 'contain' | 'cover' | 'fill',
+                        })
+                      }
+                      className="w-full text-xs rounded border border-slate-300 p-1.5 bg-white dark:bg-slate-850"
+                    >
+                      <option value="contain">等比完整容納 (contain - 推薦)</option>
+                      <option value="cover">等比填滿裁切 (cover)</option>
+                      <option value="fill">填滿變形 (fill)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* CheckBox Specific Inspector */}
+              {selectedControl.type === 'CheckBox' && (
+                <div className="space-y-2 bg-amber-50/50 p-2 rounded border border-amber-200/80 dark:bg-amber-950/30 dark:border-amber-900">
+                  <div className="flex items-center space-x-1.5 text-amber-800 dark:text-amber-300 font-semibold text-[11px]">
+                    <CheckSquare className="h-3.5 w-3.5" />
+                    <span>核取方塊設定 (CheckBox)</span>
+                  </div>
+
+                  <label className="flex items-center space-x-2 text-[11px] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!selectedControl.checked}
+                      onChange={(e) =>
+                        updateControl(selectedBand.id, selectedControl.id, {
+                          checked: e.target.checked,
+                        })
+                      }
+                      className="rounded border-slate-300"
+                    />
+                    <span>預設勾選狀態 (Checked)</span>
+                  </label>
+
+                  <div>
+                    <Label className="text-[10px] text-slate-500">核取說明文字</Label>
+                    <Input
+                      value={selectedControl.checkText ?? ''}
+                      placeholder="如 核取項目、已發貨"
+                      onChange={(e) =>
+                        updateControl(selectedBand.id, selectedControl.id, {
+                          checkText: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] text-slate-500">或綁定布林欄位 (可選)</Label>
+                    <Input
+                      value={selectedControl.fieldName ?? ''}
+                      placeholder="如 isPaid, inStock"
+                      onChange={(e) =>
+                        updateControl(selectedBand.id, selectedControl.id, {
+                          fieldName: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Panel Specific Inspector */}
+              {selectedControl.type === 'Panel' && (
+                <div className="space-y-2 bg-slate-100/70 p-2 rounded border border-slate-300 dark:bg-slate-900 dark:border-slate-800">
+                  <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
+                    <Square className="h-3.5 w-3.5" />
+                    <span>面板框線與圓角 (Panel)</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[10px] text-slate-500">框線粗細 (pt)</Label>
+                      <Input
+                        type="number"
+                        value={selectedControl.style?.borderWidth ?? 1}
+                        onChange={(e) =>
+                          updateControl(selectedBand.id, selectedControl.id, {
+                            style: {
+                              ...selectedControl.style,
+                              borderWidth: Number(e.target.value) || 0,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] text-slate-500">圓角大小 (pt)</Label>
+                      <Input
+                        type="number"
+                        value={selectedControl.style?.borderRadius ?? 0}
+                        onChange={(e) =>
+                          updateControl(selectedBand.id, selectedControl.id, {
+                            style: {
+                              ...selectedControl.style,
+                              borderRadius: Number(e.target.value) || 0,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] text-slate-500">外框線條色彩</Label>
+                    <div className="flex items-center space-x-1">
+                      <input
+                        type="color"
+                        value={selectedControl.style?.borderColor || '#cbd5e1'}
+                        onChange={(e) =>
+                          updateControl(selectedBand.id, selectedControl.id, {
+                            style: { ...selectedControl.style, borderColor: e.target.value },
+                          })
+                        }
+                        className="w-6 h-6 rounded border border-slate-200 cursor-pointer"
+                      />
+                      <Input
+                        value={selectedControl.style?.borderColor || '#cbd5e1'}
+                        onChange={(e) =>
+                          updateControl(selectedBand.id, selectedControl.id, {
+                            style: { ...selectedControl.style, borderColor: e.target.value },
+                          })
+                        }
+                        className="text-[11px] font-mono h-7"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

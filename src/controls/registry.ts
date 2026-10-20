@@ -6,6 +6,9 @@ import { ExpressionControl } from './plugins/ExpressionControl';
 import { LineControl } from './plugins/LineControl';
 import { BarcodeControl } from './plugins/BarcodeControl';
 import { QRCodeControl } from './plugins/QRCodeControl';
+import { ImageControl } from './plugins/ImageControl';
+import { CheckBoxControl } from './plugins/CheckBoxControl';
+import { PanelControl } from './plugins/PanelControl';
 
 class ControlRegistry {
   private plugins = new Map<ControlType, ReportControlPlugin>();
@@ -17,6 +20,9 @@ class ControlRegistry {
     this.register(LineControl);
     this.register(BarcodeControl);
     this.register(QRCodeControl);
+    this.register(ImageControl);
+    this.register(CheckBoxControl);
+    this.register(PanelControl);
   }
 
   public register(plugin: ReportControlPlugin) {

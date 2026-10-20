@@ -46,6 +46,7 @@ export interface ControlStyle {
   padding?: number;
   paddingHorizontal?: number;
   paddingVertical?: number;
+  borderRadius?: number;
 }
 
 export type ControlType =
@@ -55,7 +56,9 @@ export type ControlType =
   | 'Line'
   | 'Image'
   | 'Barcode'
-  | 'QRCode';
+  | 'QRCode'
+  | 'CheckBox'
+  | 'Panel';
 
 export interface ControlDefinition {
   id: string;
@@ -68,11 +71,16 @@ export interface ControlDefinition {
 
   // Specific content and data binding properties
   text?: string;            // Static text for Label, Barcode, QRCode
-  fieldName?: string;       // Data field path for Field, Barcode, QRCode (e.g. "code", "sku")
+  fieldName?: string;       // Data field path for Field, Barcode, QRCode, CheckBox (e.g. "code", "sku", "isDelivered")
   expression?: string;      // Calculation formula (e.g. "=SUM(amount)", "=PAGE_NUMBER + '/' + TOTAL_PAGES")
   formatString?: string;    // Formatting directive (e.g. "currency", "date:YYYY-MM-DD", "number:0.00")
   src?: string;             // Image source URL / base64
+  objectFit?: 'contain' | 'cover' | 'fill'; // Image scaling
   lineOrientation?: 'horizontal' | 'vertical'; // For Line control
+
+  // CheckBox specific configurations
+  checked?: boolean;        // Default checked state
+  checkText?: string;       // Label text next to the checkbox
 
   // Barcode and QRCode specific configurations
   barcodeFormat?: 'CODE128' | 'EAN13' | 'UPC' | 'CODE39';
