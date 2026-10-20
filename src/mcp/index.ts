@@ -18,8 +18,9 @@ import React from 'react';
 import ReactPDF, { Font } from '@react-pdf/renderer';
 
 import type { ReportDefinition, ControlDefinition } from '../types/report.js';
-import { sampleOrderReport, sampleOrderData45 } from '../mock/sampleReport.js';
+import { sampleOrderReport, sampleOrderData45, sampleOrderData14 } from '../mock/sampleReport.js';
 import { ReportPDFDocument } from '../compiler/pdfCompiler.js';
+import { inspectReportLayout, renderReportToSvg } from '../inspector/layoutInspector.js';
 
 // Register font for node environment
 const fontPath = path.resolve(process.cwd(), 'public/fonts/NotoSansTC.ttf');
@@ -189,6 +190,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: '產生的測試筆數 (預設 45 筆以測試多頁跨頁與表頭重複效果)',
             },
           },
+        },
+      },
+      {
+        name: 'inspect_and_preview_layout',
+        description: '【Agent 排版感知必備】秒級排版幾何健檢與視覺預覽。自動檢測控制項溢出破版、文字碰撞重疊、表頭與明細欄位垂直對齊度，並同步輸出首頁 SVG 向量圖與實體 PDF 檔案供 Agent 檢閱。',
+        inputSchema: {
+          type: 'object',
+          properties: {},
         },
       },
     ],
@@ -433,6 +442,54 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: `PDF 導出成功！檔案大小: ${(stats.size / 1024).toFixed(1)} KB，路徑: ${targetFile}`,
+            },
+          ],
+        };
+      }
+
+      case 'inspect_and_preview_layout': {
+        const inspection = inspectReportLayout(currentReport);
+
+        // 1. Render and save live SVG snapshot
+        const svgContent = renderReportToSvg(currentReport, sampleOrderData14);
+        const svgPath = path.resolve(process.cwd(), '.assets/agent_live_preview.svg');
+        fs.writeFileSync(svgPath, svgContent, 'utf-8');
+
+        // 2. Render and save live PDF
+        const pdfPath = path.resolve(process.cwd(), '.assets/agent_live_preview.pdf');
+        const pdfDocElement = React.createElement(ReportPDFDocument, {
+          report: currentReport,
+          data: sampleOrderData14,
+        });
+        await ReactPDF.renderToFile(pdfDocElement as any, pdfPath);
+        const pdfStats = fs.statSync(pdfPath);
+
+        // 3. Construct structured diagnosis report
+        let reportText = `## 📊 報表排版幾何健檢與視覺快照\n\n`;
+        reportText += `- **總結判定**: ${inspection.isValid ? '✅ 通過 (無破版錯誤)' : '🚨 發現破版錯誤 (需調整控制項座標)'}\n`;
+        reportText += `- **紙張規格**: ${inspection.pageSize} (可繪製寬度: ${inspection.printableWidth.toFixed(1)} pt)\n`;
+        reportText += `- **結構規模**: ${inspection.totalBands} 個 Bands，共 ${inspection.totalControls} 個像素級控制項\n`;
+        reportText += `- **SVG 向量預覽圖**: \`${svgPath}\`\n`;
+        reportText += `- **即時 PDF 檔案**: \`${pdfPath}\` (${(pdfStats.size / 1024).toFixed(1)} KB)\n\n`;
+
+        if (inspection.diagnostics.length > 0) {
+          reportText += `### ⚠️ 幾何診斷問題清單 (${inspection.diagnostics.length} 項)：\n`;
+          inspection.diagnostics.forEach((d, idx) => {
+            const icon = d.severity === 'error' ? '🚨 [錯誤]' : '⚠️ [警告]';
+            reportText += `${idx + 1}. ${icon} **[${d.category.toUpperCase()}]** (${d.bandType}): ${d.message}\n`;
+          });
+          reportText += '\n';
+        } else {
+          reportText += `### ✨ 幾何診斷：完全零溢出、零重疊、表格欄位 100% 精準垂直對齊！\n\n`;
+        }
+
+        reportText += `### 🗺️ 當前版面區塊輪廓圖 (ASCII Wireframe)：\n\`\`\`text\n${inspection.asciiWireframe}\n\`\`\`\n`;
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: reportText,
             },
           ],
         };

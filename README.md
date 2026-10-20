@@ -122,6 +122,7 @@ npm run build
 | `set_band_height` | 調整指定 Band 的物理高度（pt） |
 | `set_band_controls` | 批次置換某個 Band 的全部控制項（適合 Agent 一次排好客戶資訊卡或簽核矩陣） |
 | `set_full_report` | 直接替換整份 ReportDefinition（適合 Agent 一次性產生整張新單據） |
+| `inspect_and_preview_layout` | 【Agent 排版感知核心】秒級幾何健檢與視覺快照。自動偵測溢出破版、文字碰撞、表格欄位垂直對齊度，並同步輸出 SVG 向量圖與實體 PDF 檔案 |
 | `export_pdf` | 使用當前像素架構直接算繪高解析 PDF 輸出至本機磁碟供檢驗 |
 
 ### 2. Client 端設定範例 (例如 Cursor / Claude Desktop `mcp_config.json`)
