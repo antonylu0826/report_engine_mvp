@@ -14,6 +14,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import React from 'react';
 import ReactPDF, { Font } from '@react-pdf/renderer';
 
@@ -22,8 +23,18 @@ import { sampleOrderReport, sampleOrderData45, sampleOrderData14 } from '../mock
 import { ReportPDFDocument } from '../compiler/pdfCompiler.js';
 import { inspectReportLayout, renderReportToSvg } from '../inspector/layoutInspector.js';
 
+// Resolve project root based on this script location (src/mcp/index.ts -> root)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '../..');
+const ASSETS_DIR = path.resolve(PROJECT_ROOT, '.assets');
+
+if (!fs.existsSync(ASSETS_DIR)) {
+  fs.mkdirSync(ASSETS_DIR, { recursive: true });
+}
+
 // Register font for node environment
-const fontPath = path.resolve(process.cwd(), 'public/fonts/NotoSansTC.ttf');
+const fontPath = path.resolve(PROJECT_ROOT, 'public/fonts/NotoSansTC.ttf');
 if (fs.existsSync(fontPath)) {
   Font.register({
     family: 'AppChineseFont',
@@ -32,7 +43,7 @@ if (fs.existsSync(fontPath)) {
 }
 
 // State persistence file for pixel-level layout
-const LAYOUT_FILE_PATH = path.resolve(process.cwd(), 'current_report_layout.json');
+const LAYOUT_FILE_PATH = path.resolve(PROJECT_ROOT, 'current_report_layout.json');
 
 function loadCurrentReport(): ReportDefinition {
   if (fs.existsSync(LAYOUT_FILE_PATH)) {
@@ -427,7 +438,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'export_pdf': {
         const { outputPath = 'export_output.pdf' } = (args as { outputPath?: string; recordCount?: number }) || {};
-        const targetFile = path.resolve(process.cwd(), outputPath);
+        const targetFile = path.isAbsolute(outputPath) ? outputPath : path.resolve(PROJECT_ROOT, outputPath);
 
         const pdfDocElement = React.createElement(ReportPDFDocument, {
           report: currentReport,
@@ -452,11 +463,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         // 1. Render and save live SVG snapshot
         const svgContent = renderReportToSvg(currentReport, sampleOrderData14);
-        const svgPath = path.resolve(process.cwd(), '.assets/agent_live_preview.svg');
+        const svgPath = path.resolve(ASSETS_DIR, 'agent_live_preview.svg');
         fs.writeFileSync(svgPath, svgContent, 'utf-8');
 
         // 2. Render and save live PDF
-        const pdfPath = path.resolve(process.cwd(), '.assets/agent_live_preview.pdf');
+        const pdfPath = path.resolve(ASSETS_DIR, 'agent_live_preview.pdf');
         const pdfDocElement = React.createElement(ReportPDFDocument, {
           report: currentReport,
           data: sampleOrderData14,
