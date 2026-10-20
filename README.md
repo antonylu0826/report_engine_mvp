@@ -111,7 +111,7 @@ npm run build
 
 本專案內建標準的 **MCP 伺服器**，任何支援 MCP 的 AI Agent（如 Claude Desktop、Cursor、Antigravity Agent、Cline 等）皆可直接透過工具調用（Tool Calling）精準操控整份報表！
 
-### 1. 提供的 8 大像素級 MCP 工具
+### 1. 提供的 9 大像素級 MCP 工具
 
 | MCP 工具名稱 | 說明 |
 | :--- | :--- |
@@ -122,18 +122,55 @@ npm run build
 | `set_band_height` | 調整指定 Band 的物理高度（pt） |
 | `set_band_controls` | 批次置換某個 Band 的全部控制項（適合 Agent 一次排好客戶資訊卡或簽核矩陣） |
 | `set_full_report` | 直接替換整份 ReportDefinition（適合 Agent 一次性產生整張新單據） |
-| `inspect_and_preview_layout` | 【Agent 排版感知核心】秒級幾何健檢與視覺快照。自動偵測溢出破版、文字碰撞、表格欄位垂直對齊度，並同步輸出 SVG 向量圖與實體 PDF 檔案 |
+| `inspect_and_preview_layout` | 【Agent 排版感知核心】秒級幾何健檢與視覺快照。自動偵測溢出破版、文字碰撞、表格欄位垂直對齊度，並同步輸出首頁 SVG 向量圖與實體 PDF 檔案 |
 | `export_pdf` | 使用當前像素架構直接算繪高解析 PDF 輸出至本機磁碟供檢驗 |
 
-### 2. Client 端設定範例 (例如 Cursor / Claude Desktop `mcp_config.json`)
+---
 
+### 2. Client 端設定範例 (Cursor / Claude Desktop / Antigravity)
+
+在您的 MCP 設定檔（例如 Claude Desktop 的 `%APPDATA%\Claude\claude_desktop_config.json`、Cursor 的 `%USERPROFILE%\.cursor\mcp.json`、或 Antigravity 的 `~/.gemini/config/mcp_config.json`）中加入以下內容：
+
+#### Windows 環境最穩定配置（推薦）：
 ```json
 {
   "mcpServers": {
     "report-engine": {
-      "command": "npx",
-      "args": ["-y", "tsx", "d:/Source/Private/report_engine_mvp/src/mcp/index.ts"]
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": [
+        "-y",
+        "tsx",
+        "d:/Source/Private/report_engine_mvp/src/mcp/index.ts"
+      ],
+      "cwd": "d:/Source/Private/report_engine_mvp"
     }
   }
 }
 ```
+
+> [!TIP]
+> 1. 若 Node.js 安裝在非預設路徑，也可將 `command` 設為 `"cmd.exe"`，並將 `args` 第一個參數改為 `"/c"`。
+> 2. 路徑中的斜線請使用正斜線 `/` 或轉義雙反斜線 `\\`，避免 JSON 解析錯誤。
+
+---
+
+### 3. 🔄 前端即時雙向熱更新 (Live Sync)
+
+本專案內建 Vite 即時檔案同步中介層：
+- **自動感知**：瀏覽器介面（[http://localhost:5173/](http://localhost:5173/)）每 1.5 秒自動監聽磁碟上的 `current_report_layout.json`。
+- **無縫熱更新**：當外部 AI Agent 透過 MCP 執行任何 `update_control` 或 `set_band_controls`，**瀏覽器無需手動刷新，1 秒內自動熱重載最新版面與即時 PDF 預覽**！
+- **連線指示燈**：頂部導航列常駐 `🟢 MCP 即時連動 🔄` 狀態膠囊，隨時反饋連線狀態。
+
+---
+
+### 4. 💬 AI Agent 實測 Prompt 範例
+
+連線後，您可以直接對 Agent 發送以下指令進行測試：
+
+- **版面健檢與感知**：
+  > 「請幫我調用 report-engine 工具，檢查目前出貨單是否有任何溢出破版或欄位未對齊，並回報目前的區塊輪廓圖。」
+- **精確修改單一資訊**：
+  > 「請幫我把出貨單中的客戶聯絡電話分機加上 204。」
+- **表頭風格批次置換**：
+  > 「請幫我把表格表頭底色切換為商務深藍 (#1e3a8a)，文字改為純白粗體，完成後呼叫 inspect_and_preview_layout 驗證。」
+
