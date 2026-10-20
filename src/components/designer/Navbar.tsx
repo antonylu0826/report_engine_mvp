@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FileText,
   Eye,
@@ -9,6 +9,8 @@ import {
   ZoomOut,
   Sliders,
   Sparkles,
+  RefreshCw,
+  Radio,
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { Button } from '@/components/ui/button';
@@ -24,9 +26,46 @@ export const Navbar: React.FC = () => {
     zoom,
     setZoom,
     resetToSample,
+    setReport,
   } = useReportStore();
 
   const [isExporting, setIsExporting] = useState(false);
+  const [mcpSynced, setMcpSynced] = useState(false);
+  const [mcpConnecting, setMcpConnecting] = useState(false);
+  const lastMtimeRef = useRef<number>(0);
+
+  // Sync with current_report_layout.json from MCP
+  const fetchMcpLayout = async (force = false) => {
+    try {
+      setMcpConnecting(true);
+      const res = await fetch('/api/report-layout');
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json && json.report) {
+        if (force || json.mtime !== lastMtimeRef.current) {
+          lastMtimeRef.current = json.mtime;
+          setReport(json.report);
+          setMcpSynced(true);
+          setTimeout(() => setMcpSynced(false), 2500);
+        }
+      }
+    } catch {
+      // ignore offline or static build
+    } finally {
+      setMcpConnecting(false);
+    }
+  };
+
+  // Poll for changes made by external MCP Agent every 1.5 seconds
+  useEffect(() => {
+    fetchMcpLayout(true); // initial fetch
+
+    const timer = setInterval(() => {
+      fetchMcpLayout(false);
+    }, 1500);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleExportPDF = async () => {
     try {
@@ -99,11 +138,11 @@ export const Navbar: React.FC = () => {
           onClick={() => setActiveTab('agent')}
           className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
             activeTab === 'agent'
-              ? 'bg-blue-600 text-white shadow-sm'
+              ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100'
               : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
           }`}
         >
-          <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+          <Sparkles className="h-3.5 w-3.5 text-blue-500" />
           <span>Agent 協作模式</span>
         </button>
 
@@ -120,8 +159,23 @@ export const Navbar: React.FC = () => {
         </button>
       </div>
 
-      {/* Right Controls: Zoom, Reset, Export */}
+      {/* Right Controls: MCP Status, Zoom & Action Buttons */}
       <div className="flex items-center space-x-2">
+        {/* MCP Live Sync Status Pill */}
+        <button
+          onClick={() => fetchMcpLayout(true)}
+          className={`flex items-center space-x-1.5 text-[11px] px-2.5 py-1 rounded-full border transition-all ${
+            mcpSynced
+              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-400/40 dark:text-emerald-400 animate-pulse'
+              : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/80 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800'
+          }`}
+          title="每 1.5 秒自動監聽 MCP 外部 Agent 修改，點擊可立即手動重新拉取"
+        >
+          <Radio className={`h-3 w-3 ${mcpSynced ? 'text-emerald-500' : 'text-blue-500 animate-pulse'}`} />
+          <span>{mcpSynced ? 'MCP 已同步' : 'MCP 即時連動'}</span>
+          <RefreshCw className={`h-2.5 w-2.5 ml-0.5 ${mcpConnecting ? 'animate-spin' : ''}`} />
+        </button>
+
         {activeTab === 'designer' && (
           <div className="flex items-center space-x-1 bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 dark:bg-slate-900 dark:border-slate-800">
             <button
