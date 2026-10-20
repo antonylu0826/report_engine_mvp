@@ -284,6 +284,12 @@ export const BandCanvas: React.FC = () => {
                             overflow: 'hidden',
                             display: 'flex',
                             alignItems: 'center',
+                            justifyContent:
+                              control.style?.textAlign === 'center'
+                                ? 'center'
+                                : control.style?.textAlign === 'right'
+                                ? 'flex-end'
+                                : 'flex-start',
                             padding: '0 2pt',
                           }}
                         >
@@ -304,7 +310,15 @@ export const BandCanvas: React.FC = () => {
                               {control.expression}
                             </span>
                           ) : (
-                            <span className="truncate">{control.text}</span>
+                            <span
+                              className="truncate"
+                              style={{
+                                width: control.style?.textAlign ? '100%' : undefined,
+                                textAlign: control.style?.textAlign ?? 'left',
+                              }}
+                            >
+                              {control.text}
+                            </span>
                           )}
 
                           {/* Selected Resize Handles */}
