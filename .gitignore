@@ -23,4 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 scratch/
-
+current_report_layout.json
+current_report_spec.json
+*.pdf

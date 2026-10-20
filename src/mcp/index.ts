@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Report Engine MCP Server
- * Exposes Agent-Native Report Design Tools via Model Context Protocol (MCP).
+ * Report Engine MCP Server (Pixel-Level Banded Architecture)
+ * Exposes Agent-Native Pixel-Level Layout Tools via Model Context Protocol (MCP).
  * Compatible with Cursor, Claude Desktop, Antigravity, and other MCP clients.
  */
 
@@ -17,17 +17,8 @@ import path from 'path';
 import React from 'react';
 import ReactPDF, { Font } from '@react-pdf/renderer';
 
-import type { SemanticReportSpec, SemanticTheme } from '../semantic/types.js';
-import { defaultSemanticSpec } from '../semantic/sampleSpec.js';
-import { compileSemanticSpecToReport } from '../semantic/compiler.js';
-import {
-  addColumn,
-  removeColumn,
-  updateColumn,
-  setTheme,
-  setReportTitle,
-} from '../semantic/mutations.js';
-import { sampleOrderData45 } from '../mock/sampleReport.js';
+import type { ReportDefinition, ControlDefinition } from '../types/report.js';
+import { sampleOrderReport, sampleOrderData45 } from '../mock/sampleReport.js';
 import { ReportPDFDocument } from '../compiler/pdfCompiler.js';
 
 // Register font for node environment
@@ -39,34 +30,34 @@ if (fs.existsSync(fontPath)) {
   });
 }
 
-// State persistence file
-const SPEC_FILE_PATH = path.resolve(process.cwd(), 'current_report_spec.json');
+// State persistence file for pixel-level layout
+const LAYOUT_FILE_PATH = path.resolve(process.cwd(), 'current_report_layout.json');
 
-function loadCurrentSpec(): SemanticReportSpec {
-  if (fs.existsSync(SPEC_FILE_PATH)) {
+function loadCurrentReport(): ReportDefinition {
+  if (fs.existsSync(LAYOUT_FILE_PATH)) {
     try {
-      const data = fs.readFileSync(SPEC_FILE_PATH, 'utf-8');
+      const data = fs.readFileSync(LAYOUT_FILE_PATH, 'utf-8');
       return JSON.parse(data);
     } catch {
       // fallback
     }
   }
-  return defaultSemanticSpec;
+  return sampleOrderReport;
 }
 
-function saveCurrentSpec(spec: SemanticReportSpec): void {
-  fs.writeFileSync(SPEC_FILE_PATH, JSON.stringify(spec, null, 2), 'utf-8');
+function saveCurrentReport(report: ReportDefinition): void {
+  fs.writeFileSync(LAYOUT_FILE_PATH, JSON.stringify(report, null, 2), 'utf-8');
 }
 
-// Initialize spec file if missing
-if (!fs.existsSync(SPEC_FILE_PATH)) {
-  saveCurrentSpec(defaultSemanticSpec);
+// Initialize layout file if missing
+if (!fs.existsSync(LAYOUT_FILE_PATH)) {
+  saveCurrentReport(sampleOrderReport);
 }
 
 const server = new Server(
   {
     name: 'report-engine-mcp',
-    version: '1.0.0',
+    version: '2.0.0',
   },
   {
     capabilities: {
@@ -80,93 +71,123 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: 'get_report_spec',
-        description: '取得當前報表的高階語意規格 (Semantic Spec DSL，不含複雜物理像素座標)',
+        name: 'get_report_layout',
+        description: '取得當前整份報表的像素級架構 (包含頁面設定、可繪寬度、各 Band 及其所有控制項精確 X/Y/寬高/邊框與文字樣式)',
         inputSchema: {
           type: 'object',
           properties: {},
         },
       },
       {
-        name: 'set_report_theme',
-        description: '一鍵變更整份報表的主題風格色彩',
+        name: 'add_control',
+        description: '在指定 Band 內新增一個精確座標的控制項 (Label, Field, Expression, Line, Image)',
         inputSchema: {
           type: 'object',
           properties: {
-            theme: {
-              type: 'string',
-              enum: ['slate', 'blue', 'emerald', 'purple', 'amber'],
-              description: '主題色系：slate(經典灰階), blue(商務深藍), emerald(財會翡翠), purple(現代紫韻), amber(復古暖金)',
+            bandId: { type: 'string', description: '目標 Band ID (如 band-report-header, band-page-header, band-detail, band-report-footer, band-page-footer)' },
+            control: {
+              type: 'object',
+              description: '控制項定義 (必須包含 type, x, y, width, height, text/fieldName, 以及可選 style)',
+              properties: {
+                id: { type: 'string', description: '自訂控制項唯一 ID (若未提供則自動生成)' },
+                type: { type: 'string', enum: ['Label', 'Field', 'Expression', 'Line', 'Image'] },
+                x: { type: 'number', description: '相對於 Band 左邊界的 X 座標 (pt)' },
+                y: { type: 'number', description: '相對於 Band 上邊界的 Y 座標 (pt)' },
+                width: { type: 'number', description: '寬度 (pt)' },
+                height: { type: 'number', description: '高度 (pt)' },
+                text: { type: 'string', description: '靜態文字 (Label 用)' },
+                fieldName: { type: 'string', description: '資料綁定欄位名稱 (Field 用)' },
+                expression: { type: 'string', description: '計算公式 (Expression 用，如 =SUM(amount))' },
+                formatString: { type: 'string', description: '格式化 (如 C0, N0)' },
+                style: { type: 'object', description: '字體大小、對齊、邊框寬度與顏色、背景色等樣式' },
+              },
+              required: ['type', 'x', 'y', 'width', 'height'],
             },
           },
-          required: ['theme'],
+          required: ['bandId', 'control'],
         },
       },
       {
-        name: 'set_report_title',
-        description: '變更報表的大標題（公司行號名稱）與副標題（單據名稱）',
+        name: 'update_control',
+        description: '修改指定 Band 內特定控制項的座標 (x, y)、尺寸 (width, height)、文字內容或樣式屬性',
         inputSchema: {
           type: 'object',
           properties: {
-            title: { type: 'string', description: '公司或機構主標題' },
-            subtitle: { type: 'string', description: '單據名稱副標題' },
+            bandId: { type: 'string', description: '目標 Band ID' },
+            controlId: { type: 'string', description: '欲修改的控制項 ID' },
+            patch: {
+              type: 'object',
+              description: '要覆蓋修改的屬性物件 (可包含 x, y, width, height, text, fieldName, style 等)',
+            },
           },
-          required: ['title'],
+          required: ['bandId', 'controlId', 'patch'],
         },
       },
       {
-        name: 'add_report_column',
-        description: '在報表中新增一個資料欄位，幾何編譯器會自動重新平衡各欄物理寬度與保證上下對齊',
+        name: 'delete_control',
+        description: '從指定 Band 中刪除特定控制項',
         inputSchema: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: '欄位唯一代碼 (如 spec, warranty, unit)' },
-            label: { type: 'string', description: '表格表頭文字 (如 "規格說明", "保固期")' },
-            field: { type: 'string', description: '對應的資料集欄位名稱 (如 "spec")' },
-            expression: { type: 'string', description: '或使用計算運算式 (如 "=ROW_INDEX")' },
-            format: { type: 'string', description: '數值格式化指令 (如 "C0" 貨幣, "N0" 千分位, "date")' },
-            widthWeight: { type: 'number', description: '寬度權重比例 (預設 1.5，大於 1 代表較寬，小於 1 代表較窄)' },
-            align: { type: 'string', enum: ['left', 'center', 'right'], description: '對齊方式' },
-            summary: { type: 'string', enum: ['SUM', 'AVG', 'COUNT'], description: '是否在頁尾進行自動統計合計' },
-            afterColumnId: { type: 'string', description: '指定插入在哪個既有欄位後方 (若不填則加在最後)' },
+            bandId: { type: 'string', description: '目標 Band ID' },
+            controlId: { type: 'string', description: '欲刪除的控制項 ID' },
           },
-          required: ['id', 'label'],
+          required: ['bandId', 'controlId'],
         },
       },
       {
-        name: 'remove_report_column',
-        description: '從報表中刪除指定的欄位',
+        name: 'set_band_height',
+        description: '調整指定 Band 的物理高度 (pt)',
         inputSchema: {
           type: 'object',
           properties: {
-            columnId: { type: 'string', description: '欲刪除的欄位 ID' },
+            bandId: { type: 'string', description: '目標 Band ID' },
+            height: { type: 'number', description: '新的 Band 高度 (pt)' },
           },
-          required: ['columnId'],
+          required: ['bandId', 'height'],
         },
       },
       {
-        name: 'update_report_column',
-        description: '修改既有欄位的屬性（如調整寬度比例、對齊方式、修改文字標籤或格式化）',
+        name: 'set_band_controls',
+        description: '批次置換某個 Band 的全部控制項陣列 (非常適合 Agent 一次性排好整組客戶資訊卡、表頭或核決章矩陣)',
         inputSchema: {
           type: 'object',
           properties: {
-            columnId: { type: 'string', description: '欄位 ID' },
-            label: { type: 'string', description: '修改後的表頭文字' },
-            widthWeight: { type: 'number', description: '新的寬度權重' },
-            align: { type: 'string', enum: ['left', 'center', 'right'], description: '新的對齊方式' },
-            format: { type: 'string', description: '新的格式化指令' },
-            summary: { type: 'string', enum: ['SUM', 'AVG', 'COUNT'], description: '頁尾統計方式' },
+            bandId: { type: 'string', description: '目標 Band ID' },
+            controls: {
+              type: 'array',
+              description: '新的控制項物件陣列',
+              items: { type: 'object' },
+            },
           },
-          required: ['columnId'],
+          required: ['bandId', 'controls'],
         },
       },
       {
-        name: 'compile_and_export_pdf',
-        description: '將當前語意報表規格透過幾何編譯器轉譯為 PDF，並輸出實體 PDF 檔案至磁碟',
+        name: 'set_full_report',
+        description: '直接替換整份報表的 ReportDefinition (適合 Agent 一次性生成整張全新架構單據)',
         inputSchema: {
           type: 'object',
           properties: {
-            outputPath: { type: 'string', description: '產出之 PDF 儲存路徑 (如 "output.pdf")' },
+            report: { type: 'object', description: '完整的 ReportDefinition 物件' },
+          },
+          required: ['report'],
+        },
+      },
+      {
+        name: 'export_pdf',
+        description: '使用當前的像素級架構與資料渲染出正式 PDF 檔案，供外部檢查排版與邊框效果',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            outputPath: {
+              type: 'string',
+              description: '輸出的 PDF 檔案路徑 (預設為 export_output.pdf)',
+            },
+            recordCount: {
+              type: 'number',
+              description: '產生的測試筆數 (預設 45 筆以測試多頁跨頁與表頭重複效果)',
+            },
           },
         },
       },
@@ -174,129 +195,244 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
-// Handle tool calls
+// Handle tool execution
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
-  let currentSpec = loadCurrentSpec();
+  const currentReport = loadCurrentReport();
 
   try {
     switch (name) {
-      case 'get_report_spec': {
+      case 'get_report_layout': {
+        const printableWidth =
+          currentReport.pageSettings.size === 'A4'
+            ? 595.28 - (currentReport.pageSettings.margins.left + currentReport.pageSettings.margins.right)
+            : 612.0 - (currentReport.pageSettings.margins.left + currentReport.pageSettings.margins.right);
+
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(currentSpec, null, 2),
+              text: JSON.stringify(
+                {
+                  pageInfo: {
+                    size: currentReport.pageSettings.size,
+                    margins: currentReport.pageSettings.margins,
+                    printableWidth,
+                  },
+                  report: currentReport,
+                },
+                null,
+                2
+              ),
             },
           ],
         };
       }
 
-      case 'set_report_theme': {
-        const theme = (args?.theme as SemanticTheme) || 'slate';
-        currentSpec = setTheme(currentSpec, theme);
-        saveCurrentSpec(currentSpec);
+      case 'add_control': {
+        const { bandId, control } = args as {
+          bandId: string;
+          control: Partial<ControlDefinition> & { type: string; x: number; y: number; width: number; height: number };
+        };
+        const newId = control.id || `ctl-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+        const fullControl: ControlDefinition = {
+          ...control,
+          id: newId,
+        } as ControlDefinition;
+
+        let found = false;
+        const updatedBands = currentReport.bands.map((b) => {
+          if (b.id === bandId || b.type === bandId) {
+            found = true;
+            return {
+              ...b,
+              controls: [...b.controls, fullControl],
+            };
+          }
+          return b;
+        });
+
+        if (!found) {
+          throw new Error(`找不到指定的 Band: ${bandId}`);
+        }
+
+        currentReport.bands = updatedBands;
+        saveCurrentReport(currentReport);
+
         return {
           content: [
             {
               type: 'text',
-              text: `已成功將報表全域主題切換為：「${theme}」風格！`,
+              text: `已成功在 ${bandId} 新增控制項 (ID: ${newId})，座標為 (${fullControl.x}, ${fullControl.y})，寬高為 ${fullControl.width}x${fullControl.height}。`,
             },
           ],
         };
       }
 
-      case 'set_report_title': {
-        const title = String(args?.title || '');
-        const subtitle = args?.subtitle ? String(args?.subtitle) : undefined;
-        currentSpec = setReportTitle(currentSpec, title, subtitle);
-        saveCurrentSpec(currentSpec);
+      case 'update_control': {
+        const { bandId, controlId, patch } = args as {
+          bandId: string;
+          controlId: string;
+          patch: Partial<ControlDefinition>;
+        };
+
+        let found = false;
+        const updatedBands = currentReport.bands.map((b) => {
+          if (b.id === bandId || b.type === bandId) {
+            return {
+              ...b,
+              controls: b.controls.map((c) => {
+                if (c.id === controlId) {
+                  found = true;
+                  return {
+                    ...c,
+                    ...patch,
+                    style: { ...c.style, ...patch.style },
+                  };
+                }
+                return c;
+              }),
+            };
+          }
+          return b;
+        });
+
+        if (!found) {
+          throw new Error(`在 ${bandId} 找不到控制項 ID: ${controlId}`);
+        }
+
+        currentReport.bands = updatedBands;
+        saveCurrentReport(currentReport);
+
         return {
           content: [
             {
               type: 'text',
-              text: `已成功變更報表抬頭為：「${title}」${subtitle ? `，副標題：「${subtitle}」` : ''}`,
+              text: `已成功更新控制項 ${controlId} 的屬性。`,
             },
           ],
         };
       }
 
-      case 'add_report_column': {
-        const newCol = {
-          id: String(args?.id),
-          label: String(args?.label),
-          field: args?.field ? String(args?.field) : undefined,
-          expression: args?.expression ? String(args?.expression) : undefined,
-          format: args?.format ? String(args?.format) : undefined,
-          widthWeight: Number(args?.widthWeight) || 1.5,
-          align: (args?.align as 'left' | 'center' | 'right') || 'left',
-          summary: args?.summary as 'SUM' | 'AVG' | 'COUNT' | undefined,
-        };
-        const afterId = args?.afterColumnId ? String(args?.afterColumnId) : undefined;
-        currentSpec = addColumn(currentSpec, newCol, afterId);
-        saveCurrentSpec(currentSpec);
+      case 'delete_control': {
+        const { bandId, controlId } = args as { bandId: string; controlId: string };
+        let found = false;
+        const updatedBands = currentReport.bands.map((b) => {
+          if (b.id === bandId || b.type === bandId) {
+            const initialLen = b.controls.length;
+            const filtered = b.controls.filter((c) => c.id !== controlId);
+            if (filtered.length !== initialLen) found = true;
+            return { ...b, controls: filtered };
+          }
+          return b;
+        });
+
+        if (!found) {
+          throw new Error(`在 ${bandId} 找不到控制項 ID: ${controlId}`);
+        }
+
+        currentReport.bands = updatedBands;
+        saveCurrentReport(currentReport);
+
         return {
           content: [
             {
               type: 'text',
-              text: `已成功新增欄位「${newCol.label}」(${newCol.id})，權重為 ${newCol.widthWeight}。幾何編譯器已自動重新平衡全表欄寬！`,
+              text: `已成功刪除控制項 ${controlId}。`,
             },
           ],
         };
       }
 
-      case 'remove_report_column': {
-        const colId = String(args?.columnId);
-        currentSpec = removeColumn(currentSpec, colId);
-        saveCurrentSpec(currentSpec);
+      case 'set_band_height': {
+        const { bandId, height } = args as { bandId: string; height: number };
+        let found = false;
+        const updatedBands = currentReport.bands.map((b) => {
+          if (b.id === bandId || b.type === bandId) {
+            found = true;
+            return { ...b, height };
+          }
+          return b;
+        });
+
+        if (!found) {
+          throw new Error(`找不到指定的 Band: ${bandId}`);
+        }
+
+        currentReport.bands = updatedBands;
+        saveCurrentReport(currentReport);
+
         return {
           content: [
             {
               type: 'text',
-              text: `已成功從報表中移除欄位 ID：「${colId}」！`,
+              text: `已將 Band ${bandId} 高度設定為 ${height} pt。`,
             },
           ],
         };
       }
 
-      case 'update_report_column': {
-        const colId = String(args?.columnId);
-        const patch: Record<string, unknown> = {};
-        if (args?.label !== undefined) patch.label = String(args.label);
-        if (args?.widthWeight !== undefined) patch.widthWeight = Number(args.widthWeight);
-        if (args?.align !== undefined) patch.align = args.align;
-        if (args?.format !== undefined) patch.format = String(args.format);
-        if (args?.summary !== undefined) patch.summary = args.summary;
+      case 'set_band_controls': {
+        const { bandId, controls } = args as { bandId: string; controls: ControlDefinition[] };
+        let found = false;
+        const updatedBands = currentReport.bands.map((b) => {
+          if (b.id === bandId || b.type === bandId) {
+            found = true;
+            return { ...b, controls };
+          }
+          return b;
+        });
 
-        currentSpec = updateColumn(currentSpec, colId, patch);
-        saveCurrentSpec(currentSpec);
+        if (!found) {
+          throw new Error(`找不到指定的 Band: ${bandId}`);
+        }
+
+        currentReport.bands = updatedBands;
+        saveCurrentReport(currentReport);
+
         return {
           content: [
             {
               type: 'text',
-              text: `已成功更新欄位「${colId}」的屬性設定！`,
+              text: `已成功為 ${bandId} 批次置入 ${controls.length} 個控制項。`,
             },
           ],
         };
       }
 
-      case 'compile_and_export_pdf': {
-        const targetPath = args?.outputPath
-          ? path.resolve(process.cwd(), String(args.outputPath))
-          : path.resolve(process.cwd(), `${currentSpec.name || 'report'}.pdf`);
+      case 'set_full_report': {
+        const { report } = args as { report: ReportDefinition };
+        if (!report.bands || !Array.isArray(report.bands)) {
+          throw new Error('無效的 ReportDefinition 物件');
+        }
+        saveCurrentReport(report);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `整份報表定義已成功替換，目前包含 ${report.bands.length} 個 Bands。`,
+            },
+          ],
+        };
+      }
 
-        const compiledReport = compileSemanticSpecToReport(currentSpec);
-        const doc = React.createElement(ReportPDFDocument, {
-          report: compiledReport,
+      case 'export_pdf': {
+        const { outputPath = 'export_output.pdf' } = (args as { outputPath?: string; recordCount?: number }) || {};
+        const targetFile = path.resolve(process.cwd(), outputPath);
+
+        const pdfDocElement = React.createElement(ReportPDFDocument, {
+          report: currentReport,
           data: sampleOrderData45,
         });
 
-        await ReactPDF.renderToFile(doc, targetPath);
+        await ReactPDF.renderToFile(pdfDocElement as any, targetFile);
+        const stats = fs.statSync(targetFile);
+
         return {
           content: [
             {
               type: 'text',
-              text: `✅ PDF 報表編譯成功！檔案已儲存至：${targetPath} (包含 45 筆資料、自動跨頁與中文字型)`,
+              text: `PDF 導出成功！檔案大小: ${(stats.size / 1024).toFixed(1)} KB，路徑: ${targetFile}`,
             },
           ],
         };
@@ -305,27 +441,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       default:
         throw new Error(`未知的工具名稱: ${name}`);
     }
-  } catch (err) {
+  } catch (error) {
     return {
       isError: true,
       content: [
         {
           type: 'text',
-          text: `操作失敗: ${(err as Error).message}`,
+          text: `工具執行失敗: ${(error as Error).message}`,
         },
       ],
     };
   }
 });
 
-// Start stdio transport
-async function run() {
+// Run server
+async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('Report Engine MCP Server running on stdio');
+  console.error('Report Engine Pixel-Level MCP Server running on stdio');
 }
 
-run().catch((err) => {
-  console.error('Fatal error in MCP Server:', err);
+main().catch((err) => {
+  console.error('Fatal server error:', err);
   process.exit(1);
 });

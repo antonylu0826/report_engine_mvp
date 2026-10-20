@@ -1,14 +1,10 @@
 import { create } from 'zustand';
 import type { ReportDefinition, ControlDefinition } from '../types/report';
-import { sampleOrderData } from '../mock/sampleReport';
-import type { SemanticReportSpec } from '../semantic/types';
-import { defaultSemanticSpec } from '../semantic/sampleSpec';
-import { compileSemanticSpecToReport } from '../semantic/compiler';
+import { sampleOrderReport, sampleOrderData } from '../mock/sampleReport';
 
 export type ReportTab = 'designer' | 'preview' | 'schema' | 'agent';
 
 interface ReportState {
-  spec: SemanticReportSpec;
   report: ReportDefinition;
   data: Record<string, unknown>[];
   selectedBandId: string | null;
@@ -27,21 +23,15 @@ interface ReportState {
   addControl: (bandId: string, control: Omit<ControlDefinition, 'id'>) => void;
   removeControl: (bandId: string, controlId: string) => void;
   updateBandHeight: (bandId: string, height: number) => void;
+  setBandControls: (bandId: string, controls: ControlDefinition[]) => void;
   setZoom: (zoom: number) => void;
   resetToSample: () => void;
   setReport: (report: ReportDefinition) => void;
   setData: (data: Record<string, unknown>[]) => void;
-
-  // Agent Native Spec Actions
-  setSpec: (spec: SemanticReportSpec) => void;
-  applyAgentMutation: (
-    mutationFn: (prev: SemanticReportSpec) => SemanticReportSpec
-  ) => void;
 }
 
 export const useReportStore = create<ReportState>((set) => ({
-  spec: defaultSemanticSpec,
-  report: compileSemanticSpecToReport(defaultSemanticSpec),
+  report: sampleOrderReport,
   data: sampleOrderData,
   selectedBandId: null,
   selectedControlId: null,
@@ -62,7 +52,9 @@ export const useReportStore = create<ReportState>((set) => ({
           return {
             ...band,
             controls: band.controls.map((ctrl) =>
-              ctrl.id === controlId ? { ...ctrl, ...patch, style: { ...ctrl.style, ...patch.style } } : ctrl
+              ctrl.id === controlId
+                ? { ...ctrl, ...patch, style: { ...ctrl.style, ...patch.style } }
+                : ctrl
             ),
           };
         }),
@@ -113,13 +105,21 @@ export const useReportStore = create<ReportState>((set) => ({
       },
     })),
 
+  setBandControls: (bandId, controls) =>
+    set((state) => ({
+      report: {
+        ...state.report,
+        bands: state.report.bands.map((band) =>
+          band.id === bandId ? { ...band, controls } : band
+        ),
+      },
+    })),
+
   setZoom: (zoom) => set({ zoom }),
 
   resetToSample: () => {
-    const compiled = compileSemanticSpecToReport(defaultSemanticSpec);
     set({
-      spec: defaultSemanticSpec,
-      report: compiled,
+      report: sampleOrderReport,
       data: sampleOrderData,
       selectedBandId: null,
       selectedControlId: null,
@@ -129,17 +129,4 @@ export const useReportStore = create<ReportState>((set) => ({
   setReport: (report) => set({ report }),
 
   setData: (data) => set({ data }),
-
-  setSpec: (spec) => {
-    const compiled = compileSemanticSpecToReport(spec);
-    set({ spec, report: compiled });
-  },
-
-  applyAgentMutation: (mutationFn) => {
-    set((state) => {
-      const nextSpec = mutationFn(state.spec);
-      const nextReport = compileSemanticSpecToReport(nextSpec);
-      return { spec: nextSpec, report: nextReport };
-    });
-  },
 }));

@@ -1,17 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useReportStore } from '@/store/useReportStore';
 import { Button } from '@/components/ui/button';
 import {
-  addColumn,
-  removeColumn,
-  setTheme,
-  setReportTitle,
-} from '@/semantic/mutations';
-import type { SemanticTheme } from '@/semantic/types';
-import {
   Sparkles,
-  Palette,
-  Columns,
   CheckCircle2,
   Code2,
   Save,
@@ -19,11 +10,15 @@ import {
   Check,
   Send,
   Zap,
+  Layers,
+  Ruler,
+  FileCheck,
 } from 'lucide-react';
+import type { ReportDefinition } from '@/types/report';
 
 export const AgentCopilot: React.FC = () => {
-  const { spec, setSpec, applyAgentMutation, setActiveTab } = useReportStore();
-  const [jsonText, setJsonText] = useState(JSON.stringify(spec, null, 2));
+  const { report, setReport, updateControl, setActiveTab, resetToSample } = useReportStore();
+  const [jsonText, setJsonText] = useState(JSON.stringify(report, null, 2));
   const [copied, setCopied] = useState(false);
   const [promptInput, setPromptInput] = useState('');
   const [chatLogs, setChatLogs] = useState<
@@ -31,14 +26,14 @@ export const AgentCopilot: React.FC = () => {
   >([
     {
       role: 'agent',
-      text: '你好！我是報表設計 Agent。我已載入當前出貨單語意模型（僅 25 行 DSL），無需手動計算像素或 pt 座標，請問您想如何調整這張報表？',
+      text: '你好！我是像素級報表設計 Agent。我已載入完整的企業標準出貨單 Banded IR 模型。所有控制項具備精確的 X/Y 座標、寬高、邊框與樣式。請問您想如何微調或重新排版這張單據？',
     },
   ]);
 
-  // Keep local json editor synced with store spec
-  React.useEffect(() => {
-    setJsonText(JSON.stringify(spec, null, 2));
-  }, [spec]);
+  // Sync JSON text when report changes in store
+  useEffect(() => {
+    setJsonText(JSON.stringify(report, null, 2));
+  }, [report]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(jsonText);
@@ -48,58 +43,73 @@ export const AgentCopilot: React.FC = () => {
 
   const handleApplyJson = () => {
     try {
-      const parsed = JSON.parse(jsonText);
-      setSpec(parsed);
-      alert('高階語意模型已套用，幾何編譯器已完成自動座標換算！');
+      const parsed: ReportDefinition = JSON.parse(jsonText);
+      if (!parsed.bands || !Array.isArray(parsed.bands)) {
+        throw new Error('報表定義格式不正確，缺少 bands 陣列。');
+      }
+      setReport(parsed);
+      alert('像素級報表模型已成功套用！您可切換至「視覺畫布」或「即時預覽」查看渲染效果。');
     } catch (err) {
       alert(`JSON 解析失敗: ${(err as Error).message}`);
     }
   };
 
-  // Simulated Agent Prompt Handling
+  // Calculate printable width and total controls
+  const totalControls = report.bands.reduce((acc, b) => acc + b.controls.length, 0);
+  const printableWidth =
+    report.pageSettings.size === 'A4'
+      ? 595.28 - (report.pageSettings.margins.left + report.pageSettings.margins.right)
+      : 612.0 - (report.pageSettings.margins.left + report.pageSettings.margins.right);
+
   const handleSendPrompt = () => {
     if (!promptInput.trim()) return;
     const input = promptInput.trim();
     const newLogs = [...chatLogs, { role: 'user' as const, text: input }];
 
-    // Simple rule-based match to demonstrate agent mutations
-    if (input.includes('藍') || input.toLowerCase().includes('blue')) {
-      applyAgentMutation((prev) => setTheme(prev, 'blue'));
-      newLogs.push({
-        role: 'agent',
-        text: '已調用 setTheme("blue") 工具，全報表色系、表頭背景與總計已一鍵切換至「商務深藍」風格！',
-        action: 'setTheme("blue")',
+    // Interactive simulated agent responses with real pixel modifications
+    if (input.includes('公司') || input.includes('抬頭') || input.includes('名稱')) {
+      updateControl('band-report-header', 'ctl-company-title', {
+        text: '大同世界科技股份有限公司 (Tatung System Technologies)',
       });
-    } else if (input.includes('綠') || input.toLowerCase().includes('emerald')) {
-      applyAgentMutation((prev) => setTheme(prev, 'emerald'));
       newLogs.push({
         role: 'agent',
-        text: '已調用 setTheme("emerald") 工具，全報表已切換至「財會翡翠綠」主題！',
-        action: 'setTheme("emerald")',
+        text: '已調用 update_control 工具：修改「band-report-header」中的「ctl-company-title」控制項文字為「大同世界科技股份有限公司」，保持字級 16pt 與居中對齊。',
+        action: 'update_control("band-report-header", "ctl-company-title", { text: ... })',
       });
-    } else if (input.includes('規格') || input.includes('spec')) {
-      applyAgentMutation((prev) =>
-        addColumn(
-          prev,
-          {
-            id: 'spec',
-            label: '規格說明',
-            field: 'sku', // dummy or field
-            widthWeight: 2.0,
-            align: 'left',
-          },
-          'sku'
-        )
-      );
+    } else if (input.includes('底色') || input.includes('藍') || input.includes('深藍')) {
+      // Modify table header background to deep business blue
+      const updatedBands = report.bands.map((band) => {
+        if (band.type === 'PageHeader') {
+          return {
+            ...band,
+            controls: band.controls.map((ctrl) => ({
+              ...ctrl,
+              style: {
+                ...ctrl.style,
+                backgroundColor: '#1e3a8a',
+                color: '#ffffff',
+                borderColor: '#1e40af',
+              },
+            })),
+          };
+        }
+        return band;
+      });
+      setReport({ ...report, bands: updatedBands });
       newLogs.push({
         role: 'agent',
-        text: '已調用 addColumn() 工具，在「品號」後方插入了「規格說明」欄位（權重 2.0），編譯器已自動重新等比例計算所有欄位 X 軸，保證表頭與明細 100% 垂直對齊！',
-        action: 'addColumn("spec")',
+        text: '已批量調用 set_band_controls：將 PageHeader 表頭全部儲存格底色調整為商務深藍 (#1e3a8a)，字體顏色轉為純白 (#ffffff)，提升視覺對比與專業度！',
+        action: 'set_band_controls("band-page-header", ...)',
+      });
+    } else if (input.includes('簽') || input.includes('核決') || input.includes('印章')) {
+      newLogs.push({
+        role: 'agent',
+        text: 'ReportFooter 內已具備企業標準四格簽核矩陣（製單人員、業務主管、倉管點收、客戶簽收蓋章），寬度分別為 122pt/122pt/122pt/131pt，均帶有獨立外框與 42pt 留空簽章空間。',
       });
     } else {
       newLogs.push({
         role: 'agent',
-        text: `已收到指令：「${input}」。您可以點擊下方快捷動作展示 Agent 原子操作，或切換至即時 PDF 預覽查看效果！`,
+        text: `已收到指令：「${input}」。在像素級模式下，Agent 可以透過 MCP 或代碼精確微調任何控制項的 x, y, width, height, 邊框粗細與文字對齊！`,
       });
     }
 
@@ -107,144 +117,113 @@ export const AgentCopilot: React.FC = () => {
     setPromptInput('');
   };
 
-  const themes: { id: SemanticTheme; name: string; color: string }[] = [
-    { id: 'slate', name: '經典灰階 (Slate)', color: 'bg-slate-700' },
-    { id: 'blue', name: '商務深藍 (Blue)', color: 'bg-blue-600' },
-    { id: 'emerald', name: '財會翡翠 (Emerald)', color: 'bg-emerald-600' },
-    { id: 'purple', name: '現代紫韻 (Purple)', color: 'bg-purple-600' },
-    { id: 'amber', name: '復古暖金 (Amber)', color: 'bg-amber-600' },
-  ];
-
   return (
     <div className="flex-1 flex h-[calc(100vh-3.25rem)] bg-slate-900 text-slate-100 select-none overflow-hidden">
-      {/* Left Column: Agent Copilot Chat & Quick Mutations */}
+      {/* Left Column: Pixel-Level Agent Copilot Chat & Quick Actions */}
       <div className="w-1/2 border-r border-slate-800 flex flex-col bg-slate-950">
         {/* Header */}
         <div className="h-10 bg-slate-900/90 border-b border-slate-800 px-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Sparkles className="h-4 w-4 text-blue-400" />
             <span className="font-semibold text-xs text-slate-200">
-              AI 報表設計代理人 (Agent Copilot)
+              AI 報表設計代理人 (Pixel-Level Agent Copilot)
             </span>
           </div>
-          <span className="text-[10px] bg-blue-950 text-blue-300 border border-blue-800 px-2 py-0.5 rounded-full">
-            Agent-Native 語意模式
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full flex items-center space-x-1">
+              <Ruler className="h-2.5 w-2.5 mr-0.5" />
+              <span>像素級 Banded 引擎</span>
+            </span>
+          </div>
         </div>
 
         {/* Quick Agent Actions Bar */}
         <div className="p-3 bg-slate-900/40 border-b border-slate-800 space-y-2">
           <div className="flex items-center space-x-1.5 text-[11px] font-medium text-slate-400">
             <Zap className="h-3.5 w-3.5 text-amber-400" />
-            <span>Agent 增量原子操作快捷示範 (無需重寫座標)：</span>
+            <span>Agent 像素級原子操作示範 (精準控制 X/Y/寬高/邊框)：</span>
           </div>
 
           <div className="flex flex-wrap gap-1.5">
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                applyAgentMutation((prev) =>
-                  addColumn(
-                    prev,
-                    {
-                      id: `spec-${Date.now().toString().slice(-3)}`,
-                      label: '規格說明',
-                      field: 'sku',
-                      widthWeight: 2.0,
-                      align: 'left',
-                    },
-                    'sku'
-                  )
-                )
-              }
-              className="h-6 text-[10px] bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700"
+              onClick={() => {
+                updateControl('band-report-header', 'ctl-company-title', {
+                  text: '宏碁資通全球股份有限公司 (Acer Info Tech Corp.)',
+                });
+              }}
+              className="h-7 text-xs bg-slate-800/80 border-slate-700 hover:bg-slate-700 text-slate-200"
             >
-              <Columns className="h-3 w-3 mr-1 text-emerald-400" />
-              + 插入規格欄位 (權重2.0)
+              微調公司抬頭
             </Button>
 
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                const lastCol = spec.columns[spec.columns.length - 1];
-                if (spec.columns.length > 3 && lastCol) {
-                  applyAgentMutation((prev) => removeColumn(prev, lastCol.id));
-                }
+                const updatedBands = report.bands.map((band) => {
+                  if (band.type === 'PageHeader') {
+                    return {
+                      ...band,
+                      controls: band.controls.map((ctrl) => ({
+                        ...ctrl,
+                        style: {
+                          ...ctrl.style,
+                          backgroundColor: '#0f766e',
+                          color: '#ffffff',
+                          borderColor: '#115e59',
+                        },
+                      })),
+                    };
+                  }
+                  return band;
+                });
+                setReport({ ...report, bands: updatedBands });
               }}
-              className="h-6 text-[10px] bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700"
+              className="h-7 text-xs bg-slate-800/80 border-slate-700 hover:bg-slate-700 text-teal-300"
             >
-              - 移除最後一欄
+              表頭換財會翡翠色
             </Button>
 
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                applyAgentMutation((prev) =>
-                  setReportTitle(
-                    prev,
-                    '全漢企業集團 (FSP Group)',
-                    '全球出貨銷貨確認明細 (Dispatch Note)'
-                  )
-                )
-              }
-              className="h-6 text-[10px] bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700"
+              onClick={() => resetToSample()}
+              className="h-7 text-xs bg-slate-800/80 border-slate-700 hover:bg-slate-700 text-slate-300"
             >
-              變更公司抬頭
+              還原企業標準單
             </Button>
-          </div>
-
-          {/* Theme Quick Switcher */}
-          <div className="flex items-center space-x-2 pt-1">
-            <span className="text-[10px] text-slate-400 flex items-center space-x-1">
-              <Palette className="h-3 w-3 text-slate-400" />
-              <span>全域主題:</span>
-            </span>
-            <div className="flex space-x-1">
-              {themes.map((th) => (
-                <button
-                  key={th.id}
-                  onClick={() => applyAgentMutation((prev) => setTheme(prev, th.id))}
-                  className={`flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] transition-colors border ${
-                    spec.theme === th.id
-                      ? 'border-blue-500 bg-slate-800 font-semibold text-white'
-                      : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
-                  }`}
-                  title={th.name}
-                >
-                  <span className={`w-2 h-2 rounded-full ${th.color}`} />
-                  <span>{th.id}</span>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* Chat / Interaction Logs */}
-        <div className="flex-1 p-3 overflow-y-auto space-y-3">
-          {chatLogs.map((msg, idx) => (
+        {/* Conversation Logs */}
+        <div className="flex-1 p-4 overflow-y-auto space-y-3 font-sans text-xs">
+          {chatLogs.map((log, idx) => (
             <div
               key={idx}
               className={`flex flex-col ${
-                msg.role === 'user' ? 'items-end' : 'items-start'
+                log.role === 'user' ? 'items-end' : 'items-start'
               }`}
             >
               <div
-                className={`max-w-[85%] rounded-lg p-2.5 text-xs ${
-                  msg.role === 'user'
-                    ? 'bg-blue-600 text-white'
+                className={`max-w-[85%] rounded-lg p-2.5 leading-relaxed ${
+                  log.role === 'user'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : 'bg-slate-800/90 text-slate-200 border border-slate-700'
                 }`}
               >
-                <div className="text-[10px] opacity-70 mb-0.5 font-mono">
-                  {msg.role === 'user' ? '用戶自然語言需求' : 'Agent 操作回應'}
-                </div>
-                <div>{msg.text}</div>
-                {msg.action && (
-                  <div className="mt-1.5 px-2 py-0.5 rounded bg-slate-900 font-mono text-[10px] text-emerald-400 border border-slate-700/80">
-                    🔧 Tool: {msg.action}
+                {log.role === 'agent' && (
+                  <div className="flex items-center space-x-1.5 text-[10px] text-blue-400 font-semibold mb-1">
+                    <Sparkles className="h-3 w-3" />
+                    <span>Agent Assistant</span>
+                  </div>
+                )}
+                <p className="whitespace-pre-wrap">{log.text}</p>
+                {log.action && (
+                  <div className="mt-1.5 pt-1.5 border-t border-slate-700/60 font-mono text-[10px] text-emerald-400">
+                    <span className="text-slate-400">調用像素操作: </span>
+                    {log.action}
                   </div>
                 )}
               </div>
@@ -252,86 +231,103 @@ export const AgentCopilot: React.FC = () => {
           ))}
         </div>
 
-        {/* Chat Input Bar */}
-        <div className="p-3 border-t border-slate-800 flex items-center space-x-2">
+        {/* Input Bar */}
+        <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-center space-x-2">
           <input
             type="text"
             value={promptInput}
             onChange={(e) => setPromptInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendPrompt()}
-            placeholder="例如：「幫我換成藍色主題」或「加一個規格欄位」..."
-            className="flex-1 bg-slate-900 border border-slate-700 rounded-md px-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="輸入排版需求 (例如：將抬頭改為大同世界科技、表頭換成深藍色...)"
+            className="flex-1 bg-slate-950 border border-slate-700 rounded-md px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <Button
             size="sm"
             onClick={handleSendPrompt}
-            className="h-8 bg-blue-600 hover:bg-blue-500 text-white space-x-1"
+            className="h-8 bg-blue-600 hover:bg-blue-500 text-white"
           >
-            <Send className="h-3.5 w-3.5" />
+            <Send className="h-3.5 w-3.5 mr-1" />
             <span>發送</span>
           </Button>
         </div>
       </div>
 
-      {/* Right Column: High-Level Semantic DSL Editor */}
-      <div className="w-1/2 flex flex-col bg-slate-900/60">
-        <div className="h-10 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs">
+      {/* Right Column: Full Pixel-Level ReportDefinition JSON Editor */}
+      <div className="w-1/2 flex flex-col bg-slate-900">
+        {/* Editor Toolbar */}
+        <div className="h-10 bg-slate-900/90 border-b border-slate-800 px-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Code2 className="h-4 w-4 text-emerald-400" />
-            <span className="font-semibold text-slate-200">
-              高階語意規格 (Semantic Spec DSL)
-            </span>
-            <span className="text-[10px] text-slate-400 font-mono">
-              • 僅 {spec.columns.length} 欄 • 無像素座標
+            <span className="font-semibold text-xs text-slate-200">
+              像素級 Banded 報表模型 (ReportDefinition IR)
             </span>
           </div>
 
           <div className="flex items-center space-x-2">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={handleCopy}
-              className="h-7 text-xs bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 space-x-1"
+              className="h-7 text-xs text-slate-400 hover:text-slate-200"
             >
-              {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-              <span>{copied ? '已複製' : '複製 DSL'}</span>
+              {copied ? (
+                <>
+                  <Check className="h-3.5 w-3.5 mr-1 text-emerald-400" />
+                  <span>已複製</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5 mr-1" />
+                  <span>複製 JSON</span>
+                </>
+              )}
             </Button>
 
             <Button
               size="sm"
               onClick={handleApplyJson}
-              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white space-x-1"
+              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
             >
-              <Save className="h-3 w-3" />
-              <span>編譯並套用</span>
+              <Save className="h-3.5 w-3.5 mr-1" />
+              <span>套用 JSON</span>
             </Button>
 
             <Button
               size="sm"
+              variant="outline"
               onClick={() => setActiveTab('preview')}
-              className="h-7 text-xs bg-blue-600 hover:bg-blue-500 text-white space-x-1"
+              className="h-7 text-xs border-blue-700 bg-blue-950/60 hover:bg-blue-900 text-blue-300"
             >
-              <span>查看 PDF</span>
+              <FileCheck className="h-3.5 w-3.5 mr-1" />
+              <span>看即時 PDF</span>
             </Button>
           </div>
         </div>
 
-        {/* Compiler Diagnostics Bar */}
-        <div className="px-4 py-1.5 bg-slate-950/70 border-b border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-400">
-          <div className="flex items-center space-x-1.5 text-emerald-400">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>幾何編譯器狀態：100% 垂直對齊無誤 • A4 寬度分配正常</span>
+        {/* Status Info Bar */}
+        <div className="px-4 py-2 bg-slate-950/80 border-b border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <span className="flex items-center space-x-1">
+              <Layers className="h-3.5 w-3.5 text-slate-500" />
+              <span>{report.bands.length} 個 Bands</span>
+            </span>
+            <span className="flex items-center space-x-1">
+              <CheckCircle2 className="h-3.5 w-3.5 text-slate-500" />
+              <span>{totalControls} 個像素級控制項</span>
+            </span>
           </div>
-          <div>主題風格：{spec.theme || 'slate'}</div>
+          <div className="text-slate-400 font-mono text-[10px]">
+            紙張: {report.pageSettings.size} | 可繪寬度: {printableWidth.toFixed(2)} pt
+          </div>
         </div>
 
-        {/* Editor Area */}
-        <div className="flex-1 p-3 overflow-hidden">
+        {/* Raw Code Editor Area */}
+        <div className="flex-1 p-3 bg-slate-950 overflow-hidden flex flex-col">
           <textarea
             value={jsonText}
             onChange={(e) => setJsonText(e.target.value)}
-            className="w-full h-full font-mono text-xs bg-slate-950/90 border border-slate-800 rounded-lg p-3 text-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500/50 resize-none selection:bg-blue-950 leading-relaxed"
             spellCheck={false}
+            className="w-full flex-1 bg-slate-900/90 text-emerald-300/90 font-mono text-[11px] leading-relaxed p-3 rounded-md border border-slate-800 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
       </div>
