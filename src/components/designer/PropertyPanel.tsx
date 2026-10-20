@@ -481,9 +481,9 @@ export const PropertyPanel: React.FC = () => {
 
             {/* Grouping Settings for GroupHeader / GroupFooter */}
             {['GroupHeader', 'GroupFooter'].includes(selectedBand.type) && (
-              <div className="p-2.5 rounded-md bg-cyan-50/70 border border-cyan-200 space-y-2 dark:bg-cyan-950/30 dark:border-cyan-800">
-                <div className="text-[11px] font-semibold text-cyan-900 dark:text-cyan-200 flex items-center space-x-1">
-                  <Layers className="h-3.5 w-3.5 text-cyan-600" />
+              <div className="p-2.5 rounded-md bg-slate-100/80 border border-slate-200 space-y-2 dark:bg-slate-900 dark:border-slate-800">
+                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200 flex items-center space-x-1">
+                  <Layers className="h-3.5 w-3.5 text-slate-500" />
                   <span>分組小計與換頁設定 (Grouping)</span>
                 </div>
 

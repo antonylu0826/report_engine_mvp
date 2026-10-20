@@ -125,20 +125,6 @@ export const BandCanvas: React.FC = () => {
       groupSortOrder: 'asc',
       controls: [
         {
-          id: `ctl-gh-bg-${Date.now().toString().slice(-4)}`,
-          type: 'Label',
-          x: 0,
-          y: 2,
-          width: contentWidth,
-          height: 16,
-          text: '',
-          style: {
-            backgroundColor: '#f0fdfa',
-            borderBottomWidth: 1,
-            borderColor: '#ccfbf1',
-          },
-        },
-        {
           id: `ctl-gh-title-${Date.now().toString().slice(-4)}`,
           type: 'Label',
           x: 6,
@@ -149,7 +135,7 @@ export const BandCanvas: React.FC = () => {
           style: {
             fontSize: 8.5,
             fontWeight: 'bold',
-            color: '#0f766e',
+            color: '#0f172a',
           },
         },
         {
@@ -163,7 +149,7 @@ export const BandCanvas: React.FC = () => {
           style: {
             fontSize: 9,
             fontWeight: 'bold',
-            color: '#115e59',
+            color: '#0f172a',
           },
         },
       ],
@@ -211,7 +197,7 @@ export const BandCanvas: React.FC = () => {
           style: {
             fontSize: 8.5,
             fontWeight: 'bold',
-            color: '#0369a1',
+            color: '#0f172a',
             textAlign: 'right',
           },
         },
@@ -254,60 +240,25 @@ export const BandCanvas: React.FC = () => {
     setReport({ ...report, bands: updated });
   };
 
-  // Band visual appearance metadata
+  // Band visual appearance metadata: unified clean professional style across all bands
+  const defaultMeta = {
+    dotColor: 'bg-slate-500',
+    stripBg: 'bg-slate-100 hover:bg-slate-200/90 text-slate-800',
+    textColor: 'text-slate-800',
+    border: 'border-slate-300',
+  };
+
   const bandMeta: Record<
     string,
     { nameTw: string; dotColor: string; stripBg: string; textColor: string; border: string }
   > = {
-    ReportHeader: {
-      nameTw: '報表主抬頭/首頁封面',
-      dotColor: 'bg-slate-700',
-      stripBg: 'bg-slate-100 hover:bg-slate-200/90 text-slate-800',
-      textColor: 'text-slate-800',
-      border: 'border-slate-300',
-    },
-    PageHeader: {
-      nameTw: '每頁頁首表頭 (重複)',
-      dotColor: 'bg-blue-600',
-      stripBg: 'bg-blue-50/90 hover:bg-blue-100/90 text-blue-900',
-      textColor: 'text-blue-900',
-      border: 'border-blue-300',
-    },
-    GroupHeader: {
-      nameTw: '群組開頭/類別標題',
-      dotColor: 'bg-cyan-600',
-      stripBg: 'bg-cyan-50/90 hover:bg-cyan-100/90 text-cyan-900',
-      textColor: 'text-cyan-900',
-      border: 'border-cyan-300',
-    },
-    Detail: {
-      nameTw: '資料列逐筆明細 (動態迴圈)',
-      dotColor: 'bg-emerald-600',
-      stripBg: 'bg-emerald-50/90 hover:bg-emerald-100/90 text-emerald-900',
-      textColor: 'text-emerald-900',
-      border: 'border-emerald-300',
-    },
-    GroupFooter: {
-      nameTw: '群組小計/統計',
-      dotColor: 'bg-amber-600',
-      stripBg: 'bg-amber-50/90 hover:bg-amber-100/90 text-amber-900',
-      textColor: 'text-amber-900',
-      border: 'border-amber-300',
-    },
-    ReportFooter: {
-      nameTw: '全表總計/簽核區',
-      dotColor: 'bg-purple-600',
-      stripBg: 'bg-purple-50/90 hover:bg-purple-100/90 text-purple-900',
-      textColor: 'text-purple-900',
-      border: 'border-purple-300',
-    },
-    PageFooter: {
-      nameTw: '每頁頁尾/頁碼',
-      dotColor: 'bg-orange-600',
-      stripBg: 'bg-orange-50/90 hover:bg-orange-100/90 text-orange-900',
-      textColor: 'text-orange-900',
-      border: 'border-orange-300',
-    },
+    ReportHeader: { ...defaultMeta, nameTw: '報表主抬頭/首頁封面' },
+    PageHeader: { ...defaultMeta, nameTw: '每頁頁首表頭 (重複)' },
+    GroupHeader: { ...defaultMeta, nameTw: '群組開頭/類別標題' },
+    Detail: { ...defaultMeta, nameTw: '資料列逐筆明細 (動態迴圈)' },
+    GroupFooter: { ...defaultMeta, nameTw: '群組小計/統計' },
+    ReportFooter: { ...defaultMeta, nameTw: '全表總計/簽核區' },
+    PageFooter: { ...defaultMeta, nameTw: '每頁頁尾/頁碼' },
   };
 
   return (
@@ -387,15 +338,15 @@ export const BandCanvas: React.FC = () => {
                       {/* Grouping Field Selector (Directly on GroupHeader / GroupFooter) */}
                       {(band.type === 'GroupHeader' || band.type === 'GroupFooter') && (
                         <div
-                          className="flex items-center space-x-1 text-[9px] bg-white/90 border border-cyan-300 px-1.5 py-0.5 rounded shadow-2xs text-cyan-900"
+                          className="flex items-center space-x-1 text-[9px] bg-white border border-slate-300 px-1.5 py-0.5 rounded shadow-2xs text-slate-700"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <Layers className="h-2.5 w-2.5 text-cyan-700" />
+                          <Layers className="h-2.5 w-2.5 text-slate-500" />
                           <span>分組依據:</span>
                           <select
                             value={band.groupBy || 'category'}
                             onChange={(e) => handleChangeGroupBy(e.target.value)}
-                            className="bg-transparent font-semibold font-mono text-[10px] text-cyan-950 focus:outline-none cursor-pointer"
+                            className="bg-transparent font-semibold font-mono text-[10px] text-slate-800 focus:outline-none cursor-pointer"
                           >
                             {sampleFields.map((f) => (
                               <option key={f} value={f}>
@@ -416,7 +367,7 @@ export const BandCanvas: React.FC = () => {
                             e.stopPropagation();
                             handleAddGrouping();
                           }}
-                          className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-600 text-white hover:bg-emerald-700 shadow-2xs transition-colors"
+                          className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-white hover:bg-slate-900 shadow-2xs transition-colors"
                           title="在資料列上下加入群組表頭與群組小計"
                         >
                           <Plus className="h-3 w-3" />
@@ -426,8 +377,8 @@ export const BandCanvas: React.FC = () => {
 
                       {/* Detail indicator if grouping is active */}
                       {band.type === 'Detail' && hasGrouping && (
-                        <span className="flex items-center space-x-1 text-[9px] text-cyan-800 bg-cyan-50 border border-cyan-200 px-1.5 py-0.2 rounded font-sans">
-                          <FolderTree className="h-2.5 w-2.5 text-cyan-600" />
+                        <span className="flex items-center space-x-1 text-[9px] text-slate-700 bg-slate-200/70 border border-slate-300 px-1.5 py-0.2 rounded font-sans">
+                          <FolderTree className="h-2.5 w-2.5 text-slate-500" />
                           <span>群組明細列</span>
                         </span>
                       )}
@@ -441,7 +392,7 @@ export const BandCanvas: React.FC = () => {
                               handleRemoveGrouping();
                             }
                           }}
-                          className="inline-flex items-center space-x-0.5 text-[9px] text-red-600 hover:text-red-700 hover:bg-red-100/80 px-1.5 py-0.5 rounded transition-colors"
+                          className="inline-flex items-center space-x-0.5 text-[9px] text-slate-500 hover:text-red-600 hover:bg-slate-200/80 px-1.5 py-0.5 rounded transition-colors border border-transparent hover:border-slate-300"
                           title="移除群組結構"
                         >
                           <Trash2 className="h-2.5 w-2.5" />
@@ -450,15 +401,15 @@ export const BandCanvas: React.FC = () => {
                       )}
 
                       {band.pageBreakAfter && (
-                        <span className="flex items-center space-x-0.5 text-[9px] bg-amber-50 text-amber-800 border border-amber-300 px-1 py-0.2 rounded font-sans">
-                          <ArrowDownUp className="h-2.5 w-2.5 text-amber-700" />
+                        <span className="flex items-center space-x-0.5 text-[9px] bg-slate-200/70 text-slate-700 border border-slate-300 px-1 py-0.2 rounded font-sans">
+                          <ArrowDownUp className="h-2.5 w-2.5 text-slate-500" />
                           <span>組後換頁</span>
                         </span>
                       )}
 
                       {band.keepTogether && (
-                        <span className="flex items-center space-x-0.5 text-[9px] bg-white border border-slate-300 px-1 py-0.2 rounded text-emerald-800 font-sans">
-                          <ShieldCheck className="h-2.5 w-2.5 text-emerald-600" />
+                        <span className="flex items-center space-x-0.5 text-[9px] bg-white border border-slate-300 px-1 py-0.2 rounded text-slate-700 font-sans">
+                          <ShieldCheck className="h-2.5 w-2.5 text-slate-500" />
                           <span>不跨頁</span>
                         </span>
                       )}
