@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
 import {
-  Layers,
+  Menu,
+  Type,
   Database,
+  Calculator,
+  Minus,
+  Barcode as BarcodeIcon,
+  QrCode as QrCodeIcon,
+  Image as ImageIcon,
+  CheckSquare,
+  Square,
+  Table,
+  BarChart3,
+  PenTool,
   CheckCircle2,
-  ChevronDown,
-  Search,
+  X,
   Plus,
+  Search,
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { controlRegistry } from '@/controls/registry';
@@ -17,12 +28,10 @@ export const Toolbox: React.FC = () => {
     data,
     addControl,
     selectedBandId,
-    selectControl,
   } = useReportStore();
 
-  const [activeBandDropdown, setActiveBandDropdown] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [justAddedControlId, setJustAddedControlId] = useState<string | null>(null);
-  const [controlSearch, setControlSearch] = useState('');
   const [fieldSearch, setFieldSearch] = useState('');
 
   // Target band to add control (selected band, or fallback to Detail, or first band)
@@ -61,195 +70,263 @@ export const Toolbox: React.FC = () => {
     });
 
     setJustAddedControlId(type);
-    setTimeout(() => setJustAddedControlId(null), 1000);
+    setTimeout(() => setJustAddedControlId(null), 900);
   };
 
-  // Get sample data fields
+  // Sample dataset fields
   const sampleFields = data && data.length > 0 ? Object.keys(data[0]) : [];
   const filteredFields = fieldSearch
     ? sampleFields.filter((f) => f.toLowerCase().includes(fieldSearch.toLowerCase()))
     : sampleFields;
 
-  const rawCategories = controlRegistry.getCategories();
-
-  // Filter categories by control search query if any
-  const categories = rawCategories
-    .map((cat) => ({
-      ...cat,
-      controls: controlSearch
-        ? cat.controls.filter(
-            (c) =>
-              c.displayName.toLowerCase().includes(controlSearch.toLowerCase()) ||
-              c.type.toLowerCase().includes(controlSearch.toLowerCase()) ||
-              c.description.toLowerCase().includes(controlSearch.toLowerCase())
-          )
-        : cat.controls,
-    }))
-    .filter((cat) => cat.controls.length > 0);
+  // Professional Palette Groups matching DevExpress Report Designer
+  const paletteGroups = [
+    {
+      id: 'basic-inputs',
+      items: [
+        {
+          type: 'Label' as ControlType,
+          name: '文字標籤 (Label)',
+          icon: Type,
+        },
+        {
+          type: 'Field' as ControlType,
+          name: '資料欄位 (Field)',
+          icon: Database,
+        },
+        {
+          type: 'Label' as ControlType,
+          name: '複選方塊 (CheckBox - 標籤範本)',
+          icon: CheckSquare,
+          customAdd: () =>
+            addControl(targetBand.id, {
+              type: 'Label',
+              x: 20,
+              y: 6,
+              width: 80,
+              height: 16,
+              text: '☑ 已確認',
+              style: { fontSize: 9, color: '#0f172a' },
+            }),
+        },
+        {
+          type: 'Label' as ControlType,
+          name: '面板容器 / 框線 (Panel)',
+          icon: Square,
+          customAdd: () =>
+            addControl(targetBand.id, {
+              type: 'Label',
+              x: 10,
+              y: 4,
+              width: 200,
+              height: 40,
+              text: '',
+              style: { borderWidth: 1, borderColor: '#cbd5e1', backgroundColor: '#ffffff' },
+            }),
+        },
+        {
+          type: 'Label' as ControlType,
+          name: '表格矩陣 (Table)',
+          icon: Table,
+        },
+        {
+          type: 'Label' as ControlType,
+          name: '靜態影像 (Picture / Image)',
+          icon: ImageIcon,
+        },
+      ],
+    },
+    {
+      id: 'lines-codes',
+      items: [
+        {
+          type: 'Line' as ControlType,
+          name: '線條 (Line)',
+          icon: Minus,
+        },
+        {
+          type: 'Barcode' as ControlType,
+          name: '一維條碼 (Barcode - Code128)',
+          icon: BarcodeIcon,
+        },
+        {
+          type: 'QRCode' as ControlType,
+          name: '二維碼 (QR Code)',
+          icon: QrCodeIcon,
+        },
+      ],
+    },
+    {
+      id: 'analytics-signatures',
+      items: [
+        {
+          type: 'Expression' as ControlType,
+          name: '計算與統計式 (Expression ∑)',
+          icon: Calculator,
+        },
+        {
+          type: 'Expression' as ControlType,
+          name: '分析圖表 (Chart)',
+          icon: BarChart3,
+        },
+        {
+          type: 'Label' as ControlType,
+          name: '簽章章格 (Signature Pad)',
+          icon: PenTool,
+          customAdd: () =>
+            addControl(targetBand.id, {
+              type: 'Label',
+              x: 20,
+              y: 6,
+              width: 100,
+              height: 45,
+              text: '簽章處',
+              style: {
+                fontSize: 8,
+                color: '#94a3b8',
+                borderWidth: 1,
+                borderColor: '#cbd5e1',
+                textAlign: 'center',
+              },
+            }),
+        },
+      ],
+    },
+  ];
 
   return (
-    <aside className="w-72 border-r border-slate-200 bg-slate-50 flex flex-col h-[calc(100vh-3.25rem)] select-none dark:border-slate-800 dark:bg-slate-950">
-      {/* 1. Target Band Selector Card */}
-      <div className="p-2.5 border-b border-slate-200 bg-white/80 backdrop-blur dark:bg-slate-900/60 dark:border-slate-800">
-        <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1 flex items-center justify-between">
-          <span className="flex items-center space-x-1">
-            <Layers className="h-3 w-3 text-slate-500" />
-            <span>加入目標區塊</span>
-          </span>
-          <span className="text-[9px] text-slate-700 bg-slate-100 border border-slate-200 px-1 py-0.2 rounded font-mono">
-            {targetBand?.type}
-          </span>
-        </div>
+    <div className="relative flex select-none z-20">
+      {/* Slim 2-Column Icon Palette (56px width, exactly like DevExpress/ActiveReports) */}
+      <aside className="w-14 border-r border-slate-200 bg-white flex flex-col items-center py-2 h-[calc(100vh-3.25rem)] dark:border-slate-800 dark:bg-slate-950 shadow-2xs">
+        {/* Top Hamburger Toggle */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`w-9 h-9 rounded-md flex items-center justify-center transition-colors mb-2 ${
+            isExpanded
+              ? 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900'
+          }`}
+          title={isExpanded ? '收合資料欄位抽屜' : '展開資料欄位抽屜 (Field Explorer)'}
+        >
+          <Menu className="h-4.5 w-4.5 stroke-[1.8]" />
+        </button>
 
-        <div className="relative">
-          <button
-            onClick={() => setActiveBandDropdown(!activeBandDropdown)}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md border border-slate-300 bg-white text-xs font-medium text-slate-800 shadow-2xs hover:border-slate-400 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
-          >
-            <div className="flex items-center space-x-2 truncate">
-              <span className="w-2 h-2 rounded-full bg-slate-700 shrink-0" />
-              <span className="font-semibold truncate">{targetBand?.type}</span>
-              <span className="text-[10px] text-slate-400 font-mono">
-                ({targetBand?.height} pt)
-              </span>
-            </div>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0 ml-1" />
-          </button>
+        <div className="w-9 h-[1px] bg-slate-200 dark:bg-slate-800 mb-2" />
 
-          {activeBandDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-md shadow-lg z-50 py-1 max-h-56 overflow-y-auto dark:bg-slate-900 dark:border-slate-800">
-              {report.bands.map((b) => (
-                <div
-                  key={b.id}
-                  onClick={() => {
-                    selectControl(b.id, null);
-                    setActiveBandDropdown(false);
-                  }}
-                  className={`px-3 py-1.5 text-xs flex items-center justify-between cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 ${
-                    b.id === targetBand?.id
-                      ? 'bg-slate-100 font-semibold text-slate-900 dark:bg-slate-800 dark:text-slate-100'
-                      : 'text-slate-700 dark:text-slate-300'
-                  }`}
-                >
-                  <span className="truncate">{b.type}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {b.controls.length} 個控制項
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+        {/* 2-Column Icon Matrix */}
+        <div className="flex-1 overflow-y-auto w-full px-1.5 space-y-3">
+          {paletteGroups.map((group, gIdx) => (
+            <div key={group.id} className="space-y-1">
+              <div className="grid grid-cols-2 gap-1 place-items-center">
+                {group.items.map((item, idx) => {
+                  const Icon = item.icon;
+                  const isJustAdded = justAddedControlId === item.type && !item.customAdd;
 
-      {/* 2. Controls Toolbox (High-density 2-Column Grid) */}
-      <div className="p-2.5 border-b border-slate-200 flex-1 overflow-y-auto dark:border-slate-800 space-y-3">
-        {/* Quick Search for controls */}
-        <div className="relative">
-          <Search className="h-3 w-3 absolute left-2 top-2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="搜尋控制項..."
-            value={controlSearch}
-            onChange={(e) => setControlSearch(e.target.value)}
-            className="w-full text-[11px] pl-6 pr-2 py-1 rounded border border-slate-200 bg-white focus:outline-none focus:border-slate-400 transition-colors shadow-2xs dark:bg-slate-900 dark:border-slate-800"
-          />
-        </div>
-
-        {categories.map((cat) => (
-          <div key={cat.id} className="space-y-1">
-            <div className="text-[10px] font-semibold text-slate-500 tracking-wider uppercase flex items-center justify-between px-0.5">
-              <span>{cat.name}</span>
-              <span className="text-[9px] text-slate-400 font-mono">{cat.controls.length}</span>
-            </div>
-
-            {/* 2-Column Compact Grid */}
-            <div className="grid grid-cols-2 gap-1.5">
-              {cat.controls.map((ctrl) => {
-                const IconComponent = ctrl.icon;
-                const isJustAdded = justAddedControlId === ctrl.type;
-
-                return (
-                  <button
-                    key={ctrl.type}
-                    onClick={() => handleAddControl(ctrl.type)}
-                    title={`${ctrl.displayName}：${ctrl.description}`}
-                    className="group relative flex items-center space-x-1.5 px-2 py-1.5 rounded-md bg-white border border-slate-200/90 text-left shadow-2xs hover:border-slate-400 hover:bg-slate-50/80 active:scale-[0.98] transition-all dark:bg-slate-900 dark:border-slate-800 dark:hover:bg-slate-800"
-                  >
-                    <div className="p-1 rounded bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 transition-colors shrink-0 dark:bg-slate-800 dark:text-slate-300">
+                  return (
+                    <button
+                      key={`${group.id}-${idx}`}
+                      onClick={() => (item.customAdd ? item.customAdd() : handleAddControl(item.type))}
+                      title={`${item.name}\n(加入至：${targetBand?.type || 'Detail'})`}
+                      className="w-5.5 h-7 rounded flex items-center justify-center text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-2xs active:bg-slate-200 transition-all dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    >
                       {isJustAdded ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 animate-in zoom-in" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 animate-in zoom-in" />
                       ) : (
-                        <IconComponent className="h-3.5 w-3.5" />
+                        <Icon className="h-4 w-4 stroke-[1.6]" />
                       )}
-                    </div>
-                    <div className="truncate flex-1">
-                      <div className="text-[11px] font-medium text-slate-700 truncate group-hover:text-slate-900 dark:text-slate-200">
-                        {ctrl.displayName}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Group Divider line */}
+              {gIdx < paletteGroups.length - 1 && (
+                <div className="w-full h-[1px] bg-slate-200/80 dark:bg-slate-800 my-1.5" />
+              )}
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* 3. Available Data Fields Explorer (Clean Compact) */}
-      <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950">
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-          <span className="flex items-center space-x-1">
-            <Database className="h-3.5 w-3.5 text-slate-500" />
-            <span>資料集欄位</span>
-          </span>
-          <span className="text-[10px] text-slate-400 font-mono">
-            {sampleFields.length} 欄
-          </span>
-        </div>
-
-        {/* Quick Search for fields */}
-        {sampleFields.length > 6 && (
-          <div className="relative mb-1.5">
-            <Search className="h-2.5 w-2.5 absolute left-2 top-2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="搜尋資料欄位..."
-              value={fieldSearch}
-              onChange={(e) => setFieldSearch(e.target.value)}
-              className="w-full text-[10px] pl-5.5 pr-2 py-0.5 rounded border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-slate-400 transition-colors dark:bg-slate-900 dark:border-slate-800"
-            />
-          </div>
-        )}
-
-        {/* Field Chips */}
-        <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
-          {filteredFields.map((field) => (
-            <button
-              key={field}
-              onClick={() => {
-                const target = targetBand || report.bands.find((b) => b.type === 'Detail');
-                if (target) {
-                  addControl(target.id, {
-                    type: 'Field',
-                    x: 30,
-                    y: 4,
-                    width: 100,
-                    height: 14,
-                    fieldName: field,
-                    style: { fontSize: 9, color: '#0f172a' },
-                  });
-                }
-              }}
-              className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
-              title="點擊新增此欄位至目標區塊"
-            >
-              <span>{field}</span>
-              <Plus className="h-2.5 w-2.5 text-slate-400" />
-            </button>
           ))}
         </div>
-      </div>
-    </aside>
+
+        {/* Bottom Current Band Indicator Pill */}
+        <div
+          className="mt-auto px-1 py-1 w-full flex flex-col items-center border-t border-slate-200/80 pt-2 text-[8px] text-slate-400 font-mono text-center truncate"
+          title={`目前目標區塊：${targetBand?.type}`}
+        >
+          <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mb-0.5" />
+          <span className="truncate max-w-[44px]">{targetBand?.type?.slice(0, 6)}</span>
+        </div>
+      </aside>
+
+      {/* Flyout Drawer for Data Fields & Search (Toggle with Hamburger ≡) */}
+      {isExpanded && (
+        <aside className="w-64 border-r border-slate-200 bg-white/95 backdrop-blur h-[calc(100vh-3.25rem)] shadow-lg flex flex-col z-30 animate-in slide-in-from-left-2 duration-150 dark:bg-slate-900/95 dark:border-slate-800">
+          {/* Drawer Header */}
+          <div className="p-3 border-b border-slate-200 flex items-center justify-between dark:border-slate-800">
+            <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
+              <Database className="h-4 w-4 text-slate-500" />
+              <span>資料集欄位總管 (Field List)</span>
+            </div>
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {/* Search Box */}
+          <div className="p-2.5 border-b border-slate-100 dark:border-slate-800">
+            <div className="relative">
+              <Search className="h-3 w-3 absolute left-2.5 top-2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="搜尋欄位名稱..."
+                value={fieldSearch}
+                onChange={(e) => setFieldSearch(e.target.value)}
+                className="w-full text-xs pl-7 pr-2 py-1 rounded border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-slate-400 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+              />
+            </div>
+          </div>
+
+          {/* Fields List */}
+          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            <div className="text-[10px] text-slate-400 uppercase font-mono px-1 mb-1">
+              可綁定欄位 ({filteredFields.length})
+            </div>
+            {filteredFields.map((field) => (
+              <div
+                key={field}
+                className="group flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-100 border border-transparent hover:border-slate-200 text-xs transition-colors dark:hover:bg-slate-800"
+              >
+                <div className="flex items-center space-x-2 truncate font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                  <Database className="h-3 w-3 text-slate-400 shrink-0" />
+                  <span className="truncate">{field}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    const target = targetBand || report.bands.find((b) => b.type === 'Detail');
+                    if (target) {
+                      addControl(target.id, {
+                        type: 'Field',
+                        x: 30,
+                        y: 4,
+                        width: 100,
+                        height: 14,
+                        fieldName: field,
+                        style: { fontSize: 9, color: '#0f172a' },
+                      });
+                    }
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded transition-all dark:hover:text-slate-100 dark:hover:bg-slate-700"
+                  title={`加入 [${field}] 至 ${targetBand?.type || 'Detail'}`}
+                >
+                  <Plus className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </aside>
+      )}
+    </div>
   );
 };
