@@ -2,15 +2,14 @@ import React, { useState } from 'react';
 import {
   Layers,
   Plus,
-  TableProperties,
   Database,
   CheckCircle2,
   ChevronDown,
-  Sparkles,
+  Search,
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { controlRegistry } from '@/controls/registry';
-import type { ControlType, BandType } from '@/types/report';
+import type { ControlType } from '@/types/report';
 
 export const Toolbox: React.FC = () => {
   const {
@@ -19,11 +18,11 @@ export const Toolbox: React.FC = () => {
     addControl,
     selectedBandId,
     selectControl,
-    setReport,
   } = useReportStore();
 
   const [activeBandDropdown, setActiveBandDropdown] = useState(false);
   const [justAddedControlId, setJustAddedControlId] = useState<string | null>(null);
+  const [fieldSearch, setFieldSearch] = useState('');
 
   // Target band to add control (selected band, or fallback to Detail, or first band)
   const targetBand =
@@ -64,38 +63,12 @@ export const Toolbox: React.FC = () => {
     setTimeout(() => setJustAddedControlId(null), 1200);
   };
 
-  // Add GroupHeader / GroupFooter if not present
-  const handleAddGroupBand = (type: 'GroupHeader' | 'GroupFooter') => {
-    const existing = report.bands.find((b) => b.type === type);
-    if (existing) {
-      selectControl(existing.id, null);
-      return;
-    }
-
-    const detailIndex = report.bands.findIndex((b) => b.type === 'Detail');
-    const insertIndex = type === 'GroupHeader' ? Math.max(0, detailIndex) : detailIndex + 1;
-
-    const newBand = {
-      id: `band-${type.toLowerCase()}-${Date.now().toString().slice(-4)}`,
-      type: type as BandType,
-      height: type === 'GroupHeader' ? 24 : 28,
-      groupBy: 'category',
-      groupSortOrder: 'asc' as const,
-      controls: [],
-    };
-
-    const newBands = [...report.bands];
-    newBands.splice(insertIndex, 0, newBand);
-
-    setReport({
-      ...report,
-      bands: newBands,
-    });
-    selectControl(newBand.id, null);
-  };
-
   // Get sample data fields
   const sampleFields = data && data.length > 0 ? Object.keys(data[0]) : [];
+  const filteredFields = fieldSearch
+    ? sampleFields.filter((f) => f.toLowerCase().includes(fieldSearch.toLowerCase()))
+    : sampleFields;
+
   const categories = controlRegistry.getCategories();
 
   return (
@@ -105,7 +78,7 @@ export const Toolbox: React.FC = () => {
         <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1 flex items-center justify-between">
           <span className="flex items-center space-x-1">
             <Layers className="h-3 w-3 text-blue-500" />
-            <span>控制項放置目標區塊</span>
+            <span>控制項加入目標區塊</span>
           </span>
           <span className="text-[9px] text-blue-600 bg-blue-50 px-1 py-0.2 rounded dark:bg-blue-950 dark:text-blue-300">
             作用中
@@ -137,11 +110,15 @@ export const Toolbox: React.FC = () => {
                     setActiveBandDropdown(false);
                   }}
                   className={`px-3 py-1.5 text-xs flex items-center justify-between cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-800 ${
-                    b.id === targetBand?.id ? 'bg-blue-50/80 font-semibold text-blue-600 dark:bg-slate-800 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'
+                    b.id === targetBand?.id
+                      ? 'bg-blue-50/80 font-semibold text-blue-600 dark:bg-slate-800 dark:text-blue-400'
+                      : 'text-slate-700 dark:text-slate-300'
                   }`}
                 >
                   <span className="truncate">{b.type}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">{b.controls.length} 個控制項</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {b.controls.length} 個控制項
+                  </span>
                 </div>
               ))}
             </div>
@@ -195,86 +172,37 @@ export const Toolbox: React.FC = () => {
             </div>
           </div>
         ))}
-
-        {/* Quick Add Group Bands */}
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-          <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1.5 flex items-center justify-between">
-            <span className="flex items-center space-x-1">
-              <Sparkles className="h-3 w-3 text-amber-500" />
-              <span>分組區塊 (Grouping Bands)</span>
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-1.5">
-            <button
-              onClick={() => handleAddGroupBand('GroupHeader')}
-              className="px-2 py-1.5 rounded bg-cyan-50 border border-cyan-200 text-cyan-800 text-[11px] font-medium hover:bg-cyan-100 transition-colors flex items-center justify-center space-x-1 dark:bg-cyan-950/50 dark:border-cyan-800 dark:text-cyan-200"
-            >
-              <Plus className="h-3 w-3" />
-              <span>+ 群組表頭</span>
-            </button>
-            <button
-              onClick={() => handleAddGroupBand('GroupFooter')}
-              className="px-2 py-1.5 rounded bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium hover:bg-amber-100 transition-colors flex items-center justify-center space-x-1 dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-200"
-            >
-              <Plus className="h-3 w-3" />
-              <span>+ 群組小計</span>
-            </button>
-          </div>
-        </div>
       </div>
 
-      {/* 3. Band Structure & Data Explorer */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/40">
+      {/* 3. Available Data Fields Explorer (Expanded & Clean) */}
+      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
           <span className="flex items-center space-x-1">
-            <TableProperties className="h-3.5 w-3.5 text-slate-500" />
-            <span>報表帶狀結構 (Bands)</span>
+            <Database className="h-3.5 w-3.5 text-emerald-600" />
+            <span>資料集可用欄位</span>
           </span>
           <span className="text-[10px] text-slate-400 font-mono">
-            {report.bands.length} 區塊
+            {sampleFields.length} 欄位
           </span>
         </div>
 
-        <div className="space-y-1 max-h-36 overflow-y-auto">
-          {report.bands.map((band) => {
-            const isSelected = selectedBandId === band.id;
-            return (
-              <div
-                key={band.id}
-                onClick={() => selectControl(band.id, null)}
-                className={`flex items-center justify-between px-2 py-1 rounded text-[11px] cursor-pointer transition-colors ${
-                  isSelected
-                    ? 'bg-blue-600 text-white font-medium shadow-2xs'
-                    : 'text-slate-700 hover:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800'
-                }`}
-              >
-                <span className="truncate">{band.type}</span>
-                <span
-                  className={`text-[10px] font-mono ${
-                    isSelected ? 'text-blue-100' : 'text-slate-500'
-                  }`}
-                >
-                  {band.height} pt ({band.controls.length})
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+        {/* Quick Search */}
+        {sampleFields.length > 5 && (
+          <div className="relative mb-2">
+            <Search className="h-3 w-3 absolute left-2 top-2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="搜尋欄位..."
+              value={fieldSearch}
+              onChange={(e) => setFieldSearch(e.target.value)}
+              className="w-full text-[11px] pl-6 pr-2 py-1 rounded border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-400 transition-colors dark:bg-slate-900 dark:border-slate-800"
+            />
+          </div>
+        )}
 
-      {/* 4. Quick Field Drag/Add */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950">
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-          <span className="flex items-center space-x-1">
-            <Database className="h-3.5 w-3.5 text-emerald-600" />
-            <span>可用資料欄位</span>
-          </span>
-          <span className="text-[10px] text-slate-400 font-mono">{sampleFields.length} 欄</span>
-        </div>
-
-        <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
-          {sampleFields.map((field) => (
+        {/* Field Chips */}
+        <div className="flex flex-wrap gap-1 max-h-36 overflow-y-auto">
+          {filteredFields.map((field) => (
             <button
               key={field}
               onClick={() => {
@@ -291,8 +219,8 @@ export const Toolbox: React.FC = () => {
                   });
                 }
               }}
-              className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 border border-slate-200 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
-              title="點擊新增欄位至當前 Band"
+              className="inline-flex items-center space-x-1 px-2 py-1 rounded text-[11px] font-mono bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 border border-slate-200 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
+              title="點擊新增欄位至目標區塊"
             >
               <span>{field}</span>
               <Plus className="h-2.5 w-2.5 text-slate-400" />

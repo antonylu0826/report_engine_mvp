@@ -527,6 +527,25 @@ export const PropertyPanel: React.FC = () => {
                     </span>
                   </label>
                 </div>
+
+                <div className="pt-2 border-t border-cyan-200/80">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm('確定要移除此分組結構 (包含群組表頭與小計) 嗎？')) {
+                        const updated = report.bands.filter(
+                          (b) => b.type !== 'GroupHeader' && b.type !== 'GroupFooter'
+                        );
+                        setReport({ ...report, bands: updated });
+                      }
+                    }}
+                    className="w-full text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 h-7"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    <span>移除此分組結構</span>
+                  </Button>
+                </div>
               </div>
             )}
 
