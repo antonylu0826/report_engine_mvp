@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useReportStore } from '@/store/useReportStore';
-import type { ControlDefinition, BandDefinition } from '@/types/report';
+import type { ControlDefinition, BandDefinition, ControlType } from '@/types/report';
 import {
   ShieldCheck,
   Layers,
@@ -34,12 +34,16 @@ export const BandCanvas: React.FC = () => {
     selectedControlId,
     selectControl,
     updateControl,
+    addControl,
     updateBandHeight,
     setReport,
     zoom,
   } = useReportStore();
 
   const { pageSettings, bands } = report;
+
+  // Track hover state when dragging a control from palette over a band
+  const [dragOverBandId, setDragOverBandId] = useState<string | null>(null);
 
   // Track dragging of controls
   const [draggingControl, setDraggingControl] = useState<{
@@ -201,6 +205,75 @@ export const BandCanvas: React.FC = () => {
       window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
   }, [draggingControl, resizingBand, resizingControl, zoom, updateControl, updateBandHeight]);
+
+  // Drag & drop handlers for dragging controls from Toolbox palette or Field Explorer onto a Band
+  const handleBandDragOver = (e: React.DragEvent, bandId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    if (dragOverBandId !== bandId) {
+      setDragOverBandId(bandId);
+    }
+  };
+
+  const handleBandDragLeave = (e: React.DragEvent, bandId: string) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    if (dragOverBandId === bandId) {
+      setDragOverBandId(null);
+    }
+  };
+
+  const handleBandDrop = (e: React.DragEvent, bandId: string) => {
+    e.preventDefault();
+    setDragOverBandId(null);
+
+    const controlType = e.dataTransfer.getData('report-control-type') as ControlType;
+    const fieldName = e.dataTransfer.getData('report-field-name');
+
+    if (!controlType) return;
+
+    const plugin = controlRegistry.get(controlType);
+    if (!plugin) return;
+
+    const defaults = plugin.createDefault();
+
+    // Calculate mouse position relative to Band workspace in points (pt)
+    const rect = e.currentTarget.getBoundingClientRect();
+    const rawX = (e.clientX - rect.left) / zoom;
+    const rawY = (e.clientY - rect.top) / zoom;
+
+    const width = defaults.width ?? plugin.defaultWidth;
+    const height = defaults.height ?? plugin.defaultHeight;
+
+    const dropX = Math.max(0, Math.round(rawX - 5));
+    const dropY = Math.max(0, Math.round(rawY - 5));
+
+    addControl(bandId, {
+      type: controlType,
+      x: dropX,
+      y: dropY,
+      width,
+      height,
+      fieldName: fieldName || defaults.fieldName,
+      text: fieldName ? `[${fieldName}]` : defaults.text,
+      expression: defaults.expression,
+      src: defaults.src,
+      objectFit: defaults.objectFit,
+      checked: defaults.checked,
+      checkText: defaults.checkText,
+      barcodeFormat: defaults.barcodeFormat,
+      displayValue: defaults.displayValue,
+      qrErrorLevel: defaults.qrErrorLevel,
+      lineOrientation: defaults.lineOrientation,
+      style: {
+        fontSize: 9,
+        color: '#0f172a',
+        textAlign: 'left',
+        ...defaults.style,
+      },
+    });
+
+    selectControl(bandId, null);
+  };
 
   // Printable page width in pt
   const pageWidth = pageSettings.size === 'A4' ? 595.28 : 612;
@@ -524,12 +597,27 @@ export const BandCanvas: React.FC = () => {
                       e.stopPropagation();
                       selectControl(band.id, null);
                     }}
-                    className="relative bg-white"
+                    onDragOver={(e) => handleBandDragOver(e, band.id)}
+                    onDragLeave={(e) => handleBandDragLeave(e, band.id)}
+                    onDrop={(e) => handleBandDrop(e, band.id)}
+                    className={`relative bg-white transition-all ${
+                      dragOverBandId === band.id
+                        ? 'ring-2 ring-blue-500 ring-inset bg-blue-50/20'
+                        : ''
+                    }`}
                     style={{
                       height: `${band.height}pt`,
                       width: '100%',
                     }}
                   >
+                    {/* Visual Drop Guide Indicator when hovering with dragged control */}
+                    {dragOverBandId === band.id && (
+                      <div className="absolute inset-0 pointer-events-none flex items-center justify-center border-2 border-dashed border-blue-500/80 bg-blue-50/20 z-30">
+                        <span className="text-[11px] font-semibold text-blue-700 bg-white/95 px-2.5 py-1 rounded-md shadow-xs border border-blue-200 font-mono">
+                          釋放滑鼠以放置控制項於此處
+                        </span>
+                      </div>
+                    )}
                     {/* Render Controls inside Band using standardized registry */}
                     {band.controls.map((control) => {
                       const isControlSelected = selectedControlId === control.id;

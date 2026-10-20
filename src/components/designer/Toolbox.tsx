@@ -164,9 +164,15 @@ export const Toolbox: React.FC = () => {
                   return (
                     <button
                       key={`${group.id}-${idx}`}
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('report-control-type', item.type);
+                        e.dataTransfer.setData('text/plain', item.type);
+                        e.dataTransfer.effectAllowed = 'copy';
+                      }}
                       onClick={() => handleAddControl(item.type)}
-                      title={`${item.name}\n(加入至：${targetBand?.type || 'Detail'})`}
-                      className="w-5.5 h-7 rounded flex items-center justify-center text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-2xs active:bg-slate-200 transition-all dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                      title={`${item.name}\n(點選加入或直接拖拉至畫布任意位置)`}
+                      className="w-5.5 h-7 rounded flex items-center justify-center text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-2xs active:bg-slate-200 transition-all dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 cursor-grab active:cursor-grabbing"
                     >
                       {isJustAdded ? (
                         <CheckCircle2 className="h-4 w-4 text-emerald-600 animate-in zoom-in" />
@@ -227,7 +233,15 @@ export const Toolbox: React.FC = () => {
             {filteredFields.map((field) => (
               <div
                 key={field}
-                className="group flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-100 border border-transparent hover:border-slate-200 text-xs transition-colors dark:hover:bg-slate-800"
+                draggable={true}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('report-control-type', 'Field');
+                  e.dataTransfer.setData('report-field-name', field);
+                  e.dataTransfer.setData('text/plain', `[${field}]`);
+                  e.dataTransfer.effectAllowed = 'copy';
+                }}
+                className="group flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-100 border border-transparent hover:border-slate-200 text-xs transition-colors dark:hover:bg-slate-800 cursor-grab active:cursor-grabbing select-none"
+                title={`按住拖拉 [${field}] 至畫布或點選右側 + 加入`}
               >
                 <div className="flex items-center space-x-2 truncate font-mono text-[11px] text-slate-700 dark:text-slate-300">
                   <Database className="h-3 w-3 text-slate-400 shrink-0" />
