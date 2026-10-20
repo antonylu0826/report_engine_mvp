@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Menu,
-  Type,
   Database,
+  Type,
   Calculator,
   Minus,
   Barcode as BarcodeIcon,
@@ -193,7 +192,7 @@ export const Toolbox: React.FC = () => {
     <div className="relative flex select-none z-20">
       {/* Slim 2-Column Icon Palette (56px width, exactly like DevExpress/ActiveReports) */}
       <aside className="w-14 border-r border-slate-200 bg-white flex flex-col items-center py-2 h-[calc(100vh-3.25rem)] dark:border-slate-800 dark:bg-slate-950 shadow-2xs">
-        {/* Top Hamburger Toggle */}
+        {/* Top Database Toggle */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className={`w-9 h-9 rounded-md flex items-center justify-center transition-colors mb-2 ${
@@ -203,7 +202,7 @@ export const Toolbox: React.FC = () => {
           }`}
           title={isExpanded ? '收合資料欄位抽屜' : '展開資料欄位抽屜 (Field Explorer)'}
         >
-          <Menu className="h-4.5 w-4.5 stroke-[1.8]" />
+          <Database className="h-4.5 w-4.5 stroke-[1.8]" />
         </button>
 
         <div className="w-9 h-[1px] bg-slate-200 dark:bg-slate-800 mb-2" />
