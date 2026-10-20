@@ -1,17 +1,23 @@
 import { create } from 'zustand';
 import type { ReportDefinition, ControlDefinition } from '../types/report';
-import { sampleOrderReport, sampleOrderData } from '../mock/sampleReport';
+import { sampleOrderData } from '../mock/sampleReport';
+import type { SemanticReportSpec } from '../semantic/types';
+import { defaultSemanticSpec } from '../semantic/sampleSpec';
+import { compileSemanticSpecToReport } from '../semantic/compiler';
+
+export type ReportTab = 'designer' | 'preview' | 'schema' | 'agent';
 
 interface ReportState {
+  spec: SemanticReportSpec;
   report: ReportDefinition;
   data: Record<string, unknown>[];
   selectedBandId: string | null;
   selectedControlId: string | null;
-  activeTab: 'designer' | 'preview' | 'schema';
+  activeTab: ReportTab;
   zoom: number;
 
   // Actions
-  setActiveTab: (tab: 'designer' | 'preview' | 'schema') => void;
+  setActiveTab: (tab: ReportTab) => void;
   selectControl: (bandId: string | null, controlId: string | null) => void;
   updateControl: (
     bandId: string,
@@ -25,10 +31,17 @@ interface ReportState {
   resetToSample: () => void;
   setReport: (report: ReportDefinition) => void;
   setData: (data: Record<string, unknown>[]) => void;
+
+  // Agent Native Spec Actions
+  setSpec: (spec: SemanticReportSpec) => void;
+  applyAgentMutation: (
+    mutationFn: (prev: SemanticReportSpec) => SemanticReportSpec
+  ) => void;
 }
 
 export const useReportStore = create<ReportState>((set) => ({
-  report: sampleOrderReport,
+  spec: defaultSemanticSpec,
+  report: compileSemanticSpecToReport(defaultSemanticSpec),
   data: sampleOrderData,
   selectedBandId: null,
   selectedControlId: null,
@@ -102,15 +115,31 @@ export const useReportStore = create<ReportState>((set) => ({
 
   setZoom: (zoom) => set({ zoom }),
 
-  resetToSample: () =>
+  resetToSample: () => {
+    const compiled = compileSemanticSpecToReport(defaultSemanticSpec);
     set({
-      report: sampleOrderReport,
+      spec: defaultSemanticSpec,
+      report: compiled,
       data: sampleOrderData,
       selectedBandId: null,
       selectedControlId: null,
-    }),
+    });
+  },
 
   setReport: (report) => set({ report }),
 
   setData: (data) => set({ data }),
+
+  setSpec: (spec) => {
+    const compiled = compileSemanticSpecToReport(spec);
+    set({ spec, report: compiled });
+  },
+
+  applyAgentMutation: (mutationFn) => {
+    set((state) => {
+      const nextSpec = mutationFn(state.spec);
+      const nextReport = compileSemanticSpecToReport(nextSpec);
+      return { spec: nextSpec, report: nextReport };
+    });
+  },
 }));

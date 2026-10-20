@@ -15,14 +15,21 @@
 
 ---
 
-### 2. 即時 PDF 向量預覽器 (PDF Live Preview)
+### 2. Agent 協作模式 (Agent Copilot & Semantic Spec DSL)
+專為 AI Agent 設計的雙層架構。Agent 透過僅 25 行的高階語意規格（無像素座標）或原子操作工具（`addColumn`、`setTheme`）即可精確操控報表，幾何編譯器自動計算物理寬度與垂直對齊，徹底根除 AI 心算座標破版問題。
+
+![Agent 協作模式](.assets/agent_preview.png)
+
+---
+
+### 3. 即時 PDF 向量預覽器 (PDF Live Preview)
 直接於瀏覽器內無伺服器（Serverless）即時算繪高品質向量 PDF。支援多頁跨頁、表頭自動重複（PageHeader）、動態原生頁碼（`第 1 頁，共 2 頁`）以及全表統計總計（`=SUM(amount)`）。
 
 ![即時 PDF 預覽](.assets/pdf_preview.png)
 
 ---
 
-### 3. 宣告式 JSON Schema 檢視與即時編輯 (Schema Editor)
+### 4. 宣告式 JSON Schema 檢視與即時編輯 (Schema Editor)
 整份報表採用純 JSON 宣告式結構定義，可雙向編輯並立即套用回設計器，極易持久化儲存於後端資料庫或進行版本控制。
 
 ![JSON Schema 檢視](.assets/schema_preview.png)
@@ -31,6 +38,10 @@
 
 ## ✨ 核心特色 (Key Features)
 
+- **AI Agent 原生雙層架構 (Agent-Native Architecture)**：
+  - **高階語意層 (High-Level Semantic Spec)**：Agent 僅需處理 20~30 行純邏輯 DSL（無像素心算），支援欄位權重比例 (`widthWeight`)、全域主題切換、宣告式合計。
+  - **幾何編譯層 (Coordinate Compiler)**：自動計算 A4 可列印寬度，自動將欄位對齊至小數點級別，徹底根除 AI 設計報表時的空間心算破版與上下欄位對不齊的難題。
+  - **原子操作工具庫 (Mutation Tools)**：提供 `addColumn`、`removeColumn`、`setTheme` 等原子工具，方便 Agent 透過 Function Calling 或 MCP 進行精確增量微調。
 - **經典帶狀架構 (Banded Report Architecture)**：
   - `ReportHeader`：報表首頁封面/大標題（僅第一頁出現一次）。
   - `PageHeader`：每頁固定重複的表格標題列（跨頁自動重複）。

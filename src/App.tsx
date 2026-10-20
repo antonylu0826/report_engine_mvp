@@ -5,6 +5,7 @@ import { BandCanvas } from '@/components/designer/BandCanvas';
 import { PropertyPanel } from '@/components/designer/PropertyPanel';
 import { ReportViewer } from '@/components/viewer/ReportViewer';
 import { SchemaViewer } from '@/components/schema/SchemaViewer';
+import { AgentCopilot } from '@/components/agent/AgentCopilot';
 
 export function App() {
   const { activeTab } = useReportStore();
@@ -23,6 +24,8 @@ export function App() {
         )}
 
         {activeTab === 'preview' && <ReportViewer />}
+
+        {activeTab === 'agent' && <AgentCopilot />}
 
         {activeTab === 'schema' && <SchemaViewer />}
       </div>

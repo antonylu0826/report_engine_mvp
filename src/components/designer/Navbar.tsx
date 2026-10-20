@@ -8,6 +8,7 @@ import {
   ZoomIn,
   ZoomOut,
   Sliders,
+  Sparkles,
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { Button } from '@/components/ui/button';
@@ -95,6 +96,18 @@ export const Navbar: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('agent')}
+          className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+            activeTab === 'agent'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+          <span>Agent 協作模式</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('schema')}
           className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
             activeTab === 'schema'
@@ -103,7 +116,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Code2 className="h-3.5 w-3.5" />
-          <span>JSON Schema</span>
+          <span>帶狀 IR Schema</span>
         </button>
       </div>
 
