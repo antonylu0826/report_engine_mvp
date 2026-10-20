@@ -4,7 +4,7 @@ import type { ReportControlPlugin } from '../types';
 
 export const LineControl: ReportControlPlugin = {
   type: 'Line',
-  displayName: '分隔線條',
+  displayName: '水平線條',
   category: 'shape',
   categoryName: '圖形與裝飾',
   description: '用於區塊分隔、表格橫線、裝飾線條',

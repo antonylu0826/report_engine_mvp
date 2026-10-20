@@ -5,7 +5,7 @@ import { mapControlStyle } from '../styleUtils';
 
 export const LabelControl: ReportControlPlugin = {
   type: 'Label',
-  displayName: '靜態文字標籤',
+  displayName: '文字標籤',
   category: 'basic',
   categoryName: '基本控制項',
   description: '用於單據標題、固定提示說明、欄位表頭標題等',

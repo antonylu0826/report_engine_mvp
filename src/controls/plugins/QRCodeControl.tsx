@@ -7,7 +7,7 @@ import { evaluateExpression } from '@/compiler/evaluator';
 
 export const QRCodeControl: ReportControlPlugin = {
   type: 'QRCode',
-  displayName: 'QR Code 二維碼',
+  displayName: 'QR Code',
   category: 'code',
   categoryName: '碼別與識別',
   description: '支援行動裝置掃描、數位簽署、驗證連結與單據追蹤',

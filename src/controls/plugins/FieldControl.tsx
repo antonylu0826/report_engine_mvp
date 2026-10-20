@@ -7,7 +7,7 @@ import { formatValue } from '@/compiler/formatters';
 
 export const FieldControl: ReportControlPlugin = {
   type: 'Field',
-  displayName: '資料欄位綁定',
+  displayName: '資料欄位',
   category: 'data',
   categoryName: '資料綁定',
   description: '綁定資料集內的特定欄位 (例如 sku、品名、金額)',

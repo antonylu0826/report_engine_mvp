@@ -7,7 +7,7 @@ import { formatValue } from '@/compiler/formatters';
 
 export const ExpressionControl: ReportControlPlugin = {
   type: 'Expression',
-  displayName: '計算與統計式',
+  displayName: '計算運算式',
   category: 'data',
   categoryName: '資料綁定',
   description: '動態統計運算 (例如 =SUM(amount)、=COUNT()、[PageNumber])',

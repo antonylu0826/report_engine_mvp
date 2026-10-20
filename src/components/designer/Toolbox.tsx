@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
   Layers,
-  Plus,
   Database,
   CheckCircle2,
   ChevronDown,
   Search,
+  Plus,
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { controlRegistry } from '@/controls/registry';
@@ -22,6 +22,7 @@ export const Toolbox: React.FC = () => {
 
   const [activeBandDropdown, setActiveBandDropdown] = useState(false);
   const [justAddedControlId, setJustAddedControlId] = useState<string | null>(null);
+  const [controlSearch, setControlSearch] = useState('');
   const [fieldSearch, setFieldSearch] = useState('');
 
   // Target band to add control (selected band, or fallback to Detail, or first band)
@@ -60,7 +61,7 @@ export const Toolbox: React.FC = () => {
     });
 
     setJustAddedControlId(type);
-    setTimeout(() => setJustAddedControlId(null), 1200);
+    setTimeout(() => setJustAddedControlId(null), 1000);
   };
 
   // Get sample data fields
@@ -69,29 +70,44 @@ export const Toolbox: React.FC = () => {
     ? sampleFields.filter((f) => f.toLowerCase().includes(fieldSearch.toLowerCase()))
     : sampleFields;
 
-  const categories = controlRegistry.getCategories();
+  const rawCategories = controlRegistry.getCategories();
+
+  // Filter categories by control search query if any
+  const categories = rawCategories
+    .map((cat) => ({
+      ...cat,
+      controls: controlSearch
+        ? cat.controls.filter(
+            (c) =>
+              c.displayName.toLowerCase().includes(controlSearch.toLowerCase()) ||
+              c.type.toLowerCase().includes(controlSearch.toLowerCase()) ||
+              c.description.toLowerCase().includes(controlSearch.toLowerCase())
+          )
+        : cat.controls,
+    }))
+    .filter((cat) => cat.controls.length > 0);
 
   return (
     <aside className="w-72 border-r border-slate-200 bg-slate-50 flex flex-col h-[calc(100vh-3.25rem)] select-none dark:border-slate-800 dark:bg-slate-950">
       {/* 1. Target Band Selector Card */}
-      <div className="p-3 border-b border-slate-200 bg-white/70 backdrop-blur dark:bg-slate-900/60 dark:border-slate-800">
+      <div className="p-2.5 border-b border-slate-200 bg-white/80 backdrop-blur dark:bg-slate-900/60 dark:border-slate-800">
         <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1 flex items-center justify-between">
           <span className="flex items-center space-x-1">
-            <Layers className="h-3 w-3 text-blue-500" />
-            <span>控制項加入目標區塊</span>
+            <Layers className="h-3 w-3 text-slate-500" />
+            <span>加入目標區塊</span>
           </span>
-          <span className="text-[9px] text-blue-600 bg-blue-50 px-1 py-0.2 rounded dark:bg-blue-950 dark:text-blue-300">
-            作用中
+          <span className="text-[9px] text-slate-700 bg-slate-100 border border-slate-200 px-1 py-0.2 rounded font-mono">
+            {targetBand?.type}
           </span>
         </div>
 
         <div className="relative">
           <button
             onClick={() => setActiveBandDropdown(!activeBandDropdown)}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md border border-slate-300 bg-white text-xs font-medium text-slate-800 shadow-2xs hover:border-blue-400 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md border border-slate-300 bg-white text-xs font-medium text-slate-800 shadow-2xs hover:border-slate-400 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
           >
             <div className="flex items-center space-x-2 truncate">
-              <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+              <span className="w-2 h-2 rounded-full bg-slate-700 shrink-0" />
               <span className="font-semibold truncate">{targetBand?.type}</span>
               <span className="text-[10px] text-slate-400 font-mono">
                 ({targetBand?.height} pt)
@@ -109,9 +125,9 @@ export const Toolbox: React.FC = () => {
                     selectControl(b.id, null);
                     setActiveBandDropdown(false);
                   }}
-                  className={`px-3 py-1.5 text-xs flex items-center justify-between cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-800 ${
+                  className={`px-3 py-1.5 text-xs flex items-center justify-between cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 ${
                     b.id === targetBand?.id
-                      ? 'bg-blue-50/80 font-semibold text-blue-600 dark:bg-slate-800 dark:text-blue-400'
+                      ? 'bg-slate-100 font-semibold text-slate-900 dark:bg-slate-800 dark:text-slate-100'
                       : 'text-slate-700 dark:text-slate-300'
                   }`}
                 >
@@ -126,15 +142,29 @@ export const Toolbox: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Categorized Controls Toolbox */}
-      <div className="p-3 border-b border-slate-200 flex-1 overflow-y-auto dark:border-slate-800 space-y-4">
+      {/* 2. Controls Toolbox (High-density 2-Column Grid) */}
+      <div className="p-2.5 border-b border-slate-200 flex-1 overflow-y-auto dark:border-slate-800 space-y-3">
+        {/* Quick Search for controls */}
+        <div className="relative">
+          <Search className="h-3 w-3 absolute left-2 top-2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="搜尋控制項..."
+            value={controlSearch}
+            onChange={(e) => setControlSearch(e.target.value)}
+            className="w-full text-[11px] pl-6 pr-2 py-1 rounded border border-slate-200 bg-white focus:outline-none focus:border-slate-400 transition-colors shadow-2xs dark:bg-slate-900 dark:border-slate-800"
+          />
+        </div>
+
         {categories.map((cat) => (
-          <div key={cat.id} className="space-y-1.5">
-            <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 tracking-wide flex items-center space-x-1.5">
+          <div key={cat.id} className="space-y-1">
+            <div className="text-[10px] font-semibold text-slate-500 tracking-wider uppercase flex items-center justify-between px-0.5">
               <span>{cat.name}</span>
+              <span className="text-[9px] text-slate-400 font-mono">{cat.controls.length}</span>
             </div>
 
-            <div className="grid grid-cols-1 gap-1.5">
+            {/* 2-Column Compact Grid */}
+            <div className="grid grid-cols-2 gap-1.5">
               {cat.controls.map((ctrl) => {
                 const IconComponent = ctrl.icon;
                 const isJustAdded = justAddedControlId === ctrl.type;
@@ -143,28 +173,20 @@ export const Toolbox: React.FC = () => {
                   <button
                     key={ctrl.type}
                     onClick={() => handleAddControl(ctrl.type)}
-                    className="w-full group text-left px-2.5 py-2 rounded-md bg-white border border-slate-200/90 shadow-2xs hover:border-blue-400 hover:shadow-xs hover:bg-blue-50/20 transition-all flex items-center justify-between dark:bg-slate-900 dark:border-slate-800 dark:hover:border-blue-500 dark:hover:bg-slate-800/80"
+                    title={`${ctrl.displayName}：${ctrl.description}`}
+                    className="group relative flex items-center space-x-1.5 px-2 py-1.5 rounded-md bg-white border border-slate-200/90 text-left shadow-2xs hover:border-slate-400 hover:bg-slate-50/80 active:scale-[0.98] transition-all dark:bg-slate-900 dark:border-slate-800 dark:hover:bg-slate-800"
                   >
-                    <div className="flex items-center space-x-2.5">
-                      <div className="p-1.5 rounded-md bg-slate-100 text-slate-700 group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors dark:bg-slate-800 dark:text-slate-300 dark:group-hover:bg-blue-950 dark:group-hover:text-blue-400">
-                        <IconComponent className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center space-x-1">
-                          <span>{ctrl.displayName}</span>
-                        </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[155px]">
-                          {ctrl.description}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 pl-1">
+                    <div className="p-1 rounded bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 transition-colors shrink-0 dark:bg-slate-800 dark:text-slate-300">
                       {isJustAdded ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600 animate-in zoom-in" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 animate-in zoom-in" />
                       ) : (
-                        <Plus className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 group-hover:scale-110 transition-all" />
+                        <IconComponent className="h-3.5 w-3.5" />
                       )}
+                    </div>
+                    <div className="truncate flex-1">
+                      <div className="text-[11px] font-medium text-slate-700 truncate group-hover:text-slate-900 dark:text-slate-200">
+                        {ctrl.displayName}
+                      </div>
                     </div>
                   </button>
                 );
@@ -174,34 +196,34 @@ export const Toolbox: React.FC = () => {
         ))}
       </div>
 
-      {/* 3. Available Data Fields Explorer (Expanded & Clean) */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950">
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+      {/* 3. Available Data Fields Explorer (Clean Compact) */}
+      <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950">
+        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
           <span className="flex items-center space-x-1">
-            <Database className="h-3.5 w-3.5 text-emerald-600" />
-            <span>資料集可用欄位</span>
+            <Database className="h-3.5 w-3.5 text-slate-500" />
+            <span>資料集欄位</span>
           </span>
           <span className="text-[10px] text-slate-400 font-mono">
-            {sampleFields.length} 欄位
+            {sampleFields.length} 欄
           </span>
         </div>
 
-        {/* Quick Search */}
-        {sampleFields.length > 5 && (
-          <div className="relative mb-2">
-            <Search className="h-3 w-3 absolute left-2 top-2 text-slate-400" />
+        {/* Quick Search for fields */}
+        {sampleFields.length > 6 && (
+          <div className="relative mb-1.5">
+            <Search className="h-2.5 w-2.5 absolute left-2 top-2 text-slate-400" />
             <input
               type="text"
-              placeholder="搜尋欄位..."
+              placeholder="搜尋資料欄位..."
               value={fieldSearch}
               onChange={(e) => setFieldSearch(e.target.value)}
-              className="w-full text-[11px] pl-6 pr-2 py-1 rounded border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-400 transition-colors dark:bg-slate-900 dark:border-slate-800"
+              className="w-full text-[10px] pl-5.5 pr-2 py-0.5 rounded border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-slate-400 transition-colors dark:bg-slate-900 dark:border-slate-800"
             />
           </div>
         )}
 
         {/* Field Chips */}
-        <div className="flex flex-wrap gap-1 max-h-36 overflow-y-auto">
+        <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
           {filteredFields.map((field) => (
             <button
               key={field}
@@ -219,8 +241,8 @@ export const Toolbox: React.FC = () => {
                   });
                 }
               }}
-              className="inline-flex items-center space-x-1 px-2 py-1 rounded text-[11px] font-mono bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 border border-slate-200 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
-              title="點擊新增欄位至目標區塊"
+              className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
+              title="點擊新增此欄位至目標區塊"
             >
               <span>{field}</span>
               <Plus className="h-2.5 w-2.5 text-slate-400" />

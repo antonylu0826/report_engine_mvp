@@ -6,7 +6,7 @@ import { evaluateExpression } from '@/compiler/evaluator';
 
 export const BarcodeControl: ReportControlPlugin = {
   type: 'Barcode',
-  displayName: '一維條形碼',
+  displayName: '一維條碼',
   category: 'code',
   categoryName: '碼別與識別',
   description: '支援 Code128 等標準條碼，可綁定單號或 SKU 掃描',
