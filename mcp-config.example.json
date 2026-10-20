@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "report-engine": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "tsx",
+        "d:/Source/Private/report_engine_mvp/src/mcp/index.ts"
+      ]
+    }
+  }
+}

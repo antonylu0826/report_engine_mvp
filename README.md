@@ -93,6 +93,51 @@ npm run dev
 npm run build
 ```
 
+### 3. 啟動 MCP 伺服器 (供 Claude Desktop / Cursor / AI Agent 調用)
+
+```bash
+npm run mcp
+```
+
+---
+
+## 🤖 AI Agent 整合：MCP 伺服器 (Model Context Protocol)
+
+本專案內建標準的 **MCP 伺服器**，任何支援 MCP 的 AI Agent（如 Claude Desktop、Cursor、Antigravity Agent、Cline 等）皆可直接透過工具調用（Tool Calling）操控本系統！
+
+### 1. 提供的 MCP 工具清單
+
+| MCP 工具名稱 | 說明 |
+| :--- | :--- |
+| `get_report_spec` | 讀取當前報表高階語意規格（僅 20~30 行乾淨 DSL） |
+| `set_report_theme` | 一鍵切換報表主題色系（`slate` / `blue` / `emerald` / `purple` / `amber`） |
+| `set_report_title` | 變更公司主標題與單據副標題 |
+| `add_report_column` | 新增資料欄位（自動重新平衡欄寬並確保上下對齊） |
+| `remove_report_column` | 刪除指定欄位 |
+| `update_report_column` | 微調欄位屬性（寬度權重、對齊方式、格式化、加總統計） |
+| `compile_and_export_pdf` | 將語意規格透過幾何編譯器直接產出高品質 PDF 檔案至本機磁碟 |
+
+### 2. Client 端設定範例 (例如 Claude Desktop / Cursor `mcp_config.json`)
+
+```json
+{
+  "mcpServers": {
+    "report-engine": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "tsx",
+        "d:/Source/Private/report_engine_mvp/src/mcp/index.ts"
+      ]
+    }
+  }
+}
+```
+
+設定完成後，您即可直接向 AI 對話：
+> *「請用 report-engine 工具幫我把報表換成深藍色主題，並在品號後加上規格說明欄位，最後匯出成 output.pdf」*
+> AI Agent 將會自動呼叫工具完成所有設計排版與 PDF 產出！
+
 ---
 
 ## 📋 報表結構定義 (Report Schema)

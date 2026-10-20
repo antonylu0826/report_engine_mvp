@@ -16,10 +16,13 @@ import type {
 import { formatValue } from './formatters';
 import { evaluateExpression, type EvalContext } from './evaluator';
 
-// Construct absolute URL for the font to avoid relative path resolution failures in Blob/Worker context
+// Construct font URL supporting both browser (origin) and Node/MCP (process.cwd)
 const getFontUrl = () => {
   if (typeof window !== 'undefined' && window.location) {
     return `${window.location.origin}/fonts/NotoSansTC.ttf`;
+  }
+  if (typeof process !== 'undefined' && process.cwd) {
+    return `${process.cwd()}/public/fonts/NotoSansTC.ttf`.replace(/\\/g, '/');
   }
   return '/fonts/NotoSansTC.ttf';
 };
