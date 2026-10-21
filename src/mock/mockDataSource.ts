@@ -74,10 +74,79 @@ export function generateOrderItems(count: number): Record<string, unknown>[] {
   return result;
 }
 
+export const defaultSampleOrderItems: Record<string, unknown>[] = [
+  {
+    index: 1,
+    sku: 'IT-MBP16-M3M',
+    category: '資訊運算設備',
+    productName: 'Apple MacBook Pro 16" (M3 Max / 36GB / 1TB)',
+    unit: '台',
+    quantity: 1,
+    unitPrice: 104900,
+    amount: 104900,
+    isInspected: true,
+    batchNo: 'LOT-20261001',
+    serials: [
+      {
+        serialNo: 'MBP-2026-001-01',
+        lotNo: 'LOT-20261001',
+        location: '倉位 1-01',
+        qcStatus: '合格 PASS',
+      },
+    ],
+  },
+  {
+    index: 2,
+    sku: 'IT-DELL-U2723QE',
+    category: '螢幕與視訊',
+    productName: 'Dell UltraSharp 27" 4K HDR USB-C 專業顯示器',
+    unit: '台',
+    quantity: 2,
+    unitPrice: 18900,
+    amount: 37800,
+    isInspected: true,
+    batchNo: 'LOT-20261002',
+    serials: [
+      {
+        serialNo: 'DELL-2026-002-01',
+        lotNo: 'LOT-20261002',
+        location: '倉位 2-01',
+        qcStatus: '合格 PASS',
+      },
+      {
+        serialNo: 'DELL-2026-002-02',
+        lotNo: 'LOT-20261002',
+        location: '倉位 2-02',
+        qcStatus: '合格 PASS',
+      },
+    ],
+  },
+  {
+    index: 3,
+    sku: 'IT-CALDIGIT-TS4',
+    category: '周邊配件',
+    productName: 'CalDigit TS4 Thunderbolt 4 旗艦擴充基座',
+    unit: '組',
+    quantity: 1,
+    unitPrice: 12500,
+    amount: 12500,
+    isInspected: true,
+    batchNo: 'LOT-20261003',
+    serials: [
+      {
+        serialNo: 'TS4-2026-003-01',
+        lotNo: 'LOT-20261003',
+        location: '倉位 3-01',
+        qcStatus: '合格 PASS',
+      },
+    ],
+  },
+];
+
+export const sampleOrderData = defaultSampleOrderItems;
 export const sampleOrderData14 = generateOrderItems(14);
 export const sampleOrderData45 = generateOrderItems(45);
 export const sampleOrderData100 = generateOrderItems(100);
-export const sampleOrderData = sampleOrderData14;
 
 /**
  * Normalized DataSource Definition: Standard Enterprise Delivery Order
@@ -127,6 +196,6 @@ export const sampleOrderDataSource: ReportDataSource = {
   },
   data: {
     parameters: defaultOrderParameters,
-    items: sampleOrderData14,
+    items: defaultSampleOrderItems,
   },
 };

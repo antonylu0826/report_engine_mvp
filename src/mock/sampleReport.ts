@@ -699,7 +699,7 @@ export const sampleOrderReport: ReportDefinition = {
           y: 50,
           width: 305,
           height: 16,
-          text: '金額大寫：新臺幣陸拾肆萬伍仟柒佰伍拾元整',
+          text: '金額大寫：新臺幣壹拾陸萬貳仟玖佰陸拾元整',
           style: {
             fontSize: 9,
             fontWeight: 'bold',
@@ -745,7 +745,7 @@ export const sampleOrderReport: ReportDefinition = {
           y: 26,
           width: 90,
           height: 14,
-          text: 'NT$ 30,750',
+          text: 'NT$ 7,760',
           style: { fontSize: 8.5, textAlign: 'right', color: '#475569' },
         },
         // Grand Total Row with Double Bottom Border
@@ -766,7 +766,7 @@ export const sampleOrderReport: ReportDefinition = {
           y: 44,
           width: 90,
           height: 18,
-          text: 'NT$ 645,750',
+          text: 'NT$ 162,960',
           style: {
             fontSize: 10,
             fontWeight: 'bold',
