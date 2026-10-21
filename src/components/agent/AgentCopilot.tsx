@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useReportStore } from '@/store/useReportStore';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,24 +15,35 @@ import {
   FileCheck,
 } from 'lucide-react';
 import type { ReportDefinition } from '@/types/report';
+import { useCurrentLocale } from '@/i18n';
 
 export const AgentCopilot: React.FC = () => {
+  const { locale } = useCurrentLocale();
   const { report, setReport, updateControl, setActiveTab, resetToSample } = useReportStore();
-  const [jsonText, setJsonText] = useState(JSON.stringify(report, null, 2));
+  const [jsonText, setJsonText] = useState(() => JSON.stringify(report, null, 2));
   const [copied, setCopied] = useState(false);
   const [promptInput, setPromptInput] = useState('');
+  const prevReportRef = useRef(report);
   const [chatLogs, setChatLogs] = useState<
     { role: 'user' | 'agent'; text: string; action?: string }[]
   >([
     {
       role: 'agent',
-      text: '你好！我是像素級報表設計 Agent。我已載入完整的企業標準出貨單 Banded IR 模型。所有控制項具備精確的 X/Y 座標、寬高、邊框與樣式。請問您想如何微調或重新排版這張單據？',
+      text:
+        locale === 'zh-TW'
+          ? '你好！我是像素級報表設計 Agent。我已載入完整的企業標準出貨單 Banded IR 模型。所有控制項具備精確的 X/Y 座標、寬高、邊框與樣式。請問您想如何微調或重新排版這張單據？'
+          : 'Hello! I am the Pixel-Perfect Report Design Agent. I have loaded the Banded IR model with precise X/Y coordinates, dimensions, and styles. How would you like to refine the report layout?',
     },
   ]);
 
-  // Sync JSON text when report changes in store
+  // Sync JSON text when report changes in store safely without cascading render
   useEffect(() => {
-    setJsonText(JSON.stringify(report, null, 2));
+    if (prevReportRef.current !== report) {
+      prevReportRef.current = report;
+      queueMicrotask(() => {
+        setJsonText(JSON.stringify(report, null, 2));
+      });
+    }
   }, [report]);
 
   const handleCopy = () => {
@@ -238,16 +249,20 @@ export const AgentCopilot: React.FC = () => {
             value={promptInput}
             onChange={(e) => setPromptInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendPrompt()}
-            placeholder="輸入排版需求 (例如：將抬頭改為大同世界科技、表頭換成深藍色...)"
+            placeholder={
+              locale === 'zh-TW'
+                ? '輸入排版需求 (例如：將抬頭改為大同世界科技、表頭換成深藍色...)'
+                : 'Enter layout instructions (e.g. change title to Tatung Tech, change header to deep blue...)'
+            }
             className="flex-1 bg-slate-950 border border-slate-700 rounded-md px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <Button
             size="sm"
             onClick={handleSendPrompt}
-            className="h-8 bg-blue-600 hover:bg-blue-500 text-white"
+            className="h-8 bg-blue-600 hover:bg-blue-500 text-white cursor-pointer"
           >
             <Send className="h-3.5 w-3.5 mr-1" />
-            <span>發送</span>
+            <span>{locale === 'zh-TW' ? '發送' : 'Send'}</span>
           </Button>
         </div>
       </div>
@@ -259,7 +274,7 @@ export const AgentCopilot: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Code2 className="h-4 w-4 text-emerald-400" />
             <span className="font-semibold text-xs text-slate-200">
-              報表規格定義模型
+              {locale === 'zh-TW' ? '報表規格定義模型' : 'Report IR Model'}
             </span>
           </div>
 
@@ -268,17 +283,17 @@ export const AgentCopilot: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={handleCopy}
-              className="h-7 text-xs text-slate-400 hover:text-slate-200"
+              className="h-7 text-xs text-slate-400 hover:text-slate-200 cursor-pointer"
             >
               {copied ? (
                 <>
                   <Check className="h-3.5 w-3.5 mr-1 text-emerald-400" />
-                  <span>已複製</span>
+                  <span>{locale === 'zh-TW' ? '已複製' : 'Copied'}</span>
                 </>
               ) : (
                 <>
                   <Copy className="h-3.5 w-3.5 mr-1" />
-                  <span>複製定義</span>
+                  <span>{locale === 'zh-TW' ? '複製定義' : 'Copy IR'}</span>
                 </>
               )}
             </Button>
@@ -286,20 +301,20 @@ export const AgentCopilot: React.FC = () => {
             <Button
               size="sm"
               onClick={handleApplyJson}
-              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
+              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
             >
               <Save className="h-3.5 w-3.5 mr-1" />
-              <span>套用定義</span>
+              <span>{locale === 'zh-TW' ? '套用定義' : 'Apply'}</span>
             </Button>
 
             <Button
               size="sm"
               variant="outline"
               onClick={() => setActiveTab('preview')}
-              className="h-7 text-xs border-blue-700 bg-blue-950/60 hover:bg-blue-900 text-blue-300"
+              className="h-7 text-xs border-blue-700 bg-blue-950/60 hover:bg-blue-900 text-blue-300 cursor-pointer"
             >
               <FileCheck className="h-3.5 w-3.5 mr-1" />
-              <span>即時預覽</span>
+              <span>{locale === 'zh-TW' ? '即時預覽' : 'Preview'}</span>
             </Button>
           </div>
         </div>
@@ -309,15 +324,15 @@ export const AgentCopilot: React.FC = () => {
           <div className="flex items-center space-x-4">
             <span className="flex items-center space-x-1">
               <Layers className="h-3.5 w-3.5 text-slate-500" />
-              <span>{report.bands.length} 個區段</span>
+              <span>{report.bands.length} {locale === 'zh-TW' ? '個區段' : 'Bands'}</span>
             </span>
             <span className="flex items-center space-x-1">
               <CheckCircle2 className="h-3.5 w-3.5 text-slate-500" />
-              <span>{totalControls} 個控制項</span>
+              <span>{totalControls} {locale === 'zh-TW' ? '個控制項' : 'Controls'}</span>
             </span>
           </div>
           <div className="text-slate-400 font-mono text-[10px]">
-            紙張: {report.pageSettings.size} | 可繪寬度: {printableWidth.toFixed(2)} pt
+            {locale === 'zh-TW' ? '紙張: ' : 'Paper: '}{report.pageSettings.size} | {locale === 'zh-TW' ? '可繪寬度: ' : 'Printable Width: '}{printableWidth.toFixed(2)} pt
           </div>
         </div>
 

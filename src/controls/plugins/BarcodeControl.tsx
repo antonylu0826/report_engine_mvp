@@ -1,4 +1,3 @@
-import React from 'react';
 import { Barcode as BarcodeIcon } from 'lucide-react';
 import { Image as PdfImage } from '@react-pdf/renderer';
 import type { ReportControlPlugin } from '../types';

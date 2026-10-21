@@ -1,17 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useReportStore } from '@/store/useReportStore';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, Save } from 'lucide-react';
+import { useCurrentLocale } from '@/i18n';
 
 export const SchemaViewer: React.FC = () => {
+  const { locale } = useCurrentLocale();
   const { report, setReport } = useReportStore();
-  const [jsonText, setJsonText] = useState('');
+  const [jsonText, setJsonText] = useState(() => JSON.stringify(report, null, 2));
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const prevReportRef = useRef(report);
 
+  // Sync external report changes safely without setState-in-effect cascading render warning
   useEffect(() => {
-    setJsonText(JSON.stringify(report, null, 2));
-    setError(null);
+    if (prevReportRef.current !== report) {
+      prevReportRef.current = report;
+      queueMicrotask(() => {
+        setJsonText(JSON.stringify(report, null, 2));
+        setError(null);
+      });
+    }
   }, [report]);
 
   const handleCopy = () => {
@@ -24,11 +33,15 @@ export const SchemaViewer: React.FC = () => {
     try {
       const parsed = JSON.parse(jsonText);
       if (!parsed.bands || !Array.isArray(parsed.bands)) {
-        throw new Error('Schema 格式無效：缺少 bands 陣列。');
+        throw new Error(
+          locale === 'zh-TW'
+            ? 'Schema 格式無效：缺少 bands 陣列。'
+            : 'Invalid schema format: missing bands array.'
+        );
       }
       setReport(parsed);
       setError(null);
-      alert('Schema 已成功套用！');
+      alert(locale === 'zh-TW' ? 'Schema 已成功套用！' : 'Schema successfully applied!');
     } catch (err) {
       setError((err as Error).message);
     }
@@ -39,9 +52,13 @@ export const SchemaViewer: React.FC = () => {
       {/* Schema Toolbar */}
       <div className="h-10 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs">
         <div className="flex items-center space-x-2">
-          <span className="font-semibold text-slate-200">報表定義結構</span>
+          <span className="font-semibold text-slate-200">
+            {locale === 'zh-TW' ? '報表定義結構' : 'Report Schema Definition'}
+          </span>
           <span className="text-[11px] text-slate-400">
-            • 宣告式報表結構 • 可持久化至資料庫
+            {locale === 'zh-TW'
+              ? '• 宣告式報表結構 • 可持久化至資料庫'
+              : '• Declarative Layout Spec • Database Persistable'}
           </span>
         </div>
 
@@ -52,19 +69,23 @@ export const SchemaViewer: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={handleCopy}
-            className="h-7 text-xs bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 space-x-1"
+            className="h-7 text-xs bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 space-x-1 cursor-pointer"
           >
             {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-            <span>{copied ? '已複製' : '複製定義'}</span>
+            <span>
+              {copied
+                ? locale === 'zh-TW' ? '已複製' : 'Copied'
+                : locale === 'zh-TW' ? '複製定義' : 'Copy Schema'}
+            </span>
           </Button>
 
           <Button
             size="sm"
             onClick={handleApply}
-            className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white space-x-1"
+            className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white space-x-1 cursor-pointer"
           >
             <Save className="h-3 w-3" />
-            <span>套用變更</span>
+            <span>{locale === 'zh-TW' ? '套用變更' : 'Apply Changes'}</span>
           </Button>
         </div>
       </div>

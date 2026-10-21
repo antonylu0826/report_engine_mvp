@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   FileText,
   Eye,
@@ -16,8 +16,14 @@ import { useReportStore } from '@/store/useReportStore';
 import { Button } from '@/components/ui/button';
 import { pdf } from '@react-pdf/renderer';
 import { ReportPDFDocument } from '@/compiler/pdfCompiler';
+import { useTranslations, useCurrentLocale } from '@/i18n';
+import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 
 export const Navbar: React.FC = () => {
+  const { locale } = useCurrentLocale();
+  const tNav = useTranslations('navbar');
+  const tCommon = useTranslations('common');
+
   const {
     report,
     dataSource,
@@ -39,7 +45,7 @@ export const Navbar: React.FC = () => {
   const isFirstMountRef = useRef<boolean>(true);
 
   // Sync with current_report_layout.json from MCP (Inbound: Disk -> UI)
-  const fetchMcpLayout = async (force = false) => {
+  const fetchMcpLayout = useCallback(async (force = false) => {
     try {
       setMcpConnecting(true);
       const res = await fetch('/api/report-layout');
@@ -59,18 +65,25 @@ export const Navbar: React.FC = () => {
     } finally {
       setMcpConnecting(false);
     }
-  };
+  }, [setReport]);
 
   // Poll for changes made by external MCP Agent every 1.5 seconds
   useEffect(() => {
-    fetchMcpLayout(true); // initial fetch
+    let active = true;
+    const initialTimer = setTimeout(() => {
+      if (active) fetchMcpLayout(true);
+    }, 0);
 
     const timer = setInterval(() => {
-      fetchMcpLayout(false);
+      if (active) fetchMcpLayout(false);
     }, 1500);
 
-    return () => clearInterval(timer);
-  }, []);
+    return () => {
+      active = false;
+      clearTimeout(initialTimer);
+      clearInterval(timer);
+    };
+  }, [fetchMcpLayout]);
 
   // Outbound: Push UI edits to current_report_layout.json (Debounced ~500ms)
   useEffect(() => {
@@ -123,7 +136,7 @@ export const Navbar: React.FC = () => {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Failed to export PDF:', err);
-      alert('產生 PDF 失敗，請檢查控制台錯誤訊息。');
+      alert(locale === 'zh-TW' ? '產生 PDF 失敗，請檢查控制台錯誤訊息。' : 'Failed to generate PDF. Please check the browser console for details.');
     } finally {
       setIsExporting(false);
     }
@@ -142,11 +155,11 @@ export const Navbar: React.FC = () => {
               {report.name}
             </span>
             <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
-              {report.pageSettings.size} • {report.pageSettings.orientation === 'portrait' ? '直向' : '橫向'}
+              {report.pageSettings.size} • {report.pageSettings.orientation === 'portrait' ? tCommon('portrait') : tCommon('landscape')}
             </span>
           </div>
           <p className="text-[11px] text-slate-500">
-            企業級報表引擎
+            {tNav('enterpriseEngine')}
           </p>
         </div>
       </div>
@@ -162,7 +175,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Sliders className="h-3.5 w-3.5" />
-          <span>報表設計</span>
+          <span>{tNav('designer')}</span>
         </button>
 
         <button
@@ -174,7 +187,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Eye className="h-3.5 w-3.5" />
-          <span>即時預覽</span>
+          <span>{tNav('preview')}</span>
         </button>
 
         <button
@@ -186,7 +199,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Sparkles className="h-3.5 w-3.5 text-blue-500" />
-          <span>智慧助理</span>
+          <span>{tNav('agent')}</span>
         </button>
 
         <button
@@ -198,11 +211,11 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Code2 className="h-3.5 w-3.5" />
-          <span>規格定義</span>
+          <span>{tNav('schema')}</span>
         </button>
       </div>
 
-      {/* Right Controls: MCP Status, Zoom & Action Buttons */}
+      {/* Right Controls: MCP Status, Zoom, Locale & Action Buttons */}
       <div className="flex items-center space-x-2">
         {/* MCP Live Sync Status Pill */}
         <button
@@ -214,10 +227,10 @@ export const Navbar: React.FC = () => {
               ? 'bg-emerald-500/10 text-emerald-600 border-emerald-400/40 dark:text-emerald-400 animate-pulse'
               : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/80 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800'
           }`}
-          title="自動雙向同步（UI 編輯自動存盤，外部 Agent 修改即時推播），點擊可手動強制重新拉取"
+          title={tNav('mcpTooltip')}
         >
           <Radio className={`h-3 w-3 ${isSaving ? 'text-amber-500 animate-spin' : mcpSynced ? 'text-emerald-500' : 'text-blue-500 animate-pulse'}`} />
-          <span>{isSaving ? '同步至磁碟中...' : mcpSynced ? '雙向已同步' : 'MCP 即時連動'}</span>
+          <span>{isSaving ? tCommon('syncing') : mcpSynced ? tCommon('synced') : tCommon('mcpLive')}</span>
           <RefreshCw className={`h-2.5 w-2.5 ml-0.5 ${mcpConnecting || isSaving ? 'animate-spin' : ''}`} />
         </button>
 
@@ -226,7 +239,7 @@ export const Navbar: React.FC = () => {
             <button
               onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}
               className="p-1 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-              title="縮小"
+              title={tNav('zoomOut')}
             >
               <ZoomOut className="h-3.5 w-3.5" />
             </button>
@@ -236,22 +249,25 @@ export const Navbar: React.FC = () => {
             <button
               onClick={() => setZoom(Math.min(1.8, zoom + 0.1))}
               className="p-1 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-              title="放大"
+              title={tNav('zoomIn')}
             >
               <ZoomIn className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
 
+        {/* Locale Switcher */}
+        <LocaleSwitcher />
+
         <Button
           variant="outline"
           size="sm"
           onClick={resetToSample}
           className="text-xs h-8 space-x-1.5"
-          title="重設為預設範例"
+          title={tNav('resetSampleTooltip')}
         >
           <RotateCcw className="h-3.5 w-3.5" />
-          <span>重設範本</span>
+          <span>{tNav('resetSample')}</span>
         </Button>
 
         <Button
@@ -265,7 +281,7 @@ export const Navbar: React.FC = () => {
           ) : (
             <Download className="h-3.5 w-3.5" />
           )}
-          <span>{isExporting ? '算繪中...' : '匯出 PDF'}</span>
+          <span>{isExporting ? tCommon('exporting') : tCommon('exportPdf')}</span>
         </Button>
       </div>
     </header>

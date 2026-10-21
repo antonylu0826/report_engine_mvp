@@ -16,6 +16,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import React from 'react';
+(globalThis as any).React = React;
 import ReactPDF, { Font } from '@react-pdf/renderer';
 
 import type { ReportDefinition, ControlDefinition } from '../types/report.js';

@@ -9,9 +9,12 @@ import {
   sampleOrderData45,
   sampleOrderData100,
 } from '@/mock/sampleReport';
+import { useTranslations, useCurrentLocale } from '@/i18n';
 
 export const ReportViewer: React.FC = () => {
   const { report, dataSource, data, setData } = useReportStore();
+  const { locale } = useCurrentLocale();
+  const tViewer = useTranslations('viewer');
 
   const [instance, updateInstance] = usePDF({
     document: <ReportPDFDocument report={report} data={data} dataSource={dataSource} />,
@@ -28,9 +31,11 @@ export const ReportViewer: React.FC = () => {
       <div className="h-10 bg-slate-800 border-b border-slate-700 px-4 flex items-center justify-between text-xs text-slate-300">
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-1.5">
-            <span className="font-semibold text-slate-200">即時 PDF 預覽</span>
+            <span className="font-semibold text-slate-200">
+              {locale === 'zh-TW' ? '即時 PDF 預覽' : 'Live PDF Preview'}
+            </span>
             <span className="text-[11px] text-slate-400">
-              • 繁體中文向量引擎
+              • {locale === 'zh-TW' ? '向量排版引擎' : 'Vector Layout Engine'}
             </span>
           </div>
 
@@ -38,7 +43,7 @@ export const ReportViewer: React.FC = () => {
           <div className="flex items-center space-x-1 bg-slate-900/80 p-0.5 rounded-md border border-slate-700">
             <span className="text-[10px] text-slate-400 px-1.5 flex items-center space-x-1">
               <Database className="h-3 w-3 text-slate-500" />
-              <span>資料筆數:</span>
+              <span>{locale === 'zh-TW' ? '資料筆數:' : 'Rows:'}</span>
             </span>
             <button
               onClick={() => setData(sampleOrderData14)}
@@ -48,7 +53,7 @@ export const ReportViewer: React.FC = () => {
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
-              14 筆 (單頁)
+              {locale === 'zh-TW' ? '14 筆 (單頁)' : '14 Rows (Single)'}
             </button>
             <button
               onClick={() => setData(sampleOrderData45)}
@@ -58,7 +63,7 @@ export const ReportViewer: React.FC = () => {
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
-              45 筆 (2頁跨頁)
+              {locale === 'zh-TW' ? '45 筆 (2頁跨頁)' : '45 Rows (2 Pages)'}
             </button>
             <button
               onClick={() => setData(sampleOrderData100)}
@@ -68,7 +73,7 @@ export const ReportViewer: React.FC = () => {
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
-              100 筆 (多頁大表)
+              {locale === 'zh-TW' ? '100 筆 (多頁大表)' : '100 Rows (Multi-page)'}
             </button>
           </div>
         </div>
@@ -81,7 +86,7 @@ export const ReportViewer: React.FC = () => {
             className="text-slate-300 hover:text-white hover:bg-slate-700 h-7 text-xs space-x-1"
           >
             <RefreshCw className="h-3 w-3" />
-            <span>重新整理</span>
+            <span>{tViewer('refresh')}</span>
           </Button>
 
           {instance.url && (
@@ -91,7 +96,7 @@ export const ReportViewer: React.FC = () => {
               className="inline-flex items-center space-x-1.5 h-7 px-3 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-xs"
             >
               <Download className="h-3 w-3" />
-              <span>下載 PDF</span>
+              <span>{tViewer('downloadPdf')}</span>
             </a>
           )}
         </div>

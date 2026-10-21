@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { QrCode as QrCodeIcon } from 'lucide-react';
 import { Image as PdfImage } from '@react-pdf/renderer';
 import type { ReportControlPlugin } from '../types';

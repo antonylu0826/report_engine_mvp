@@ -1,8 +1,9 @@
 import type { BandType, ControlType, PageOrientation } from '@/types/report';
+import type { AppLocale } from '@/i18n/config';
+import { allMessages } from '@/i18n/messages';
 
 /**
- * Pure Traditional Chinese Label Mappings
- * Centralized for immediate clean UI rendering and future i18n support.
+ * Standard Label Mappings with i18n support
  */
 
 export const BAND_NAMES: Record<BandType, string> = {
@@ -40,3 +41,18 @@ export const DATA_TYPE_NAMES: Record<string, string> = {
   boolean: '布林',
   array: '陣列/清單',
 };
+
+export function getBandName(type: BandType, locale: AppLocale = 'zh-TW'): string {
+  const msgs = allMessages[locale]?.bands;
+  return (msgs as any)?.[type] || BAND_NAMES[type] || type;
+}
+
+export function getControlName(type: ControlType, locale: AppLocale = 'zh-TW'): string {
+  const msgs = allMessages[locale]?.controls;
+  return (msgs as any)?.[type] || CONTROL_NAMES[type] || type;
+}
+
+export function getOrientationName(orientation: PageOrientation, locale: AppLocale = 'zh-TW'): string {
+  const msgs = allMessages[locale]?.common;
+  return (msgs as any)?.[orientation] || ORIENTATION_NAMES[orientation] || orientation;
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+(globalThis as any).React = React;
 import {
   Document,
   Page,

@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { controlRegistry } from '@/controls/registry';
 import { mapDesignerControlStyle } from '@/controls/styleUtils';
+import { useTranslations, useCurrentLocale } from '@/i18n';
+import { getBandName } from '@/constants/labels';
 
 export type ResizeDirection = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
@@ -26,6 +28,8 @@ interface ResizingControlState {
   initialWidth: number;
   initialHeight: number;
 }
+
+const createUniqueId = (prefix: string) => `${prefix}-${Date.now().toString().slice(-4)}`;
 
 export const BandCanvas: React.FC = () => {
   const {
@@ -45,6 +49,10 @@ export const BandCanvas: React.FC = () => {
     exitSubReportEditor,
     getActiveReport,
   } = useReportStore();
+
+  const { locale } = useCurrentLocale();
+  const tBands = useTranslations('bands');
+  const tControls = useTranslations('controls');
 
   const activeReport = getActiveReport();
   const { pageSettings, bands } = activeReport;
@@ -365,20 +373,20 @@ export const BandCanvas: React.FC = () => {
     if (detailIndex === -1) return;
 
     const groupHeader: BandDefinition = {
-      id: `band-group-header-${Date.now().toString().slice(-4)}`,
+      id: createUniqueId('band-group-header'),
       type: 'GroupHeader',
       height: 20,
       groupBy: defaultField,
       groupSortOrder: 'asc',
       controls: [
         {
-          id: `ctl-gh-title-${Date.now().toString().slice(-4)}`,
+          id: createUniqueId('ctl-gh-title'),
           type: 'Label',
           x: 6,
           y: 3,
           width: 65,
           height: 14,
-          text: '【 類別 】',
+          text: locale === 'zh-TW' ? '【 類別 】' : '[ Category ]',
           style: {
             fontSize: 8.5,
             fontWeight: 'bold',
@@ -386,7 +394,7 @@ export const BandCanvas: React.FC = () => {
           },
         },
         {
-          id: `ctl-gh-category-${Date.now().toString().slice(-4)}`,
+          id: createUniqueId('ctl-gh-category'),
           type: 'Field',
           fieldName: defaultField,
           x: 72,
@@ -403,14 +411,14 @@ export const BandCanvas: React.FC = () => {
     };
 
     const groupFooter: BandDefinition = {
-      id: `band-group-footer-${Date.now().toString().slice(-4)}`,
+      id: createUniqueId('band-group-footer'),
       type: 'GroupFooter',
       height: 18,
       groupBy: defaultField,
       groupSortOrder: 'asc',
       controls: [
         {
-          id: `ctl-gf-line-${Date.now().toString().slice(-4)}`,
+          id: createUniqueId('ctl-gf-line'),
           type: 'Line',
           x: 0,
           y: 0,
@@ -419,13 +427,13 @@ export const BandCanvas: React.FC = () => {
           style: { color: '#e2e8f0' },
         },
         {
-          id: `ctl-gf-label-${Date.now().toString().slice(-4)}`,
+          id: createUniqueId('ctl-gf-label'),
           type: 'Label',
           x: contentWidth - 175,
           y: 3,
           width: 80,
           height: 12,
-          text: '本類別小計：',
+          text: locale === 'zh-TW' ? '本類別小計：' : 'Category Subtotal:',
           style: {
             fontSize: 8,
             color: '#64748b',
@@ -433,7 +441,7 @@ export const BandCanvas: React.FC = () => {
           },
         },
         {
-          id: `ctl-gf-sum-${Date.now().toString().slice(-4)}`,
+          id: createUniqueId('ctl-gf-sum'),
           type: 'Expression',
           expression: '=SUM(amount)',
           formatString: 'C0',
@@ -488,6 +496,7 @@ export const BandCanvas: React.FC = () => {
   };
 
   // Band visual appearance metadata: unified clean professional style across all bands
+  // Band visual appearance metadata: unified clean professional style across all bands
   const defaultMeta = {
     dotColor: 'bg-slate-500',
     stripBg: 'bg-slate-100 hover:bg-slate-200/90 text-slate-800',
@@ -495,17 +504,8 @@ export const BandCanvas: React.FC = () => {
     border: 'border-slate-300',
   };
 
-  const bandMeta: Record<
-    string,
-    { nameTw: string; dotColor: string; stripBg: string; textColor: string; border: string }
-  > = {
-    ReportHeader: { ...defaultMeta, nameTw: '報表表頭' },
-    PageHeader: { ...defaultMeta, nameTw: '頁首' },
-    GroupHeader: { ...defaultMeta, nameTw: '群組首' },
-    Detail: { ...defaultMeta, nameTw: '明細區' },
-    GroupFooter: { ...defaultMeta, nameTw: '群組尾' },
-    ReportFooter: { ...defaultMeta, nameTw: '報表表尾' },
-    PageFooter: { ...defaultMeta, nameTw: '頁尾' },
+  const getBandDisplayName = (type: string) => {
+    return getBandName(type as any, locale);
   };
 
   return (
@@ -524,7 +524,7 @@ export const BandCanvas: React.FC = () => {
             <div className="flex items-center space-x-2 text-xs">
               <Badge variant="secondary" className="gap-1 font-normal text-slate-700 dark:text-slate-200">
                 <TableProperties className="w-3 h-3 text-slate-500" />
-                <span>子報表</span>
+                <span>{tControls('SubReport')}</span>
               </Badge>
               <button
                 onClick={exitSubReportEditor}
@@ -544,7 +544,7 @@ export const BandCanvas: React.FC = () => {
               onClick={exitSubReportEditor}
               className="h-7 text-xs px-2.5 font-normal text-slate-700 dark:text-slate-200"
             >
-              返回主報表
+              {locale === 'zh-TW' ? '返回主報表' : 'Back to Main Report'}
             </Button>
           </div>
         )}
@@ -576,12 +576,9 @@ export const BandCanvas: React.FC = () => {
           <div className="flex flex-col space-y-3 relative z-10">
             {bands.map((band) => {
               const isBandSelected = selectedBandId === band.id;
-              const meta = bandMeta[band.type] || {
-                nameTw: band.type,
-                dotColor: 'bg-slate-500',
-                stripBg: 'bg-slate-100',
-                textColor: 'text-slate-800',
-                border: 'border-slate-300',
+              const meta = {
+                ...defaultMeta,
+                nameTw: getBandDisplayName(band.type),
               };
 
               return (
@@ -616,7 +613,7 @@ export const BandCanvas: React.FC = () => {
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Layers className="h-2.5 w-2.5 text-slate-500" />
-                          <span>分組依據:</span>
+                          <span>{tBands('groupBy')}:</span>
                           <select
                             value={band.groupBy || 'category'}
                             onChange={(e) => handleChangeGroupBy(e.target.value)}
@@ -642,10 +639,10 @@ export const BandCanvas: React.FC = () => {
                             handleAddGrouping();
                           }}
                           className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-white hover:bg-slate-900 shadow-2xs transition-colors"
-                          title="在資料列上下加入群組表頭與群組小計"
+                          title={locale === 'zh-TW' ? '在資料列上下加入群組表頭與群組小計' : 'Add group header and footer around detail rows'}
                         >
                           <Plus className="h-3 w-3" />
-                          <span>新增分組小計</span>
+                          <span>{locale === 'zh-TW' ? '新增分組小計' : 'Add Grouping'}</span>
                         </button>
                       )}
 
@@ -653,7 +650,7 @@ export const BandCanvas: React.FC = () => {
                       {band.type === 'Detail' && hasGrouping && (
                         <span className="flex items-center space-x-1 text-[9px] text-slate-700 bg-slate-200/70 border border-slate-300 px-1.5 py-0.2 rounded font-sans">
                           <FolderTree className="h-2.5 w-2.5 text-slate-500" />
-                          <span>群組明細列</span>
+                          <span>{locale === 'zh-TW' ? '群組明細列' : 'Group Details'}</span>
                         </span>
                       )}
 
@@ -662,15 +659,15 @@ export const BandCanvas: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm('確定要移除此分組結構 (包含群組表頭與小計) 嗎？')) {
+                            if (confirm(locale === 'zh-TW' ? '確定要移除此分組結構 (包含群組表頭與小計) 嗎？' : 'Are you sure you want to remove this grouping?')) {
                               handleRemoveGrouping();
                             }
                           }}
                           className="inline-flex items-center space-x-0.5 text-[9px] text-slate-500 hover:text-red-600 hover:bg-slate-200/80 px-1.5 py-0.5 rounded transition-colors border border-transparent hover:border-slate-300"
-                          title="移除群組結構"
+                          title={locale === 'zh-TW' ? '移除群組結構' : 'Remove grouping'}
                         >
                           <Trash2 className="h-2.5 w-2.5" />
-                          <span>移除分組</span>
+                          <span>{locale === 'zh-TW' ? '移除分組' : 'Remove Grouping'}</span>
                         </button>
                       )}
                     </div>
@@ -699,7 +696,7 @@ export const BandCanvas: React.FC = () => {
                     {dragOverBandId === band.id && (
                       <div className="absolute inset-0 pointer-events-none flex items-center justify-center border-2 border-dashed border-blue-500/80 bg-blue-50/20 z-30">
                         <span className="text-[11px] font-semibold text-blue-700 bg-white/95 px-2.5 py-1 rounded-md shadow-xs border border-blue-200 font-mono">
-                          釋放滑鼠以放置控制項於此處
+                          {locale === 'zh-TW' ? '釋放滑鼠以放置控制項於此處' : 'Drop control here'}
                         </span>
                       </div>
                     )}
@@ -744,16 +741,16 @@ export const BandCanvas: React.FC = () => {
                                   <div
                                     onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 'w')}
                                     className={`absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 ${handleStyle} cursor-ew-resize`}
-                                    title="拖曳調整線條長度 (左端)"
+                                    title={locale === 'zh-TW' ? '拖曳調整線條長度 (左端)' : 'Drag to adjust line (left)'}
                                   />
                                   <div
                                     onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 'e')}
                                     className={`absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 ${handleStyle} cursor-ew-resize`}
-                                    title="拖曳調整線條長度 (右端)"
+                                    title={locale === 'zh-TW' ? '拖曳調整線條長度 (右端)' : 'Drag to adjust line (right)'}
                                   />
                                   {resizingControl?.controlId === control.id && (
                                     <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-[9px] font-mono px-1.5 py-0.5 rounded shadow pointer-events-none z-40 whitespace-nowrap">
-                                      寬度: {control.width} pt
+                                      {locale === 'zh-TW' ? '寬度: ' : 'Width: '}{control.width} pt
                                     </div>
                                   )}
                                 </>
@@ -767,16 +764,16 @@ export const BandCanvas: React.FC = () => {
                                   <div
                                     onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 'n')}
                                     className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 ${handleStyle} cursor-ns-resize`}
-                                    title="拖曳調整線條長度 (頂端)"
+                                    title={locale === 'zh-TW' ? '拖曳調整線條長度 (頂端)' : 'Drag to adjust line (top)'}
                                   />
                                   <div
                                     onMouseDown={(e) => handleResizeMouseDown(e, band.id, control, 's')}
                                     className={`absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 ${handleStyle} cursor-ns-resize`}
-                                    title="拖曳調整線條長度 (底端)"
+                                    title={locale === 'zh-TW' ? '拖曳調整線條長度 (底端)' : 'Drag to adjust line (bottom)'}
                                   />
                                   {resizingControl?.controlId === control.id && (
                                     <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-[9px] font-mono px-1.5 py-0.5 rounded shadow pointer-events-none z-40 whitespace-nowrap">
-                                      高度: {control.height} pt
+                                      {locale === 'zh-TW' ? '高度: ' : 'Height: '}{control.height} pt
                                     </div>
                                   )}
                                 </>
@@ -824,7 +821,7 @@ export const BandCanvas: React.FC = () => {
                       className={`absolute -bottom-1.5 left-0 right-0 h-3 cursor-row-resize flex items-center justify-center z-20 group transition-opacity ${
                         isBandSelected ? 'opacity-100' : 'opacity-0 hover:opacity-100'
                       }`}
-                      title="拖曳以調整 Band 高度"
+                      title={locale === 'zh-TW' ? '拖曳以調整 Band 高度' : 'Drag to adjust band height'}
                     >
                       <div className={`h-1.5 w-20 rounded-full transition-colors shadow-xs ${
                         isBandSelected ? 'bg-blue-600 ring-2 ring-blue-300' : 'bg-slate-400 group-hover:bg-blue-600'
