@@ -35,9 +35,11 @@ export const BandCanvas: React.FC = () => {
     selectControl,
     updateControl,
     addControl,
+    removeControl,
     updateBandHeight,
     setReport,
     zoom,
+    setZoom,
   } = useReportStore();
 
   const { pageSettings, bands } = report;
@@ -205,6 +207,73 @@ export const BandCanvas: React.FC = () => {
       window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
   }, [draggingControl, resizingBand, resizingControl, zoom, updateControl, updateBandHeight]);
+
+  // Global Keyboard Shortcuts (Delete, Escape, Arrow keys nudge)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is typing in an input, textarea, or select
+      const activeElement = document.activeElement;
+      const isInputFocused =
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        activeElement instanceof HTMLSelectElement;
+
+      if (isInputFocused) return;
+
+      // 1. Delete or Backspace: Remove selected control
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBandId && selectedControlId) {
+        e.preventDefault();
+        removeControl(selectedBandId, selectedControlId);
+        selectControl(selectedBandId, null);
+        return;
+      }
+
+      // 2. Escape: Deselect all
+      if (e.key === 'Escape') {
+        selectControl(null, null);
+        return;
+      }
+
+      // 3. Arrow keys: Precision Nudge for selected control (1pt, or 5pt if Shift is pressed)
+      if (
+        selectedBandId &&
+        selectedControlId &&
+        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)
+      ) {
+        const band = report.bands.find((b) => b.id === selectedBandId);
+        const control = band?.controls.find((c) => c.id === selectedControlId);
+        if (!control) return;
+
+        e.preventDefault();
+        const step = e.shiftKey ? 5 : 1;
+        let newX = control.x;
+        let newY = control.y;
+
+        if (e.key === 'ArrowLeft') newX = Math.max(0, control.x - step);
+        if (e.key === 'ArrowRight') newX = control.x + step;
+        if (e.key === 'ArrowUp') newY = Math.max(0, control.y - step);
+        if (e.key === 'ArrowDown') newY = control.y + step;
+
+        updateControl(selectedBandId, selectedControlId, {
+          x: newX,
+          y: newY,
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedBandId, selectedControlId, report, removeControl, selectControl, updateControl]);
+
+  // Ctrl + Wheel to zoom canvas smoothly
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.05 : -0.05;
+      const nextZoom = Math.min(2.0, Math.max(0.5, Math.round((zoom + delta) * 100) / 100));
+      setZoom(nextZoom);
+    }
+  };
 
   // Drag & drop handlers for dragging controls from Toolbox palette or Field Explorer onto a Band
   const handleBandDragOver = (e: React.DragEvent, bandId: string) => {
@@ -438,6 +507,7 @@ export const BandCanvas: React.FC = () => {
     <main
       className="flex-1 overflow-auto bg-slate-200/80 p-8 flex justify-center items-start select-none dark:bg-slate-950/80 designer-grid"
       onClick={() => selectControl(null, null)}
+      onWheel={handleWheel}
     >
       <div
         className="transition-transform duration-75 origin-top"
