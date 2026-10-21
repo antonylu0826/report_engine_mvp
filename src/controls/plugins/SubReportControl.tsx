@@ -1,5 +1,5 @@
 import React from 'react';
-import { TableProperties, Layers, Edit3 } from 'lucide-react';
+import { TableProperties, Layers } from 'lucide-react';
 import { View, Text } from '@react-pdf/renderer';
 import type { ReportControlPlugin } from '../types';
 import { getNestedValue, type EvalContext } from '@/compiler/evaluator';
@@ -43,16 +43,25 @@ export const SubReportControl: ReportControlPlugin = {
   DesignerComponent: ({ control, isSelected }) => {
     const title = control.subReportTitle || '序號與檢驗明細';
     const binding = control.subReportBinding || 'serials';
-    const subBands = control.subReportDefinition?.bands || [];
-    const totalCtrls = subBands.reduce((acc, b) => acc + b.controls.length, 0);
 
     return (
       <div
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          const state = useReportStore.getState();
+          const parentBand = state.report.bands.find((b) =>
+            b.controls.some((c) => c.id === control.id)
+          );
+          if (parentBand) {
+            state.enterSubReportEditor(parentBand.id, control.id);
+          }
+        }}
         className={`w-full h-full flex flex-col justify-between overflow-hidden rounded-md transition-all ${
           isSelected
             ? 'bg-slate-50 dark:bg-slate-900 border-slate-900 dark:border-slate-100 shadow-xs ring-1 ring-slate-400'
             : 'bg-slate-50/50 dark:bg-slate-900/30 border-slate-300 dark:border-slate-700 hover:border-slate-400'
         } border border-dashed p-1.5`}
+        title="雙擊此處或在右側屬性面板可進入次級畫布進行排版"
       >
         {/* SubReport Header Strip in Designer Canvas */}
         <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-1">
@@ -67,30 +76,6 @@ export const SubReportControl: ReportControlPlugin = {
               <Layers className="w-2.5 h-2.5 mr-0.5" />
               {binding}
             </span>
-          </div>
-
-          <div className="flex items-center space-x-1.5">
-            <span className="text-[8.5px] text-slate-400 font-mono shrink-0">
-              {subBands.length} 區段 · {totalCtrls} 控制項
-            </span>
-            {/* Quick Action Button to Enter SubReport Canvas */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const state = useReportStore.getState();
-                const parentBand = state.report.bands.find((b) =>
-                  b.controls.some((c) => c.id === control.id)
-                );
-                if (parentBand) {
-                  state.enterSubReportEditor(parentBand.id, control.id);
-                }
-              }}
-              className="inline-flex items-center space-x-0.5 text-[9px] text-slate-700 hover:text-slate-900 dark:text-slate-300 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded transition-colors shadow-2xs pointer-events-auto"
-              title="進入次級畫布進行排版"
-            >
-              <Edit3 className="w-2.5 h-2.5" />
-              <span>編輯</span>
-            </button>
           </div>
         </div>
 

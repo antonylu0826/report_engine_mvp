@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useReportStore } from '@/store/useReportStore';
 import type { ControlDefinition, BandDefinition, ControlType } from '@/types/report';
 import {
-  ShieldCheck,
   Layers,
-  ArrowDownUp,
   Plus,
   Trash2,
   TableProperties,
@@ -634,7 +632,7 @@ export const BandCanvas: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Right: Actions, Badges & Height */}
+                    {/* Right: Actions */}
                     <div className="flex items-center space-x-2 text-[10px] text-slate-600 font-mono">
                       {/* Contextual Action: Add Grouping from Detail Band */}
                       {band.type === 'Detail' && !hasGrouping && (
@@ -675,24 +673,6 @@ export const BandCanvas: React.FC = () => {
                           <span>移除分組</span>
                         </button>
                       )}
-
-                      {band.pageBreakAfter && (
-                        <span className="flex items-center space-x-0.5 text-[9px] bg-slate-200/70 text-slate-700 border border-slate-300 px-1 py-0.2 rounded font-sans">
-                          <ArrowDownUp className="h-2.5 w-2.5 text-slate-500" />
-                          <span>組後換頁</span>
-                        </span>
-                      )}
-
-                      {band.keepTogether && (
-                        <span className="flex items-center space-x-0.5 text-[9px] bg-white border border-slate-300 px-1 py-0.2 rounded text-slate-700 font-sans">
-                          <ShieldCheck className="h-2.5 w-2.5 text-slate-500" />
-                          <span>不跨頁</span>
-                        </span>
-                      )}
-
-                      <span className="bg-white px-1.5 py-0.2 rounded border border-slate-300 text-slate-700">
-                        {band.height} pt
-                      </span>
                     </div>
                   </div>
 
