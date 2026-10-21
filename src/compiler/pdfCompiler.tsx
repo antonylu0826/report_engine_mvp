@@ -73,13 +73,15 @@ function renderBand(
   context: EvalContext,
   keyPrefix = ''
 ): React.ReactElement {
+  const hasSubReport = band.controls.some((c) => c.type === 'SubReport');
+
   return (
     <View
       key={`${keyPrefix}-${band.id}`}
       style={{
         position: 'relative',
         width: '100%',
-        height: band.height,
+        ...(hasSubReport ? { minHeight: band.height } : { height: band.height }),
       }}
       wrap={!band.keepTogether}
       break={band.pageBreakBefore}

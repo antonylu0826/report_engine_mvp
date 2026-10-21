@@ -46,6 +46,17 @@ export function generateOrderItems(count: number): Record<string, unknown>[] {
   for (let i = 0; i < count; i++) {
     const p = baseProductCatalog[i % baseProductCatalog.length];
     const quantity = (i % 5) + 1;
+    const lotNo = `LOT-${20261000 + (i % 10)}`;
+    const skuPrefix = p.sku.split('-')[1] || 'SN';
+
+    // One-to-many nested serial numbers tracking for SubReport
+    const serials = Array.from({ length: quantity }, (_, qIdx) => ({
+      serialNo: `${skuPrefix}-2026-${(i + 1).toString().padStart(3, '0')}-${(qIdx + 1).toString().padStart(2, '0')}`,
+      lotNo,
+      location: `倉位 ${(i % 3) + 1}-0${qIdx + 1}`,
+      qcStatus: '合格 PASS',
+    }));
+
     result.push({
       index: i + 1,
       sku: p.sku,
@@ -56,7 +67,8 @@ export function generateOrderItems(count: number): Record<string, unknown>[] {
       unitPrice: p.unitPrice,
       amount: quantity * p.unitPrice,
       isInspected: i % 2 === 0,
-      batchNo: `LOT-${20261000 + (i % 10)}`,
+      batchNo: lotNo,
+      serials,
     });
   }
   return result;
@@ -99,6 +111,18 @@ export const sampleOrderDataSource: ReportDataSource = {
       { name: 'amount', label: '金額小計', type: 'number', formatHint: 'C0', description: '項目小計金額 (數量 × 單價)' },
       { name: 'isInspected', label: '驗收勾選', type: 'boolean', description: '現場實物驗收點收狀態 (支援 CheckBox)' },
       { name: 'batchNo', label: '製造批號', type: 'string', description: '原廠生產品質追溯批號' },
+      {
+        name: 'serials',
+        label: '出廠序號與檢驗明細 (一對多子資料)',
+        type: 'array',
+        description: '產品批次出廠序號、製造批號與品管檢驗狀態',
+        children: [
+          { name: 'serialNo', label: '出廠序號 (S/N)', type: 'string', description: '產品出廠序號' },
+          { name: 'lotNo', label: '生產批號', type: 'string', description: '工廠製程追溯批號' },
+          { name: 'location', label: '出貨儲位', type: 'string', description: '倉庫存放儲位' },
+          { name: 'qcStatus', label: '品檢結果', type: 'string', description: '出庫 QC 檢驗結果' },
+        ],
+      },
     ],
   },
   data: {

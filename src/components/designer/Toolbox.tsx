@@ -17,6 +17,7 @@ import {
   Hash,
   ChevronDown,
   ChevronRight,
+  TableProperties,
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { controlRegistry } from '@/controls/registry';
@@ -162,6 +163,11 @@ export const Toolbox: React.FC = () => {
           name: CONTROL_NAMES.Expression,
           icon: Calculator,
         },
+        {
+          type: 'SubReport' as ControlType,
+          name: CONTROL_NAMES.SubReport,
+          icon: TableProperties,
+        },
       ],
     },
   ];
@@ -175,6 +181,8 @@ export const Toolbox: React.FC = () => {
         return <Calendar className="h-3 w-3 text-purple-600 dark:text-purple-400 shrink-0" />;
       case 'boolean':
         return <CheckSquare className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />;
+      case 'array':
+        return <TableProperties className="h-3 w-3 text-cyan-600 dark:text-cyan-400 shrink-0" />;
       default:
         return <Type className="h-3 w-3 text-blue-600 dark:text-blue-400 shrink-0" />;
     }
@@ -395,57 +403,93 @@ export const Toolbox: React.FC = () => {
                       const sampleTooltip = `[${field.name}] ${field.label}\n型別: ${typeZh}${sampleVal !== undefined ? `\n範例值: ${sampleVal}` : ''}\n按住可拖曳至畫布`;
 
                       return (
-                        <div
-                          key={field.name}
-                          draggable={true}
-                          onDragStart={(e) => {
-                            e.dataTransfer.setData('report-control-type', 'Field');
-                            e.dataTransfer.setData('report-field-name', field.name);
-                            e.dataTransfer.setData('text/plain', `[${field.name}]`);
-                            e.dataTransfer.effectAllowed = 'copy';
-                          }}
-                          title={sampleTooltip}
-                          className="group flex items-center justify-between px-2 py-1 rounded text-xs hover:bg-emerald-50 dark:hover:bg-slate-800/80 cursor-grab active:cursor-grabbing transition-colors"
-                        >
-                          <div className="flex items-center space-x-1.5 min-w-0 flex-1">
-                            {renderTypeIcon(field.type)}
-                            <span className="truncate text-slate-700 dark:text-slate-200 text-[11px]">
-                              {field.label}
-                            </span>
-                            <span className="text-[10px] font-mono text-slate-400 truncate">
-                              {field.name}
-                            </span>
+                        <div key={field.name} className="flex flex-col">
+                          <div
+                            draggable={true}
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('report-control-type', field.type === 'array' ? 'SubReport' : 'Field');
+                              e.dataTransfer.setData('report-field-name', field.name);
+                              e.dataTransfer.setData('text/plain', `[${field.name}]`);
+                              e.dataTransfer.effectAllowed = 'copy';
+                            }}
+                            title={sampleTooltip}
+                            className="group flex items-center justify-between px-2 py-1 rounded text-xs hover:bg-emerald-50 dark:hover:bg-slate-800/80 cursor-grab active:cursor-grabbing transition-colors"
+                          >
+                            <div className="flex items-center space-x-1.5 min-w-0 flex-1">
+                              {renderTypeIcon(field.type)}
+                              <span className="truncate text-slate-700 dark:text-slate-200 text-[11px]">
+                                {field.label}
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-400 truncate">
+                                {field.name}
+                              </span>
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                const target =
+                                  targetBand ||
+                                  report.bands.find((b) => b.type === 'Detail') ||
+                                  report.bands[0];
+                                if (target) {
+                                  if (field.type === 'array') {
+                                    addControl(target.id, {
+                                      type: 'SubReport',
+                                      x: 0,
+                                      y: 22,
+                                      width: 515,
+                                      height: 38,
+                                      subReportTitle: field.label,
+                                      subReportBinding: field.name,
+                                    });
+                                  } else {
+                                    addControl(target.id, {
+                                      type: field.type === 'boolean' ? 'CheckBox' : 'Field',
+                                      x: 30,
+                                      y: 4,
+                                      width: field.type === 'boolean' ? 80 : 100,
+                                      height: 14,
+                                      fieldName: field.name,
+                                      formatString: field.formatHint,
+                                      text: field.label,
+                                      style: {
+                                        fontSize: 9,
+                                        color: '#0f172a',
+                                        textAlign: field.type === 'number' ? 'right' : 'left',
+                                      },
+                                    });
+                                  }
+                                }
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded transition-all dark:hover:bg-slate-700 shrink-0"
+                              title={`加入至 ${BAND_NAMES[targetBand?.type as BandType] || '明細區'}`}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </button>
                           </div>
 
-                          <button
-                            onClick={() => {
-                              const target =
-                                targetBand ||
-                                report.bands.find((b) => b.type === 'Detail') ||
-                                report.bands[0];
-                              if (target) {
-                                addControl(target.id, {
-                                  type: field.type === 'boolean' ? 'CheckBox' : 'Field',
-                                  x: 30,
-                                  y: 4,
-                                  width: field.type === 'boolean' ? 80 : 100,
-                                  height: 14,
-                                  fieldName: field.name,
-                                  formatString: field.formatHint,
-                                  text: field.label,
-                                  style: {
-                                    fontSize: 9,
-                                    color: '#0f172a',
-                                    textAlign: field.type === 'number' ? 'right' : 'left',
-                                  },
-                                });
-                              }
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded transition-all dark:hover:bg-slate-700 shrink-0"
-                            title={`加入至 ${BAND_NAMES[targetBand?.type as BandType] || '明細區'}`}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
+                          {/* Nested Sub-fields preview if this is an array field */}
+                          {field.children && field.children.length > 0 && (
+                            <div className="ml-5 pl-2.5 py-1 mb-1 border-l-2 border-cyan-400/80 bg-cyan-50/30 dark:bg-slate-900/40 rounded-r space-y-0.5">
+                              <span className="text-[9px] font-semibold text-cyan-800 dark:text-cyan-300 block">
+                                子清單欄位 (一對多)：
+                              </span>
+                              {field.children.map((child) => (
+                                <div
+                                  key={child.name}
+                                  className="flex items-center space-x-1.5 text-[9.5px] text-slate-600 dark:text-slate-300 font-mono"
+                                >
+                                  <span className="text-cyan-500">↳</span>
+                                  <span className="font-sans font-medium text-slate-700 dark:text-slate-200">
+                                    {child.label}
+                                  </span>
+                                  <span className="text-[8.5px] text-slate-400">
+                                    ({child.name})
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     })}

@@ -9,6 +9,7 @@ import { QRCodeControl } from './plugins/QRCodeControl';
 import { ImageControl } from './plugins/ImageControl';
 import { CheckBoxControl } from './plugins/CheckBoxControl';
 import { PanelControl } from './plugins/PanelControl';
+import { SubReportControl } from './plugins/SubReportControl';
 
 class ControlRegistry {
   private plugins = new Map<ControlType, ReportControlPlugin>();
@@ -23,6 +24,7 @@ class ControlRegistry {
     this.register(ImageControl);
     this.register(CheckBoxControl);
     this.register(PanelControl);
+    this.register(SubReportControl);
   }
 
   public register(plugin: ReportControlPlugin) {

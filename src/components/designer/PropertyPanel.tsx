@@ -21,6 +21,7 @@ import {
   ArrowDownUp,
   FileText,
   Compass,
+  TableProperties,
 } from 'lucide-react';
 import { controlRegistry } from '@/controls/registry';
 import type { PageSize, PageOrientation, BandType } from '@/types/report';
@@ -814,6 +815,47 @@ export const PropertyPanel: React.FC = () => {
                         </select>
                       )}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SubReport Specific Inspector */}
+              {selectedControl.type === 'SubReport' && (
+                <div className="space-y-2.5 bg-blue-50/60 p-2.5 rounded-md border border-blue-200 dark:bg-slate-900 dark:border-blue-900/50">
+                  <div className="flex items-center space-x-1.5 text-blue-900 dark:text-blue-200 font-semibold text-[11px]">
+                    <TableProperties className="h-3.5 w-3.5 text-blue-600" />
+                    <span>子報表 (SubReport) 一對多設定</span>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] text-slate-500">子報表標題備註</Label>
+                    <Input
+                      value={selectedControl.subReportTitle ?? ''}
+                      placeholder="如 產品出廠序號與品檢明細"
+                      onChange={(e) =>
+                        updateControl(selectedBand.id, selectedControl.id, {
+                          subReportTitle: e.target.value,
+                        })
+                      }
+                      className="text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] text-slate-500">綁定父列子陣列欄位 (Data Binding)</Label>
+                    <Input
+                      value={selectedControl.subReportBinding ?? ''}
+                      placeholder="如 serials, components, logs"
+                      onChange={(e) =>
+                        updateControl(selectedBand.id, selectedControl.id, {
+                          subReportBinding: e.target.value,
+                        })
+                      }
+                      className="font-mono text-xs"
+                    />
+                    <p className="text-[9px] text-slate-500 mt-1">
+                      將自動從明細每筆紀錄中提取此陣列（例如 <code>currentRow.serials</code>）並展開呈現在該項目下方。
+                    </p>
                   </div>
                 </div>
               )}

@@ -58,7 +58,8 @@ export type ControlType =
   | 'Barcode'
   | 'QRCode'
   | 'CheckBox'
-  | 'Panel';
+  | 'Panel'
+  | 'SubReport';
 
 export interface ControlDefinition {
   id: string;
@@ -86,6 +87,12 @@ export interface ControlDefinition {
   barcodeFormat?: 'CODE128' | 'EAN13' | 'UPC' | 'CODE39';
   displayValue?: boolean;   // Whether to show barcode human-readable text below
   qrErrorLevel?: 'L' | 'M' | 'Q' | 'H'; // QR Code error correction level
+
+  // SubReport configurations
+  subReportTitle?: string;
+  subReportBinding?: string; // Path to nested array on parent row, e.g. "serials"
+  subReportDefinition?: ReportDefinition; // Inline ReportDefinition (optional)
+  subReportRefId?: string; // External template reference ID (optional)
 }
 
 export interface BandDefinition {

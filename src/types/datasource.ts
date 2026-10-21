@@ -3,10 +3,10 @@
  * Standardized data model designed for host application embedding and AI Agent interoperability.
  */
 
-export type FieldDataType = 'string' | 'number' | 'boolean' | 'date';
+export type FieldDataType = 'string' | 'number' | 'boolean' | 'date' | 'array';
 
 export interface DataFieldSchema {
-  /** Property key used in binding, e.g. 'unitPrice', 'customerName' */
+  /** Property key used in binding, e.g. 'unitPrice', 'customerName', 'serials' */
   name: string;
   /** Human-readable display label, e.g. '產品單價', '客戶名稱' */
   label: string;
@@ -16,6 +16,8 @@ export interface DataFieldSchema {
   formatHint?: string;
   /** Optional field description for tooltips and AI prompt context */
   description?: string;
+  /** Nested sub-fields for array/object types (One-to-Many Master-Detail) */
+  children?: DataFieldSchema[];
 }
 
 export interface DataSourceSchema {

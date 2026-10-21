@@ -25,6 +25,7 @@ export const CONTROL_NAMES: Record<ControlType, string> = {
   QRCode: '二維碼',
   CheckBox: '核取方塊',
   Panel: '面板容器',
+  SubReport: '子報表',
 };
 
 export const ORIENTATION_NAMES: Record<PageOrientation, string> = {
@@ -37,4 +38,5 @@ export const DATA_TYPE_NAMES: Record<string, string> = {
   number: '數值',
   date: '日期',
   boolean: '布林',
+  array: '陣列/清單',
 };

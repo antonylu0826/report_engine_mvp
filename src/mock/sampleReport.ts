@@ -350,7 +350,7 @@ export const sampleOrderReport: ReportDefinition = {
     {
       id: 'band-detail',
       type: 'Detail',
-      height: 22,
+      height: 62,
       keepTogether: true,
       controls: [
         // Detail Col 1: Index
@@ -489,6 +489,17 @@ export const sampleOrderReport: ReportDefinition = {
             paddingHorizontal: 4,
             paddingVertical: 4,
           },
+        },
+        // Nested SubReport for Serial Numbers & QC Inspection
+        {
+          id: 'ctl-subreport-serials',
+          type: 'SubReport',
+          x: 0,
+          y: 22,
+          width: 515,
+          height: 38,
+          subReportTitle: '產品出廠序號與品檢明細 (一對多子報表)',
+          subReportBinding: 'serials',
         },
       ],
     },
