@@ -145,27 +145,28 @@ export const SubReportControl: ReportControlPlugin = {
           key={control.id}
           style={{
             position: 'relative',
-            width: control.width,
+            width: '100%',
             marginTop: control.y,
             marginBottom: 2,
             paddingLeft: 35, // Align with SKU column for hierarchical indentation
             paddingRight: 0,
           }}
         >
-          {/* SubReport Mini Box Container */}
+          {/* SubReport Mini Box Container - Width 480 + Indent 35 = 515 (Perfect right alignment with main table) */}
           <View
             style={{
+              width: 480,
               borderLeftWidth: 2,
               borderLeftColor: '#0284c7', // Cyan left accent marker
               borderBottomWidth: 0.5,
               borderBottomColor: '#cbd5e1',
               borderRightWidth: 0.5,
-              borderRightColor: '#e2e8f0',
+              borderRightColor: '#cbd5e1',
               borderTopWidth: 0.5,
               borderTopColor: '#e2e8f0',
               backgroundColor: '#f8fafc',
               paddingVertical: 2,
-              paddingHorizontal: 4,
+              paddingHorizontal: 0,
             }}
           >
             {/* A. SubReport Header Band */}
@@ -242,12 +243,13 @@ export const SubReportControl: ReportControlPlugin = {
       >
         <View
           style={{
+            width: 480,
             borderLeftWidth: 2,
             borderLeftColor: '#0284c7',
             borderBottomWidth: 0.5,
             borderBottomColor: '#cbd5e1',
             borderRightWidth: 0.5,
-            borderRightColor: '#e2e8f0',
+            borderRightColor: '#cbd5e1',
             borderTopWidth: 0.5,
             borderTopColor: '#e2e8f0',
             backgroundColor: '#f8fafc',
