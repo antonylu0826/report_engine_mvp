@@ -7,6 +7,7 @@ import {
   ArrowDownUp,
   Plus,
   Trash2,
+  TableProperties,
   FolderTree,
 } from 'lucide-react';
 import { controlRegistry } from '@/controls/registry';
@@ -40,9 +41,13 @@ export const BandCanvas: React.FC = () => {
     setReport,
     zoom,
     setZoom,
+    editingSubReportPath,
+    exitSubReportEditor,
+    getActiveReport,
   } = useReportStore();
 
-  const { pageSettings, bands } = report;
+  const activeReport = getActiveReport();
+  const { pageSettings, bands } = activeReport;
 
   // Track hover state when dragging a control from palette over a band
   const [dragOverBandId, setDragOverBandId] = useState<string | null>(null);
@@ -513,6 +518,36 @@ export const BandCanvas: React.FC = () => {
         className="transition-transform duration-75 origin-top"
         style={{ transform: `scale(${zoom})` }}
       >
+        {/* SubReport Secondary Canvas Breadcrumb Banner */}
+        {editingSubReportPath && (
+          <div className="mb-3 px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md flex items-center justify-between shadow-md">
+            <div className="flex items-center space-x-2 text-xs">
+              <span className="bg-white/20 text-white font-mono px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase">
+                子報表次級畫布 (BANDS 模式)
+              </span>
+              <button
+                onClick={exitSubReportEditor}
+                className="font-semibold text-blue-100 hover:text-white hover:underline flex items-center space-x-1"
+                title="回到主報表"
+              >
+                <span>主報表: {report.name}</span>
+              </button>
+              <span className="text-white/60">/</span>
+              <span className="font-bold flex items-center space-x-1.5 text-white">
+                <TableProperties className="w-3.5 h-3.5 text-blue-200" />
+                <span>{activeReport.name}</span>
+              </span>
+            </div>
+
+            <button
+              onClick={exitSubReportEditor}
+              className="text-xs bg-white text-blue-700 hover:bg-blue-50 font-bold px-3 py-1 rounded-md transition-all shadow-xs"
+            >
+              ← 完成並返回主報表
+            </button>
+          </div>
+        )}
+
         {/* Paper Container: ALWAYS pure white paper with realistic sheet shadow */}
         <div
           className="bg-white shadow-2xl border border-slate-300/80 rounded-xs overflow-hidden text-slate-900 relative"

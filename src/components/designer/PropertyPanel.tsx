@@ -37,13 +37,26 @@ export const PropertyPanel: React.FC = () => {
     removeControl,
     updateBandHeight,
     setReport,
+    editingSubReportPath,
+    getActiveReport,
   } = useReportStore();
 
-  const selectedBand = report.bands.find((b) => b.id === selectedBandId);
+  const activeReport = getActiveReport();
+  const selectedBand = activeReport.bands.find((b) => b.id === selectedBandId);
   const selectedControl = selectedBand?.controls.find((c) => c.id === selectedControlId);
 
   // Sample dataset fields for auto-suggest
-  const sampleFields = data && data.length > 0 ? Object.keys(data[0]) : [];
+  const sampleFields = (() => {
+    if (editingSubReportPath) {
+      // SubReport nested field suggestions from mock sample items
+      const nestedSample = data?.[0]?.serials as Record<string, unknown>[] | undefined;
+      if (nestedSample && nestedSample.length > 0) {
+        return Object.keys(nestedSample[0]);
+      }
+      return ['serialNo', 'lotNo', 'location', 'qcStatus'];
+    }
+    return data && data.length > 0 ? Object.keys(data[0]) : [];
+  })();
 
   // Update Band properties (e.g. groupBy, pageBreakAfter)
   const updateBandProp = (patch: Record<string, unknown>) => {
@@ -855,6 +868,23 @@ export const PropertyPanel: React.FC = () => {
                     />
                     <p className="text-[9px] text-slate-500 mt-1">
                       將自動從明細每筆紀錄中提取此陣列（例如 <code>currentRow.serials</code>）並展開呈現在該項目下方。
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-blue-200/80">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const state = useReportStore.getState();
+                        state.enterSubReportEditor(selectedBand.id, selectedControl.id);
+                      }}
+                      className="w-full text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center space-x-1.5 shadow-xs"
+                    >
+                      <TableProperties className="h-3.5 w-3.5" />
+                      <span>開啟子報表次級畫布 (Bands 排版)</span>
+                    </Button>
+                    <p className="text-[8.5px] text-slate-500 text-center mt-1">
+                      自由增刪控制項、欄位、條碼與調整子表頭/明細區段高
                     </p>
                   </div>
                 </div>
