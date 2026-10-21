@@ -57,10 +57,13 @@
     - `↑` `↓` `←` `→`：方向鍵精細微調 1pt（按住 `Shift` 加速 5pt）。
     - `Escape`：取消選取，切換回全域報表版面設定。
     - `Ctrl + 滑鼠滾輪`：畫布 50% ~ 200% 平滑縮放。
-- **資料集與欄位總管 (Dataset & Field List)**：
-  - 側邊欄抽屜式「資料集欄位總管」，自動自資料集萃取可用欄位（`index`、`sku`、`productName`、`category`、`unit`、`quantity`、`unitPrice`、`amount`）。
-  - 支援關鍵字搜尋欄位、一鍵新增或拖放至明細列。
-  - 支援透過 `useReportStore.getState().setData(apiData)` 動態注入後端 API 真實資料。
+- **旗艦級資料集欄位總管 (Redesigned Field List Drawer)**：
+  - **320px 寬幅抽屜**：告別擁擠直列排版，自動同步正規化資料模型（`ReportDataSource`）。
+  - **多維度分類頁籤**：提供 `全部 (26)`、`單頭主檔 (16)`、`明細清單 (10)` 快速切換，支援手風琴折疊。
+  - **型別色彩編碼**：字串（藍色）、數值（綠色+格式提示）、日期（紫色）、布林（琥珀色），一目了然。
+  - **即時真實範例值預覽 (Sample Values)**：卡片內直接呈現當前資料來源的真實範例內容（例如：`值: 台積光電...`、`值: NT$ 104,900`），排版時心智模型極其清晰。
+  - **拖曳抓手與快速加入**：卡片自帶拖曳抓手（`GripVertical`），支援按住直接拖曳至畫布目標 Band，或一鍵「+」自動定位加入。
+  - **宿主 App 嵌入相容**：支援透過 `useReportStore.getState().setDataSource(yourApiDataSource)` 動態注入後端 API 資料源。
 - **可擴充外掛控制項系統 (Plugin Registry)**：
   - 內建 9 大開箱即用控制項：`Label` (文字標籤)、`Field` (資料欄位)、`Expression` (計算表達式)、`Line` (線段分隔)、`Barcode` (條碼)、`QRCode` (二維碼)、`Image` (圖片)、`CheckBox` (核取方塊)、`Panel` (邊框容器)。
 - **真實企業出貨單設計標準**：
