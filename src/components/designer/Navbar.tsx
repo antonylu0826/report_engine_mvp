@@ -20,6 +20,7 @@ import { ReportPDFDocument } from '@/compiler/pdfCompiler';
 export const Navbar: React.FC = () => {
   const {
     report,
+    dataSource,
     data,
     activeTab,
     setActiveTab,
@@ -112,7 +113,7 @@ export const Navbar: React.FC = () => {
   const handleExportPDF = async () => {
     try {
       setIsExporting(true);
-      const doc = <ReportPDFDocument report={report} data={data} />;
+      const doc = <ReportPDFDocument report={report} data={data} dataSource={dataSource} />;
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');

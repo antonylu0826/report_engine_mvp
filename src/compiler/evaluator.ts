@@ -41,6 +41,12 @@ export function evaluateExpression(
   if (fieldName) {
     const val = getNestedValue(context.currentRow, fieldName);
     if (val !== undefined) return val;
+
+    // Fallback: check Master/Header reportParameters
+    if (context.reportParameters) {
+      const paramVal = getNestedValue(context.reportParameters, fieldName);
+      if (paramVal !== undefined) return paramVal;
+    }
   }
 
   // 2. No expression provided

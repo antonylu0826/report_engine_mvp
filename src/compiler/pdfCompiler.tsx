@@ -91,8 +91,9 @@ function renderBand(
 
 export interface PDFCompilerProps {
   report: ReportDefinition;
-  data: Record<string, unknown>[];
+  data?: Record<string, unknown>[];
   parameters?: Record<string, unknown>;
+  dataSource?: import('../types/datasource').ReportDataSource;
 }
 
 /**
@@ -101,9 +102,16 @@ export interface PDFCompilerProps {
 export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
   report,
   data,
-  parameters = {},
+  parameters,
+  dataSource,
 }) => {
   const { pageSettings, bands } = report;
+
+  const actualData = data || dataSource?.data?.items || [];
+  const actualParameters = {
+    ...(dataSource?.data?.parameters || {}),
+    ...(parameters || {}),
+  };
 
   const reportHeaderBand = bands.find((b) => b.type === 'ReportHeader');
   const pageHeaderBand = bands.find((b) => b.type === 'PageHeader');
@@ -114,8 +122,8 @@ export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
   const pageFooterBand = bands.find((b) => b.type === 'PageFooter');
 
   const globalContext: EvalContext = {
-    dataSource: data,
-    reportParameters: parameters,
+    dataSource: actualData,
+    reportParameters: actualParameters,
   };
 
   const pagePadding = {
@@ -134,8 +142,8 @@ export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
 
   // Group data rows
   const groups = hasGrouping
-    ? groupDataRows(data, groupByField, groupSortOrder)
-    : [{ key: 'all', field: '', rows: data }];
+    ? groupDataRows(actualData, groupByField, groupSortOrder)
+    : [{ key: 'all', field: '', rows: actualData }];
 
   return (
     <Document title={report.name}>

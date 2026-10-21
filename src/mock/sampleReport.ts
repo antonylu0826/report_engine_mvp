@@ -821,3 +821,47 @@ export const sampleOrderData14 = generateOrderItems(14);
 export const sampleOrderData45 = generateOrderItems(45);
 export const sampleOrderData100 = generateOrderItems(100);
 export const sampleOrderData = sampleOrderData14;
+
+export const sampleOrderDataSource: import('../types/datasource').ReportDataSource = {
+  id: 'ds-delivery-order',
+  name: '企業標準銷貨出貨單資料源',
+  schema: {
+    parameters: [
+      { name: 'orderNo', label: '出貨單號', type: 'string', sampleValue: 'ORD-2026-1020-008', description: 'ERP 唯一出貨單號' },
+      { name: 'customerName', label: '客戶名稱', type: 'string', sampleValue: '台灣積體電路製造股份有限公司', description: '交易客戶法定全銜' },
+      { name: 'uniformInvoiceNo', label: '統一編號', type: 'string', sampleValue: '22099131', description: '客戶營利事業統一編號' },
+      { name: 'contactPerson', label: '聯絡人', type: 'string', sampleValue: '陳建廷 (資深採購經理)', description: '收貨/對帳負責窗口' },
+      { name: 'contactPhone', label: '聯絡電話', type: 'string', sampleValue: '(03) 578-1688 #204', description: '聯絡分機' },
+      { name: 'deliveryAddress', label: '交貨地址', type: 'string', sampleValue: '新竹科學園區力行六路 8 號 (十二廠 P4)', description: '貨物配送實際卸貨廠址' },
+      { name: 'poNumber', label: '客戶採購單號', type: 'string', sampleValue: 'PO-TSMC-2026-X892', description: '客戶方採購訂單編號' },
+      { name: 'paymentTerms', label: '付款條件', type: 'string', sampleValue: '月結 60 天 (電匯 T/T)', description: '商業會計結算方式' },
+      { name: 'deliveryDate', label: '預定出貨日', type: 'date', sampleValue: '2026-10-21', description: '預計交貨出庫日' },
+      { name: 'salesRep', label: '負責業務', type: 'string', sampleValue: '張啟銘 (業務部二組)', description: '專案業務工程師' },
+    ],
+    detailFields: [
+      { name: 'index', label: '項次', type: 'number', formatHint: 'N0', sampleValue: 1, description: '明細流水號' },
+      { name: 'sku', label: '產品料號', type: 'string', sampleValue: 'IT-MBP16-M3M', description: '標準物料 SKU 代碼' },
+      { name: 'category', label: '產品品類', type: 'string', sampleValue: '資訊運算設備', description: '產品分類歸屬' },
+      { name: 'productName', label: '品名規格', type: 'string', sampleValue: 'Apple MacBook Pro 16" (M3 Max / 36GB / 1TB)', description: '商品完整規格說明' },
+      { name: 'unit', label: '單位', type: 'string', sampleValue: '台', description: '出貨計量單位' },
+      { name: 'quantity', label: '數量', type: 'number', formatHint: 'N0', sampleValue: 3, description: '實交出貨數量' },
+      { name: 'unitPrice', label: '單價', type: 'number', formatHint: 'C0', sampleValue: 104900, description: '未稅銷售單價' },
+      { name: 'amount', label: '金額小計', type: 'number', formatHint: 'C0', sampleValue: 314700, description: '項目小計金額 (數量 × 單價)' },
+    ],
+  },
+  data: {
+    parameters: {
+      orderNo: 'ORD-2026-1020-008',
+      customerName: '台灣積體電路製造股份有限公司',
+      uniformInvoiceNo: '22099131',
+      contactPerson: '陳建廷 (資深採購經理)',
+      contactPhone: '(03) 578-1688 #204',
+      deliveryAddress: '新竹科學園區力行六路 8 號 (十二廠 P4)',
+      poNumber: 'PO-TSMC-2026-X892',
+      paymentTerms: '月結 60 天 (電匯 T/T)',
+      deliveryDate: '2026-10-21',
+      salesRep: '張啟銘 (業務部二組)',
+    },
+    items: sampleOrderData14,
+  },
+};

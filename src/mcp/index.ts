@@ -19,7 +19,7 @@ import React from 'react';
 import ReactPDF, { Font } from '@react-pdf/renderer';
 
 import type { ReportDefinition, ControlDefinition } from '../types/report.js';
-import { sampleOrderReport, sampleOrderData45, sampleOrderData14 } from '../mock/sampleReport.js';
+import { sampleOrderReport, sampleOrderData45, sampleOrderData14, sampleOrderDataSource } from '../mock/sampleReport.js';
 import { ReportPDFDocument } from '../compiler/pdfCompiler.js';
 import { inspectReportLayout, renderReportToSvg } from '../inspector/layoutInspector.js';
 
@@ -316,17 +316,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'get_available_data_fields': {
         const fieldMeta = {
-          description: '出貨驗收單資料模型與可用欄位規格',
-          detailFields: [
-            { fieldName: 'index', title: '項次', type: 'number', example: 1 },
-            { fieldName: 'sku', title: '品號/SKU', type: 'string', example: 'IT-MBP16-M3M' },
-            { fieldName: 'productName', title: '品名規格', type: 'string', example: 'Apple MacBook Pro 16" (M3 Max / 36GB / 1TB)' },
-            { fieldName: 'category', title: '品類', type: 'string', example: '資訊運算設備' },
-            { fieldName: 'unit', title: '單位', type: 'string', example: '台' },
-            { fieldName: 'quantity', title: '數量', type: 'number', example: 3, formatHint: 'N0' },
-            { fieldName: 'unitPrice', title: '單價', type: 'number', example: 104900, formatHint: 'C0' },
-            { fieldName: 'amount', title: '金額小計', type: 'number', example: 314700, formatHint: 'C0' },
-          ],
+          dataSourceId: sampleOrderDataSource.id,
+          dataSourceName: sampleOrderDataSource.name,
+          parameters: sampleOrderDataSource.schema.parameters || [],
+          detailFields: sampleOrderDataSource.schema.detailFields || [],
           aggregateFormulas: [
             { expression: '=SUM(amount)', description: '計算當前報表明細總金額合計', formatHint: 'C0' },
             { expression: '=SUM(quantity)', description: '計算出貨品項總數量', formatHint: 'N0' },
@@ -338,7 +331,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             { tag: '[TotalPages]', description: '總頁數 (如 共 [TotalPages] 頁)' },
             { tag: '[ExecutionTime]', description: '報表產生列印時間' },
           ],
-          sampleRecord: sampleOrderData14[0],
+          sampleParameters: sampleOrderDataSource.data.parameters,
+          sampleDetailRecord: sampleOrderDataSource.data.items[0],
         };
 
         return {

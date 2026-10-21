@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import type { ReportDefinition, ControlDefinition } from '../types/report';
-import { sampleOrderReport, sampleOrderData } from '../mock/sampleReport';
+import type { ReportDataSource } from '../types/datasource';
+import { sampleOrderReport, sampleOrderData, sampleOrderDataSource } from '../mock/sampleReport';
 
 export type ReportTab = 'designer' | 'preview' | 'schema' | 'agent';
 
 interface ReportState {
   report: ReportDefinition;
+  dataSource: ReportDataSource;
   data: Record<string, unknown>[];
   selectedBandId: string | null;
   selectedControlId: string | null;
@@ -27,11 +29,13 @@ interface ReportState {
   setZoom: (zoom: number) => void;
   resetToSample: () => void;
   setReport: (report: ReportDefinition) => void;
+  setDataSource: (dataSource: ReportDataSource) => void;
   setData: (data: Record<string, unknown>[]) => void;
 }
 
 export const useReportStore = create<ReportState>((set) => ({
   report: sampleOrderReport,
+  dataSource: sampleOrderDataSource,
   data: sampleOrderData,
   selectedBandId: null,
   selectedControlId: null,
@@ -120,6 +124,7 @@ export const useReportStore = create<ReportState>((set) => ({
   resetToSample: () => {
     set({
       report: sampleOrderReport,
+      dataSource: sampleOrderDataSource,
       data: sampleOrderData,
       selectedBandId: null,
       selectedControlId: null,
@@ -128,5 +133,21 @@ export const useReportStore = create<ReportState>((set) => ({
 
   setReport: (report) => set({ report }),
 
-  setData: (data) => set({ data }),
+  setDataSource: (dataSource) =>
+    set({
+      dataSource,
+      data: dataSource.data.items || [],
+    }),
+
+  setData: (data) =>
+    set((state) => ({
+      data,
+      dataSource: {
+        ...state.dataSource,
+        data: {
+          ...state.dataSource.data,
+          items: data,
+        },
+      },
+    })),
 }));

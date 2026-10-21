@@ -11,16 +11,16 @@ import {
 } from '@/mock/sampleReport';
 
 export const ReportViewer: React.FC = () => {
-  const { report, data, setData } = useReportStore();
+  const { report, dataSource, data, setData } = useReportStore();
 
   const [instance, updateInstance] = usePDF({
-    document: <ReportPDFDocument report={report} data={data} />,
+    document: <ReportPDFDocument report={report} data={data} dataSource={dataSource} />,
   });
 
-  // Re-trigger update when report or data changes
+  // Re-trigger update when report, dataSource, or data changes
   React.useEffect(() => {
-    updateInstance(<ReportPDFDocument report={report} data={data} />);
-  }, [report, data, updateInstance]);
+    updateInstance(<ReportPDFDocument report={report} data={data} dataSource={dataSource} />);
+  }, [report, dataSource, data, updateInstance]);
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.25rem)] bg-slate-900 select-none">

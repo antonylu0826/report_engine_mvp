@@ -13,6 +13,7 @@ import {
   X,
   Plus,
   Search,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { controlRegistry } from '@/controls/registry';
@@ -21,6 +22,7 @@ import type { ControlType } from '@/types/report';
 export const Toolbox: React.FC = () => {
   const {
     report,
+    dataSource,
     data,
     addControl,
     selectedBandId,
@@ -73,11 +75,36 @@ export const Toolbox: React.FC = () => {
     setTimeout(() => setJustAddedControlId(null), 900);
   };
 
-  // Sample dataset fields
-  const sampleFields = data && data.length > 0 ? Object.keys(data[0]) : [];
-  const filteredFields = fieldSearch
-    ? sampleFields.filter((f) => f.toLowerCase().includes(fieldSearch.toLowerCase()))
-    : sampleFields;
+  // Normalized Schema fields (Parameters + Detail Fields)
+  const parameters = dataSource?.schema?.parameters || [];
+  const detailFields =
+    dataSource?.schema?.detailFields ||
+    (data && data.length > 0
+      ? Object.keys(data[0]).map((key) => ({
+          name: key,
+          label: key,
+          type: 'string' as const,
+        }))
+      : []);
+
+  const query = fieldSearch.toLowerCase().trim();
+  const filteredParameters = query
+    ? parameters.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          p.label.toLowerCase().includes(query) ||
+          p.description?.toLowerCase().includes(query)
+      )
+    : parameters;
+
+  const filteredDetailFields = query
+    ? detailFields.filter(
+        (f) =>
+          f.name.toLowerCase().includes(query) ||
+          f.label.toLowerCase().includes(query) ||
+          f.description?.toLowerCase().includes(query)
+      )
+    : detailFields;
 
   // Fully implemented 8-control palette (DevExpress 2-column layout)
   const paletteGroups = [
@@ -226,49 +253,137 @@ export const Toolbox: React.FC = () => {
           </div>
 
           {/* Fields List */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            <div className="text-[10px] text-slate-400 uppercase font-mono px-1 mb-1">
-              可綁定欄位 ({filteredFields.length})
-            </div>
-            {filteredFields.map((field) => (
-              <div
-                key={field}
-                draggable={true}
-                onDragStart={(e) => {
-                  e.dataTransfer.setData('report-control-type', 'Field');
-                  e.dataTransfer.setData('report-field-name', field);
-                  e.dataTransfer.setData('text/plain', `[${field}]`);
-                  e.dataTransfer.effectAllowed = 'copy';
-                }}
-                className="group flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-100 border border-transparent hover:border-slate-200 text-xs transition-colors dark:hover:bg-slate-800 cursor-grab active:cursor-grabbing select-none"
-                title={`按住拖拉 [${field}] 至畫布或點選右側 + 加入`}
-              >
-                <div className="flex items-center space-x-2 truncate font-mono text-[11px] text-slate-700 dark:text-slate-300">
-                  <Database className="h-3 w-3 text-slate-400 shrink-0" />
-                  <span className="truncate">{field}</span>
+          <div className="flex-1 overflow-y-auto p-2 space-y-3">
+            {/* Group 1: Parameters (Master / Header) */}
+            {filteredParameters.length > 0 && (
+              <div>
+                <div className="flex items-center space-x-1 text-[10px] text-blue-600 font-semibold uppercase px-1 mb-1.5 dark:text-blue-400">
+                  <SlidersHorizontal className="h-3 w-3" />
+                  <span>單頭主檔參數 ({filteredParameters.length})</span>
                 </div>
-                <button
-                  onClick={() => {
-                    const target = targetBand || report.bands.find((b) => b.type === 'Detail');
-                    if (target) {
-                      addControl(target.id, {
-                        type: 'Field',
-                        x: 30,
-                        y: 4,
-                        width: 100,
-                        height: 14,
-                        fieldName: field,
-                        style: { fontSize: 9, color: '#0f172a' },
-                      });
-                    }
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded transition-all dark:hover:text-slate-100 dark:hover:bg-slate-700"
-                  title={`加入 [${field}] 至 ${targetBand?.type || 'Detail'}`}
-                >
-                  <Plus className="h-3 w-3" />
-                </button>
+                <div className="space-y-1">
+                  {filteredParameters.map((param) => (
+                    <div
+                      key={param.name}
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('report-control-type', 'Field');
+                        e.dataTransfer.setData('report-field-name', param.name);
+                        e.dataTransfer.setData('text/plain', `[${param.name}]`);
+                        e.dataTransfer.effectAllowed = 'copy';
+                      }}
+                      className="group flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-blue-50/70 border border-transparent hover:border-blue-200 text-xs transition-colors dark:hover:bg-blue-950/40 cursor-grab active:cursor-grabbing select-none"
+                      title={`${param.label} [${param.name}] - 拖曳至畫布或點選右側 +`}
+                    >
+                      <div className="flex flex-col min-w-0 pr-1">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="font-medium text-[11px] text-slate-800 dark:text-slate-200 truncate">
+                            {param.label}
+                          </span>
+                          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400">
+                            {param.type}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-400 truncate">
+                          [{param.name}]
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const target =
+                            targetBand ||
+                            report.bands.find((b) => b.type === 'ReportHeader') ||
+                            report.bands[0];
+                          if (target) {
+                            addControl(target.id, {
+                              type: 'Field',
+                              x: 20,
+                              y: 6,
+                              width: 130,
+                              height: 16,
+                              fieldName: param.name,
+                              style: { fontSize: 9, color: '#0f172a' },
+                            });
+                          }
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-100 rounded transition-all dark:hover:text-blue-300 dark:hover:bg-blue-900"
+                        title={`加入 [${param.name}] 至 ${targetBand?.type || 'ReportHeader'}`}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
+
+            {/* Group 2: Detail List Fields */}
+            <div>
+              <div className="flex items-center space-x-1 text-[10px] text-emerald-600 font-semibold uppercase px-1 mb-1.5 dark:text-emerald-400">
+                <Database className="h-3 w-3" />
+                <span>明細列資料欄位 ({filteredDetailFields.length})</span>
+              </div>
+              <div className="space-y-1">
+                {filteredDetailFields.map((field) => (
+                  <div
+                    key={field.name}
+                    draggable={true}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('report-control-type', 'Field');
+                      e.dataTransfer.setData('report-field-name', field.name);
+                      e.dataTransfer.setData('text/plain', `[${field.name}]`);
+                      e.dataTransfer.effectAllowed = 'copy';
+                    }}
+                    className="group flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-emerald-50/70 border border-transparent hover:border-emerald-200 text-xs transition-colors dark:hover:bg-emerald-950/40 cursor-grab active:cursor-grabbing select-none"
+                    title={`${field.label} [${field.name}] - 拖曳至畫布或點選右側 +`}
+                  >
+                    <div className="flex flex-col min-w-0 pr-1">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-medium text-[11px] text-slate-800 dark:text-slate-200 truncate">
+                          {field.label}
+                        </span>
+                        {field.formatHint && (
+                          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">
+                            {field.formatHint}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-400 truncate">
+                        [{field.name}]
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const target =
+                          targetBand ||
+                          report.bands.find((b) => b.type === 'Detail') ||
+                          report.bands[0];
+                        if (target) {
+                          addControl(target.id, {
+                            type: 'Field',
+                            x: 30,
+                            y: 4,
+                            width: 100,
+                            height: 14,
+                            fieldName: field.name,
+                            formatString: field.formatHint,
+                            style: {
+                              fontSize: 9,
+                              color: '#0f172a',
+                              textAlign: field.type === 'number' ? 'right' : 'left',
+                            },
+                          });
+                        }
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-emerald-600 hover:bg-emerald-100 rounded transition-all dark:hover:text-emerald-300 dark:hover:bg-emerald-900"
+                      title={`加入 [${field.name}] 至 ${targetBand?.type || 'Detail'}`}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </aside>
       )}
