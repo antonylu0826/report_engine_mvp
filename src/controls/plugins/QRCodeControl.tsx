@@ -16,7 +16,7 @@ export const QRCodeControl: ReportControlPlugin = {
   defaultHeight: 60,
   createDefault: (overrides) => ({
     type: 'QRCode',
-    text: 'https://example.com/verify?id=DO-20261020-0089',
+    text: 'https://example.com/verify?id=ORD-20261020-0089',
     qrErrorLevel: 'M',
     width: 60,
     height: 60,

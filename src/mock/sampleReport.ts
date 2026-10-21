@@ -30,21 +30,6 @@ export const sampleOrderReport: ReportDefinition = {
             color: '#0f172a',
           },
         },
-        // Fast CheckBox indicator linked to dynamic parameter withInvoice
-        {
-          id: 'ctl-invoice-check',
-          type: 'CheckBox',
-          x: 4,
-          y: 8,
-          width: 110,
-          height: 14,
-          fieldName: 'withInvoice',
-          text: '隨貨附正本發票',
-          style: {
-            fontSize: 7.5,
-            color: '#475569',
-          },
-        },
         // Company Main Title
         {
           id: 'ctl-company-title',
@@ -167,7 +152,7 @@ export const sampleOrderReport: ReportDefinition = {
           y: 66,
           width: 240,
           height: 15,
-          text: '單據編號：DO-20261020-0089',
+          text: '單據編號：ORD-20261020-0089',
           style: { fontSize: 8.5, fontWeight: 'bold', color: '#0f172a' },
         },
         {
@@ -177,7 +162,7 @@ export const sampleOrderReport: ReportDefinition = {
           y: 83,
           width: 240,
           height: 15,
-          text: '出貨日期：2026 年 10 月 20 日',
+          text: '出貨日期：2026 年 10 月 21 日',
           style: { fontSize: 8.5, color: '#334155' },
         },
         {
@@ -794,7 +779,7 @@ export const sampleOrderReport: ReportDefinition = {
           y: 4,
           width: 260,
           height: 14,
-          text: '列印日期：2026-10-20 | 系統版本：ERP-V8.5 Enterprise | 內部機密',
+          text: '列印日期：2026-10-21 | 系統版本：ERP-V8.5 Enterprise | 內部機密',
           style: { fontSize: 7.5, color: '#94a3b8' },
         },
         {

@@ -15,7 +15,7 @@ export const BarcodeControl: ReportControlPlugin = {
   defaultHeight: 40,
   createDefault: (overrides) => ({
     type: 'Barcode',
-    text: 'DO-20261020-0089',
+    text: 'ORD-20261020-0089',
     barcodeFormat: 'CODE128',
     displayValue: true,
     width: 160,

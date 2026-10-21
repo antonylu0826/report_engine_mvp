@@ -24,22 +24,18 @@ export const baseProductCatalog = [
  * Standard Order Master Parameters
  */
 export const defaultOrderParameters: Record<string, unknown> = {
-  orderNo: 'ORD-2026-1020-0089',
+  orderNo: 'ORD-20261020-0089',
   customerName: '台積光電科技股份有限公司',
-  uniformInvoiceNo: '88765432',
-  contactPerson: '陳建宏 (資深採購經理)',
-  contactPhone: '(03) 578-9999 #203',
-  deliveryAddress: '新竹市東區科學園區創新一路 88 號 5 樓 (研發總部)',
+  taxId: '88765432',
+  contactPerson: '陳建宏 經理',
+  contactPhone: '(03) 578-9999 分機 203',
+  deliveryAddress: '新竹市東區科學園區創新一路 88 號 5 樓',
   poNumber: 'PO-TW-2026-904',
   paymentTerms: '月結 30 天 (電匯付款)',
   currency: '新台幣 NTD',
   deliveryDate: '2026-10-21',
-  salesRep: '張啟銘 (業務部二組)',
-  isUrgent: false,
-  withInvoice: true,
-  shippingWarehouse: '桃園第一保稅物流倉',
-  shippingMethod: '常溫專車直配',
-  remark: '本批次商品已完成入庫前 QC 檢驗，隨貨附正本發票與原廠保證書，抵達廠區前 30 分鐘請先電聯窗口。',
+  salesRep: '張啟銘 (業務部)',
+  remark: '抵達廠區前 30 分鐘請先電聯窗口。',
 };
 
 /**
@@ -80,20 +76,16 @@ export const sampleOrderDataSource: ReportDataSource = {
   schema: {
     parameters: [
       { name: 'orderNo', label: '出貨單號', type: 'string', description: 'ERP 唯一出貨單號 (支援條碼)' },
+      { name: 'deliveryDate', label: '出貨日期', type: 'date', description: '貨品出庫配送日期' },
       { name: 'customerName', label: '客戶名稱', type: 'string', description: '交易客戶法定全銜' },
-      { name: 'uniformInvoiceNo', label: '統一編號', type: 'string', description: '客戶營利事業統一編號' },
+      { name: 'taxId', label: '統一編號', type: 'string', description: '客戶營利事業統一編號' },
       { name: 'contactPerson', label: '聯絡人', type: 'string', description: '收貨/對帳負責窗口' },
       { name: 'contactPhone', label: '聯絡電話', type: 'string', description: '聯絡電話與分機' },
       { name: 'deliveryAddress', label: '交貨地址', type: 'string', description: '貨物配送實際卸貨廠址' },
       { name: 'poNumber', label: '客戶採購單號', type: 'string', description: '客戶方發行之採購訂單編號' },
       { name: 'paymentTerms', label: '付款條件', type: 'string', description: '商業會計結算約定條件' },
       { name: 'currency', label: '計價幣別', type: 'string', description: '報表結算基準幣別' },
-      { name: 'deliveryDate', label: '預定出貨日', type: 'date', description: '預計交貨出庫日' },
-      { name: 'salesRep', label: '負責業務', type: 'string', description: '專案業務工程師' },
-      { name: 'isUrgent', label: '急件標記', type: 'boolean', description: '是否為優先急件配送 (支援 CheckBox)' },
-      { name: 'withInvoice', label: '隨附發票', type: 'boolean', description: '是否隨貨附紙本統一發票' },
-      { name: 'shippingWarehouse', label: '出貨倉庫', type: 'string', description: '出庫物流中心' },
-      { name: 'shippingMethod', label: '配送方式', type: 'string', description: '物流承運方式' },
+      { name: 'salesRep', label: '負責業務', type: 'string', description: '專案業務經理' },
       { name: 'remark', label: '單據備註', type: 'string', description: '訂單重要注意事項' },
     ],
     detailFields: [

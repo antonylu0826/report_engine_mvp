@@ -682,7 +682,7 @@ export const PropertyPanel: React.FC = () => {
                     <Label className="text-[10px] text-slate-500">靜態條碼內容 (預設)</Label>
                     <Input
                       value={selectedControl.text ?? ''}
-                      placeholder="如 DO-20261020-0089"
+                      placeholder="如 ORD-20261020-0089"
                       onChange={(e) =>
                         updateControl(selectedBand.id, selectedControl.id, {
                           text: e.target.value,
