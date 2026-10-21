@@ -113,9 +113,9 @@ export const sampleOrderDataSource: ReportDataSource = {
       { name: 'batchNo', label: '製造批號', type: 'string', description: '原廠生產品質追溯批號' },
       {
         name: 'serials',
-        label: '出廠序號與檢驗明細 (一對多子資料)',
+        label: '序號與檢驗明細',
         type: 'array',
-        description: '產品批次出廠序號、製造批號與品管檢驗狀態',
+        description: '產品批次出廠序號與品檢結果',
         children: [
           { name: 'serialNo', label: '出廠序號 (S/N)', type: 'string', description: '產品出廠序號' },
           { name: 'lotNo', label: '生產批號', type: 'string', description: '工廠製程追溯批號' },

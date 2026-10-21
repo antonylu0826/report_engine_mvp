@@ -5,7 +5,7 @@ import { sampleOrderReport, sampleOrderData, sampleOrderDataSource } from '../mo
 
 export type ReportTab = 'designer' | 'preview' | 'schema' | 'agent';
 
-export function createDefaultSubReportDefinition(title = '出廠序號與檢驗明細'): ReportDefinition {
+export function createDefaultSubReportDefinition(title = '序號與檢驗明細'): ReportDefinition {
   return {
     id: `subreport-${Date.now()}`,
     name: title,

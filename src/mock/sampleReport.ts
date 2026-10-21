@@ -498,11 +498,11 @@ export const sampleOrderReport: ReportDefinition = {
           y: 22,
           width: 515,
           height: 38,
-          subReportTitle: '產品出廠序號與品檢明細 (一對多子報表)',
+          subReportTitle: '序號與檢驗明細',
           subReportBinding: 'serials',
           subReportDefinition: {
             id: 'subreport-serials-def',
-            name: '出廠序號與品檢明細表',
+            name: '序號與檢驗明細',
             pageSettings: {
               size: 'A4',
               orientation: 'portrait',

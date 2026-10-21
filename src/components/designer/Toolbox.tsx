@@ -470,20 +470,20 @@ export const Toolbox: React.FC = () => {
 
                           {/* Nested Sub-fields preview if this is an array field */}
                           {field.children && field.children.length > 0 && (
-                            <div className="ml-5 pl-2.5 py-1 mb-1 border-l-2 border-cyan-400/80 bg-cyan-50/30 dark:bg-slate-900/40 rounded-r space-y-0.5">
-                              <span className="text-[9px] font-semibold text-cyan-800 dark:text-cyan-300 block">
-                                子清單欄位 (一對多)：
+                            <div className="ml-5 pl-2 py-0.5 mb-1 border-l border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40 rounded-r space-y-0.5">
+                              <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 block">
+                                子欄位：
                               </span>
                               {field.children.map((child) => (
                                 <div
                                   key={child.name}
-                                  className="flex items-center space-x-1.5 text-[9.5px] text-slate-600 dark:text-slate-300 font-mono"
+                                  className="flex items-center space-x-1.5 text-[9px] text-slate-600 dark:text-slate-300 font-mono"
                                 >
-                                  <span className="text-cyan-500">↳</span>
+                                  <span className="text-slate-400">↳</span>
                                   <span className="font-sans font-medium text-slate-700 dark:text-slate-200">
                                     {child.label}
                                   </span>
-                                  <span className="text-[8.5px] text-slate-400">
+                                  <span className="text-[8px] text-slate-400">
                                     ({child.name})
                                   </span>
                                 </div>

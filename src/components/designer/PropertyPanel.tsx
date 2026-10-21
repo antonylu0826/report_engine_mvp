@@ -834,59 +834,52 @@ export const PropertyPanel: React.FC = () => {
 
               {/* SubReport Specific Inspector */}
               {selectedControl.type === 'SubReport' && (
-                <div className="space-y-2.5 bg-blue-50/60 p-2.5 rounded-md border border-blue-200 dark:bg-slate-900 dark:border-blue-900/50">
-                  <div className="flex items-center space-x-1.5 text-blue-900 dark:text-blue-200 font-semibold text-[11px]">
-                    <TableProperties className="h-3.5 w-3.5 text-blue-600" />
-                    <span>子報表 (SubReport) 一對多設定</span>
+                <div className="space-y-3 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-medium text-xs">
+                    <TableProperties className="h-3.5 w-3.5 text-slate-500" />
+                    <span>子報表設定</span>
                   </div>
 
-                  <div>
-                    <Label className="text-[10px] text-slate-500">子報表標題備註</Label>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-slate-500">標題</Label>
                     <Input
                       value={selectedControl.subReportTitle ?? ''}
-                      placeholder="如 產品出廠序號與品檢明細"
+                      placeholder="序號與檢驗明細"
                       onChange={(e) =>
                         updateControl(selectedBand.id, selectedControl.id, {
                           subReportTitle: e.target.value,
                         })
                       }
-                      className="text-xs"
+                      className="h-8 text-xs bg-white dark:bg-slate-950"
                     />
                   </div>
 
-                  <div>
-                    <Label className="text-[10px] text-slate-500">綁定父列子陣列欄位 (Data Binding)</Label>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-slate-500">綁定欄位</Label>
                     <Input
                       value={selectedControl.subReportBinding ?? ''}
-                      placeholder="如 serials, components, logs"
+                      placeholder="serials"
                       onChange={(e) =>
                         updateControl(selectedBand.id, selectedControl.id, {
                           subReportBinding: e.target.value,
                         })
                       }
-                      className="font-mono text-xs"
+                      className="h-8 font-mono text-xs bg-white dark:bg-slate-950"
                     />
-                    <p className="text-[9px] text-slate-500 mt-1">
-                      將自動從明細每筆紀錄中提取此陣列（例如 <code>currentRow.serials</code>）並展開呈現在該項目下方。
-                    </p>
                   </div>
 
-                  <div className="pt-2 border-t border-blue-200/80">
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        const state = useReportStore.getState();
-                        state.enterSubReportEditor(selectedBand.id, selectedControl.id);
-                      }}
-                      className="w-full text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center space-x-1.5 shadow-xs"
-                    >
-                      <TableProperties className="h-3.5 w-3.5" />
-                      <span>開啟子報表次級畫布 (Bands 排版)</span>
-                    </Button>
-                    <p className="text-[8.5px] text-slate-500 text-center mt-1">
-                      自由增刪控制項、欄位、條碼與調整子表頭/明細區段高
-                    </p>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const state = useReportStore.getState();
+                      state.enterSubReportEditor(selectedBand.id, selectedControl.id);
+                    }}
+                    className="w-full text-xs font-normal flex items-center justify-center space-x-1.5 mt-2 h-8"
+                  >
+                    <TableProperties className="h-3.5 w-3.5 text-slate-500" />
+                    <span>編輯子報表</span>
+                  </Button>
                 </div>
               )}
 

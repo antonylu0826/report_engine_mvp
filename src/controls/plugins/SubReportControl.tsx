@@ -27,9 +27,9 @@ export const SubReportControl: ReportControlPlugin = {
     type: 'SubReport',
     width: 515,
     height: 46,
-    subReportTitle: '產品出廠序號與品檢明細 (一對多子報表)',
+    subReportTitle: '序號與檢驗明細',
     subReportBinding: 'serials',
-    subReportDefinition: createDefaultSubReportDefinition('產品出廠序號與品檢明細'),
+    subReportDefinition: createDefaultSubReportDefinition('序號與檢驗明細'),
     style: {
       backgroundColor: '#f8fafc',
       borderColor: '#94a3b8',
@@ -41,36 +41,36 @@ export const SubReportControl: ReportControlPlugin = {
   }),
 
   DesignerComponent: ({ control, isSelected }) => {
-    const title = control.subReportTitle || '產品出廠序號與品檢明細 (一對多子報表)';
+    const title = control.subReportTitle || '序號與檢驗明細';
     const binding = control.subReportBinding || 'serials';
     const subBands = control.subReportDefinition?.bands || [];
     const totalCtrls = subBands.reduce((acc, b) => acc + b.controls.length, 0);
 
     return (
       <div
-        className={`w-full h-full flex flex-col justify-between overflow-hidden rounded-xs transition-all ${
+        className={`w-full h-full flex flex-col justify-between overflow-hidden rounded-md transition-all ${
           isSelected
-            ? 'bg-blue-50/70 border-blue-500 shadow-xs ring-1 ring-blue-400/50'
-            : 'bg-slate-50/80 border-slate-300 hover:border-slate-400'
+            ? 'bg-slate-50 dark:bg-slate-900 border-slate-900 dark:border-slate-100 shadow-xs ring-1 ring-slate-400'
+            : 'bg-slate-50/50 dark:bg-slate-900/30 border-slate-300 dark:border-slate-700 hover:border-slate-400'
         } border border-dashed p-1.5`}
       >
         {/* SubReport Header Strip in Designer Canvas */}
-        <div className="flex items-center justify-between border-b border-slate-200/80 pb-1">
+        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-1">
           <div className="flex items-center space-x-1.5 min-w-0">
-            <span className="p-0.5 rounded bg-blue-100 text-blue-700">
+            <span className="p-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
               <TableProperties className="w-3 h-3" />
             </span>
-            <span className="text-[10px] font-bold text-slate-800 truncate">
+            <span className="text-[10px] font-semibold text-slate-800 dark:text-slate-200 truncate">
               {title}
             </span>
-            <span className="inline-flex items-center text-[9px] font-mono text-blue-700 bg-blue-100/70 px-1 rounded">
+            <span className="inline-flex items-center text-[9px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-800 px-1 rounded">
               <Layers className="w-2.5 h-2.5 mr-0.5" />
               {binding}
             </span>
           </div>
 
-          <div className="flex items-center space-x-1">
-            <span className="text-[8.5px] text-slate-500 bg-white border border-slate-200 px-1 rounded font-mono shrink-0">
+          <div className="flex items-center space-x-1.5">
+            <span className="text-[8.5px] text-slate-400 font-mono shrink-0">
               {subBands.length} 區段 · {totalCtrls} 控制項
             </span>
             {/* Quick Action Button to Enter SubReport Canvas */}
@@ -85,11 +85,11 @@ export const SubReportControl: ReportControlPlugin = {
                   state.enterSubReportEditor(parentBand.id, control.id);
                 }
               }}
-              className="inline-flex items-center space-x-0.5 text-[8.5px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-600 hover:text-white px-1.5 py-0.5 rounded transition-colors shadow-2xs pointer-events-auto"
-              title="進入次級畫布進行詳細排版"
+              className="inline-flex items-center space-x-0.5 text-[9px] text-slate-700 hover:text-slate-900 dark:text-slate-300 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded transition-colors shadow-2xs pointer-events-auto"
+              title="進入次級畫布進行排版"
             >
               <Edit3 className="w-2.5 h-2.5" />
-              <span>進入編輯</span>
+              <span>編輯</span>
             </button>
           </div>
         </div>

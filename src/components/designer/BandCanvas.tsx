@@ -10,6 +10,8 @@ import {
   TableProperties,
   FolderTree,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { controlRegistry } from '@/controls/registry';
 import { mapDesignerControlStyle } from '@/controls/styleUtils';
 
@@ -520,31 +522,32 @@ export const BandCanvas: React.FC = () => {
       >
         {/* SubReport Secondary Canvas Breadcrumb Banner */}
         {editingSubReportPath && (
-          <div className="mb-3 px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md flex items-center justify-between shadow-md">
+          <div className="mb-3 px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-between shadow-xs">
             <div className="flex items-center space-x-2 text-xs">
-              <span className="bg-white/20 text-white font-mono px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase">
-                子報表次級畫布 (BANDS 模式)
-              </span>
+              <Badge variant="secondary" className="gap-1 font-normal text-slate-700 dark:text-slate-200">
+                <TableProperties className="w-3 h-3 text-slate-500" />
+                <span>子報表</span>
+              </Badge>
               <button
                 onClick={exitSubReportEditor}
-                className="font-semibold text-blue-100 hover:text-white hover:underline flex items-center space-x-1"
-                title="回到主報表"
+                className="text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
               >
-                <span>主報表: {report.name}</span>
+                {report.name}
               </button>
-              <span className="text-white/60">/</span>
-              <span className="font-bold flex items-center space-x-1.5 text-white">
-                <TableProperties className="w-3.5 h-3.5 text-blue-200" />
-                <span>{activeReport.name}</span>
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
+                {activeReport.name}
               </span>
             </div>
 
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={exitSubReportEditor}
-              className="text-xs bg-white text-blue-700 hover:bg-blue-50 font-bold px-3 py-1 rounded-md transition-all shadow-xs"
+              className="h-7 text-xs px-2.5 font-normal text-slate-700 dark:text-slate-200"
             >
-              ← 完成並返回主報表
-            </button>
+              返回主報表
+            </Button>
           </div>
         )}
 
