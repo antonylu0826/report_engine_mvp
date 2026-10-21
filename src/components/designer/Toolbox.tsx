@@ -8,6 +8,7 @@ import {
   QrCode as QrCodeIcon,
   Image as ImageIcon,
   CheckSquare,
+  Square,
   CheckCircle2,
   X,
   Plus,
@@ -114,7 +115,7 @@ export const Toolbox: React.FC = () => {
       )
     : detailFields;
 
-  // Fully implemented 8-control palette (DevExpress 2-column layout)
+  // Exact original 2-column slim palette (DevExpress/ActiveReports standard)
   const paletteGroups = [
     {
       id: 'basic-and-shapes',
@@ -123,49 +124,46 @@ export const Toolbox: React.FC = () => {
           type: 'Label' as ControlType,
           name: '文字標籤 (Label)',
           icon: Type,
-          desc: '靜態抬頭或固定文字',
         },
         {
-          type: 'Field' as ControlType,
-          name: '資料欄位 (Field)',
-          icon: Database,
-          desc: '綁定資料集或單頭參數',
+          type: 'CheckBox' as ControlType,
+          name: '核取方塊 (CheckBox)',
+          icon: CheckSquare,
         },
         {
-          type: 'Expression' as ControlType,
-          name: '計算運算式',
-          icon: Calculator,
-          desc: '=SUM() 合計或頁碼',
+          type: 'Panel' as ControlType,
+          name: '面板容器 / 框線 (Panel)',
+          icon: Square,
         },
+        {
+          type: 'Image' as ControlType,
+          name: '靜態影像 (Image)',
+          icon: ImageIcon,
+        },
+      ],
+    },
+    {
+      id: 'lines-codes-expressions',
+      items: [
         {
           type: 'Line' as ControlType,
-          name: '分割線段 (Line)',
+          name: '線條 (Line)',
           icon: Minus,
-          desc: '水平或垂直分隔裝飾',
         },
         {
           type: 'Barcode' as ControlType,
-          name: '一維條碼 (Code128)',
+          name: '一維條碼 (Barcode - Code128)',
           icon: BarcodeIcon,
-          desc: '物流與單據條碼',
         },
         {
           type: 'QRCode' as ControlType,
           name: '二維碼 (QR Code)',
           icon: QrCodeIcon,
-          desc: '電子發票與防偽溯源',
         },
         {
-          type: 'Image' as ControlType,
-          name: '圖片標誌 (Image)',
-          icon: ImageIcon,
-          desc: '企業 Logo 與核決章',
-        },
-        {
-          type: 'CheckBox' as ControlType,
-          name: '核取方塊 (Check)',
-          icon: CheckSquare,
-          desc: '驗收勾選與布林狀態',
+          type: 'Expression' as ControlType,
+          name: '計算與統計式 (Expression ∑)',
+          icon: Calculator,
         },
       ],
     },
@@ -206,94 +204,66 @@ export const Toolbox: React.FC = () => {
   };
 
   return (
-    <div className="relative flex z-20">
-      {/* Primary Fixed Toolbox Sidebar */}
-      <aside className="w-56 border-r border-slate-200 bg-white/95 backdrop-blur h-[calc(100vh-3.25rem)] shadow-xs flex flex-col justify-between select-none dark:border-slate-800 dark:bg-slate-950/90">
-        <div className="p-3 overflow-y-auto">
-          {/* Header with Flyout Drawer Toggle Button */}
-          <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center space-x-1.5">
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                控制項工具箱
-              </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400">
-                8 項
-              </span>
-            </div>
+    <div className="relative flex select-none z-20">
+      {/* 1. Slim 2-Column Icon Palette (56px width, exactly DevExpress/ActiveReports standard - UNTOUCHED) */}
+      <aside className="w-14 border-r border-slate-200 bg-white flex flex-col items-center py-2 h-[calc(100vh-3.25rem)] dark:border-slate-800 dark:bg-slate-950 shadow-2xs">
+        {/* Top Database Toggle Button for Field List */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`w-9 h-9 rounded-md flex items-center justify-center transition-colors mb-2 ${
+            isExpanded
+              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900'
+          }`}
+          title={isExpanded ? '收合資料集總管' : '展開資料集總管 (Field Explorer)'}
+        >
+          <Database className="h-4.5 w-4.5 stroke-[1.8]" />
+        </button>
 
-            {/* Flyout Hamburger Toggle Button */}
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className={`p-1 rounded-md text-xs transition-colors flex items-center space-x-1 ${
-                isExpanded
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-              title="展開/收合資料集欄位總管 (可直接拖拉欄位至畫布)"
-            >
-              <Database className="h-3.5 w-3.5" />
-              <span className="text-[10px] font-medium font-sans">欄位</span>
-            </button>
-          </div>
+        <div className="w-9 h-[1px] bg-slate-200 dark:bg-slate-800 mb-2" />
 
-          {/* Target Band Placement Notice */}
-          <div className="mb-2 px-2 py-1 rounded bg-slate-50 border border-slate-100 text-[10px] text-slate-500 flex items-center justify-between dark:bg-slate-900/80 dark:border-slate-800">
-            <span>加入至目標：</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-300 font-mono">
-              {targetBand?.type || 'Detail'}
-            </span>
-          </div>
+        {/* 2-Column Icon Matrix */}
+        <div className="flex-1 overflow-y-auto w-full px-1.5 space-y-3">
+          {paletteGroups.map((group, gIdx) => (
+            <div key={group.id} className="space-y-1">
+              <div className="grid grid-cols-2 gap-1 place-items-center">
+                {group.items.map((item, idx) => {
+                  const Icon = item.icon;
+                  const isJustAdded = justAddedControlId === item.type;
 
-          {/* 8 Controls (DevExpress 2-column Grid Layout with Drag & Drop) */}
-          {paletteGroups.map((group) => (
-            <div key={group.id} className="grid grid-cols-2 gap-1.5">
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const isJustAdded = justAddedControlId === item.type;
-
-                return (
-                  <button
-                    key={item.type}
-                    draggable={true}
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData('report-control-type', item.type);
-                      e.dataTransfer.setData('text/plain', item.type);
-                      e.dataTransfer.effectAllowed = 'copy';
-                    }}
-                    onClick={() => handleAddControl(item.type)}
-                    className={`flex flex-col items-center justify-center p-2 rounded-lg border text-center transition-all cursor-grab active:cursor-grabbing ${
-                      isJustAdded
-                        ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm scale-95 dark:bg-blue-950 dark:border-blue-500 dark:text-blue-300'
-                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 hover:shadow-xs active:scale-95 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/80'
-                    }`}
-                    title={`${item.desc} (可直接拖曳至畫布或點擊加入)`}
-                  >
-                    <div className="relative mb-1">
-                      <Icon className="h-4 w-4" />
-                      {isJustAdded && (
-                        <CheckCircle2 className="h-3 w-3 text-blue-600 absolute -top-1 -right-1 bg-white rounded-full dark:bg-slate-900" />
+                  return (
+                    <button
+                      key={`${group.id}-${idx}`}
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('report-control-type', item.type);
+                        e.dataTransfer.setData('text/plain', item.type);
+                        e.dataTransfer.effectAllowed = 'copy';
+                      }}
+                      onClick={() => handleAddControl(item.type)}
+                      title={`${item.name}\n(點選加入或直接拖拉至畫布任意位置)`}
+                      className="w-5.5 h-7 rounded flex items-center justify-center text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:shadow-2xs active:bg-slate-200 transition-all dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 cursor-grab active:cursor-grabbing"
+                    >
+                      {isJustAdded ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 animate-in zoom-in" />
+                      ) : (
+                        <Icon className="h-4 w-4 stroke-[1.6]" />
                       )}
-                    </div>
-                    <span className="text-[11px] font-medium leading-tight">
-                      {item.name.split(' ')[0]}
-                    </span>
-                    <span className="text-[9px] text-slate-400 font-mono mt-0.5">
-                      {item.type}
-                    </span>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Group Divider line */}
+              {gIdx < paletteGroups.length - 1 && (
+                <div className="w-full h-[1px] bg-slate-200/80 dark:bg-slate-800 my-1.5" />
+              )}
             </div>
           ))}
         </div>
-
-        {/* Tip Box at Bottom */}
-        <div className="p-2.5 border-t border-slate-100 bg-slate-50/60 text-[10px] text-slate-400 dark:border-slate-800 dark:bg-slate-900/40">
-          💡 支援拖曳控制項或欄位至畫布，亦可選取後按 Delete 刪除或方向鍵微調。
-        </div>
       </aside>
 
-      {/* Flyout Drawer for Data Fields & Search (320px Premium Micro-Card UI) */}
+      {/* 2. Redesigned Field List Drawer (320px Flyout Explorer for Dataset Fields ONLY) */}
       {isExpanded && (
         <aside className="w-80 border-r border-slate-200 bg-white/98 backdrop-blur-md h-[calc(100vh-3.25rem)] shadow-xl flex flex-col z-30 animate-in slide-in-from-left-2 duration-150 dark:bg-slate-900/95 dark:border-slate-800">
           {/* Drawer Header */}
@@ -319,7 +289,7 @@ export const Toolbox: React.FC = () => {
             <button
               onClick={() => setIsExpanded(false)}
               className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors"
-              title="關閉欄位抽屜"
+              title="關閉資料集總管"
             >
               <X className="h-4 w-4" />
             </button>
