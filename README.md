@@ -49,10 +49,24 @@
   - `Detail`：依傳入之資料集逐筆展開資料列範本，具備垂直格線貫穿。
   - `ReportFooter`：全表會計結算（大寫金額、稅額、雙底線總計）與企業四格簽核矩陣（僅最末頁出現一次）。
   - `PageFooter`：固定於每頁底部的頁尾、列印資訊與動態頁碼。
+- **全面可視化設計體驗 (Interactive Canvas & Shortcuts)**：
+  - **8 向拖拉縮放**：物件選取即顯示高對比實心藍色錨點，支援 8 向縮放並即時顯示尺寸徽章（線段智慧鎖定單軸）。
+  - **HTML5 拖拉放置 (Drag & Drop)**：可直接將工具箱中的控制項或資料欄位拖入畫布任意 Band 的精確位置。
+  - **完整鍵盤快捷鍵**：
+    - `Delete` / `Backspace`：一鍵刪除選取的控制項。
+    - `↑` `↓` `←` `→`：方向鍵精細微調 1pt（按住 `Shift` 加速 5pt）。
+    - `Escape`：取消選取，切換回全域報表版面設定。
+    - `Ctrl + 滑鼠滾輪`：畫布 50% ~ 200% 平滑縮放。
+- **資料集與欄位總管 (Dataset & Field List)**：
+  - 側邊欄抽屜式「資料集欄位總管」，自動自資料集萃取可用欄位（`index`、`sku`、`productName`、`category`、`unit`、`quantity`、`unitPrice`、`amount`）。
+  - 支援關鍵字搜尋欄位、一鍵新增或拖放至明細列。
+  - 支援透過 `useReportStore.getState().setData(apiData)` 動態注入後端 API 真實資料。
+- **可擴充外掛控制項系統 (Plugin Registry)**：
+  - 內建 9 大開箱即用控制項：`Label` (文字標籤)、`Field` (資料欄位)、`Expression` (計算表達式)、`Line` (線段分隔)、`Barcode` (條碼)、`QRCode` (二維碼)、`Image` (圖片)、`CheckBox` (核取方塊)、`Panel` (邊框容器)。
 - **真實企業出貨單設計標準**：
   - 徹底告別過度簡化的玩具樣式，涵蓋真實商務必備之統編、交貨地址、匯款帳號、法律備註、中文大寫金額與核決印章格。
 - **AI Agent 原生像素級 MCP 工具組 (Agent-Native MCP Server)**：
-  - 支援 Model Context Protocol (MCP) 標準，提供 8 個精準原子工具（`get_report_layout`、`add_control`、`update_control`、`set_band_controls`、`export_pdf` 等），Agent 可直接精準操縱任何座標與樣式。
+  - 支援 Model Context Protocol (MCP) 標準，提供 13 個精準原子工具（包含幾何排版健檢、可用欄位感知、批次更新、頁面微調與雙向熱重載），讓 Agent 具備像素級排版與感知能力。
 - **純前端直出 PDF (Client-side Rendering)**：
   - 採用 `@react-pdf/renderer`，無需常駐 Node.js / Puppeteer 伺服器，大幅降低伺服器負載與維運成本。
 - **中文字型零亂碼支援**：
