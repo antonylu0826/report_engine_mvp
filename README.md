@@ -111,16 +111,20 @@ npm run build
 
 本專案內建標準的 **MCP 伺服器**，任何支援 MCP 的 AI Agent（如 Claude Desktop、Cursor、Antigravity Agent、Cline 等）皆可直接透過工具調用（Tool Calling）精準操控整份報表！
 
-### 1. 提供的 9 大像素級 MCP 工具
+### 1. 提供的 13 大像素級 MCP 工具
 
 | MCP 工具名稱 | 說明 |
 | :--- | :--- |
-| `get_report_layout` | 讀取當前整份報表規格（包含 A4 可繪寬度 515.28pt、所有 Bands 與控制項精確座標） |
-| `add_control` | 在指定 Band 新增精確座標的控制項（`Label`、`Field`、`Expression`、`Line`、`Image`） |
+| `get_report_layout` | 讀取當前整份報表規格（包含可繪寬度、所有 Bands 與控制項精確座標、樣式） |
+| `get_available_data_fields` | 【全新】取得報表可供綁定的資料集欄位清單（明細欄位型別、範例值、系統聚合函式及格式化建議），方便精準綁定 `fieldName` 或撰寫計算公式 |
+| `add_control` | 在指定 Band 新增精確座標的控制項（支援 `Label`、`Field`、`Expression`、`Line`、`Image`、`Barcode`、`QRCode`、`CheckBox`、`Panel` 9 大型別） |
 | `update_control` | 修改特定控制項之座標 (x, y)、尺寸 (width, height)、文字內容或樣式屬性 |
+| `batch_update_controls` | 【全新】一次性批次更新多個控制項的屬性與樣式（適合整組欄位改字體、微調位置或套用統一色彩，大幅節省操作輪次） |
 | `delete_control` | 從指定 Band 中刪除特定控制項 |
 | `set_band_height` | 調整指定 Band 的物理高度（pt） |
 | `set_band_controls` | 批次置換某個 Band 的全部控制項（適合 Agent 一次排好客戶資訊卡或簽核矩陣） |
+| `update_page_settings` | 【全新】更新報表全域頁面設定（紙張尺寸 A4/Letter、方向 portrait/landscape、上下左右邊界 margins），自動重新計算可繪寬度 |
+| `reset_report_layout` | 【全新】一鍵重置報表版面結構回復為企業標準出貨單範本（若排版錯亂時可安全還原） |
 | `set_full_report` | 直接替換整份 ReportDefinition（適合 Agent 一次性產生整張新單據） |
 | `inspect_and_preview_layout` | 【Agent 排版感知核心】秒級幾何健檢與視覺快照。自動偵測溢出破版、文字碰撞、表格欄位垂直對齊度，並同步輸出首頁 SVG 向量圖與實體 PDF 檔案 |
 | `export_pdf` | 使用當前像素架構直接算繪高解析 PDF 輸出至本機磁碟供檢驗 |
@@ -154,12 +158,12 @@ npm run build
 
 ---
 
-### 3. 🔄 前端即時雙向熱更新 (Live Sync)
+### 3. 🔄 前端即時雙向熱更新 (Bidirectional Live Sync)
 
-本專案內建 Vite 即時檔案同步中介層：
-- **自動感知**：瀏覽器介面（[http://localhost:5173/](http://localhost:5173/)）每 1.5 秒自動監聽磁碟上的 `current_report_layout.json`。
-- **無縫熱更新**：當外部 AI Agent 透過 MCP 執行任何 `update_control` 或 `set_band_controls`，**瀏覽器無需手動刷新，1 秒內自動熱重載最新版面與即時 PDF 預覽**！
-- **連線指示燈**：頂部導航列常駐 `🟢 MCP 即時連動 🔄` 狀態膠囊，隨時反饋連線狀態。
+本專案內建 Vite 即時檔案同步中介層與狀態防抖引擎：
+- **外部 Agent ➔ 前端畫布**：瀏覽器介面每 1.5 秒自動監聽磁碟上的 `current_report_layout.json`。當外部 AI Agent 透過 MCP 執行修改時，**瀏覽器無需手動刷新，1 秒內自動熱重載最新版面與即時 PDF 預覽**！
+- **前端畫布 ➔ 外部 Agent**：當使用者在可視化設計器中手動拖曳控制項、微調尺寸或修改樣式時，系統透過 **500ms 防抖自動寫回磁碟**，Agent 呼叫 `get_report_layout` 即可立刻讀取到使用者的最新調整，達成 **100% 雙向協同**！
+- **連線指示燈**：頂部導航列常駐 `🟢 雙向已同步 🔄` 狀態膠囊，寫入與同步狀態一目了然。
 
 ---
 

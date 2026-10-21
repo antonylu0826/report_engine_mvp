@@ -32,9 +32,12 @@ export const Navbar: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [mcpSynced, setMcpSynced] = useState(false);
   const [mcpConnecting, setMcpConnecting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const lastMtimeRef = useRef<number>(0);
+  const isRemoteUpdatingRef = useRef<boolean>(false);
+  const isFirstMountRef = useRef<boolean>(true);
 
-  // Sync with current_report_layout.json from MCP
+  // Sync with current_report_layout.json from MCP (Inbound: Disk -> UI)
   const fetchMcpLayout = async (force = false) => {
     try {
       setMcpConnecting(true);
@@ -44,6 +47,7 @@ export const Navbar: React.FC = () => {
       if (json && json.report) {
         if (force || json.mtime !== lastMtimeRef.current) {
           lastMtimeRef.current = json.mtime;
+          isRemoteUpdatingRef.current = true;
           setReport(json.report);
           setMcpSynced(true);
           setTimeout(() => setMcpSynced(false), 2500);
@@ -66,6 +70,44 @@ export const Navbar: React.FC = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Outbound: Push UI edits to current_report_layout.json (Debounced ~500ms)
+  useEffect(() => {
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+
+    if (isRemoteUpdatingRef.current) {
+      isRemoteUpdatingRef.current = false;
+      return;
+    }
+
+    const saveTimer = setTimeout(async () => {
+      try {
+        setIsSaving(true);
+        const res = await fetch('/api/report-layout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(report),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.mtime) {
+            lastMtimeRef.current = json.mtime;
+          }
+          setMcpSynced(true);
+          setTimeout(() => setMcpSynced(false), 1500);
+        }
+      } catch (err) {
+        console.error('Failed to sync report to disk:', err);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(saveTimer);
+  }, [report]);
 
   const handleExportPDF = async () => {
     try {
@@ -165,15 +207,17 @@ export const Navbar: React.FC = () => {
         <button
           onClick={() => fetchMcpLayout(true)}
           className={`flex items-center space-x-1.5 text-[11px] px-2.5 py-1 rounded-full border transition-all ${
-            mcpSynced
+            isSaving
+              ? 'bg-amber-500/10 text-amber-600 border-amber-400/40 dark:text-amber-400'
+              : mcpSynced
               ? 'bg-emerald-500/10 text-emerald-600 border-emerald-400/40 dark:text-emerald-400 animate-pulse'
               : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/80 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800'
           }`}
-          title="每 1.5 秒自動監聽 MCP 外部 Agent 修改，點擊可立即手動重新拉取"
+          title="自動雙向同步（UI 編輯自動存盤，外部 Agent 修改即時推播），點擊可手動強制重新拉取"
         >
-          <Radio className={`h-3 w-3 ${mcpSynced ? 'text-emerald-500' : 'text-blue-500 animate-pulse'}`} />
-          <span>{mcpSynced ? 'MCP 已同步' : 'MCP 即時連動'}</span>
-          <RefreshCw className={`h-2.5 w-2.5 ml-0.5 ${mcpConnecting ? 'animate-spin' : ''}`} />
+          <Radio className={`h-3 w-3 ${isSaving ? 'text-amber-500 animate-spin' : mcpSynced ? 'text-emerald-500' : 'text-blue-500 animate-pulse'}`} />
+          <span>{isSaving ? '同步至磁碟中...' : mcpSynced ? '雙向已同步' : 'MCP 即時連動'}</span>
+          <RefreshCw className={`h-2.5 w-2.5 ml-0.5 ${mcpConnecting || isSaving ? 'animate-spin' : ''}`} />
         </button>
 
         {activeTab === 'designer' && (

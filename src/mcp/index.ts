@@ -91,8 +91,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'get_available_data_fields',
+        description: '取得報表可供綁定的資料集欄位清單 (包含明細資料欄位名稱、資料型別、範例值、系統聚合函式及格式化建議)，方便 Agent 精準綁定 fieldName 或撰寫計算公式',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
         name: 'add_control',
-        description: '在指定 Band 內新增一個精確座標的控制項 (Label, Field, Expression, Line, Image)',
+        description: '在指定 Band 內新增一個精確座標的控制項 (Label, Field, Expression, Line, Image, Barcode, QRCode, CheckBox, Panel)',
         inputSchema: {
           type: 'object',
           properties: {
@@ -102,19 +110,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: '控制項定義 (必須包含 type, x, y, width, height, text/fieldName, 以及可選 style)',
               properties: {
                 id: { type: 'string', description: '自訂控制項唯一 ID (若未提供則自動生成)' },
-                type: { type: 'string', enum: ['Label', 'Field', 'Expression', 'Line', 'Image', 'Barcode', 'QRCode'] },
+                type: { type: 'string', enum: ['Label', 'Field', 'Expression', 'Line', 'Image', 'Barcode', 'QRCode', 'CheckBox', 'Panel'], description: '控制項型別' },
                 x: { type: 'number', description: '相對於 Band 左邊界的 X 座標 (pt)' },
                 y: { type: 'number', description: '相對於 Band 上邊界的 Y 座標 (pt)' },
                 width: { type: 'number', description: '寬度 (pt)' },
                 height: { type: 'number', description: '高度 (pt)' },
-                text: { type: 'string', description: '靜態文字 (Label, Barcode, QRCode 用)' },
-                fieldName: { type: 'string', description: '資料綁定欄位名稱 (Field, Barcode, QRCode 用)' },
+                text: { type: 'string', description: '靜態文字 (Label, Barcode, QRCode, CheckBox 用)' },
+                fieldName: { type: 'string', description: '資料綁定欄位名稱 (Field, Barcode, QRCode, CheckBox 用)' },
                 expression: { type: 'string', description: '計算公式 (Expression 用，如 =SUM(amount))' },
                 formatString: { type: 'string', description: '格式化 (如 C0, N0)' },
                 barcodeFormat: { type: 'string', enum: ['CODE128', 'EAN13', 'UPC', 'CODE39'], description: '條碼碼別 (Barcode 用)' },
                 displayValue: { type: 'boolean', description: '是否顯示條碼文字 (Barcode 用)' },
                 qrErrorLevel: { type: 'string', enum: ['L', 'M', 'Q', 'H'], description: '容錯率等級 (QRCode 用)' },
-                style: { type: 'object', description: '字體大小、對齊、邊框寬度與顏色、背景色等樣式' },
+                checked: { type: 'boolean', description: '預設是否勾選 (CheckBox 用)' },
+                panelTitle: { type: 'string', description: '容器標題文字 (Panel 用)' },
+                style: { type: 'object', description: '字體大小、顏色、背景色、對齊、邊框寬度/顏色等樣式物件' },
               },
               required: ['type', 'x', 'y', 'width', 'height'],
             },
@@ -136,6 +146,29 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ['bandId', 'controlId', 'patch'],
+        },
+      },
+      {
+        name: 'batch_update_controls',
+        description: '一次性批次更新多個控制項的屬性與樣式 (適合整組欄位改字體、微調位置或套用統一風格，大幅節省操作輪次)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            updates: {
+              type: 'array',
+              description: '更新清單陣列',
+              items: {
+                type: 'object',
+                properties: {
+                  bandId: { type: 'string', description: '目標 Band ID' },
+                  controlId: { type: 'string', description: '欲修改的控制項 ID' },
+                  patch: { type: 'object', description: '屬性補丁 (x, y, width, height, text, style 等)' },
+                },
+                required: ['bandId', 'controlId', 'patch'],
+              },
+            },
+          },
+          required: ['updates'],
         },
       },
       {
@@ -176,6 +209,35 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ['bandId', 'controls'],
+        },
+      },
+      {
+        name: 'update_page_settings',
+        description: '更新報表全域頁面設定 (如紙張尺寸 A4/Letter、方向 portrait/landscape、上下左右邊界 margins)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            size: { type: 'string', enum: ['A4', 'Letter'], description: '紙張規格' },
+            orientation: { type: 'string', enum: ['portrait', 'landscape'], description: '紙張方向' },
+            margins: {
+              type: 'object',
+              properties: {
+                top: { type: 'number', description: '上邊界 (pt)' },
+                right: { type: 'number', description: '右邊界 (pt)' },
+                bottom: { type: 'number', description: '下邊界 (pt)' },
+                left: { type: 'number', description: '左邊界 (pt)' },
+              },
+              description: '邊界設定 (pt)'
+            },
+          },
+        },
+      },
+      {
+        name: 'reset_report_layout',
+        description: '一鍵重置報表版面結構回復為乾淨的企業標準出貨單範本 (若排版錯亂或測試後需還原時使用)',
+        inputSchema: {
+          type: 'object',
+          properties: {},
         },
       },
       {
@@ -247,6 +309,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 null,
                 2
               ),
+            },
+          ],
+        };
+      }
+
+      case 'get_available_data_fields': {
+        const fieldMeta = {
+          description: '出貨驗收單資料模型與可用欄位規格',
+          detailFields: [
+            { fieldName: 'index', title: '項次', type: 'number', example: 1 },
+            { fieldName: 'sku', title: '品號/SKU', type: 'string', example: 'IT-MBP16-M3M' },
+            { fieldName: 'productName', title: '品名規格', type: 'string', example: 'Apple MacBook Pro 16" (M3 Max / 36GB / 1TB)' },
+            { fieldName: 'category', title: '品類', type: 'string', example: '資訊運算設備' },
+            { fieldName: 'unit', title: '單位', type: 'string', example: '台' },
+            { fieldName: 'quantity', title: '數量', type: 'number', example: 3, formatHint: 'N0' },
+            { fieldName: 'unitPrice', title: '單價', type: 'number', example: 104900, formatHint: 'C0' },
+            { fieldName: 'amount', title: '金額小計', type: 'number', example: 314700, formatHint: 'C0' },
+          ],
+          aggregateFormulas: [
+            { expression: '=SUM(amount)', description: '計算當前報表明細總金額合計', formatHint: 'C0' },
+            { expression: '=SUM(quantity)', description: '計算出貨品項總數量', formatHint: 'N0' },
+            { expression: '=COUNT()', description: '計算總品項筆數', formatHint: 'N0' },
+            { expression: '=AVG(unitPrice)', description: '計算平均單價', formatHint: 'C0' },
+          ],
+          systemVariables: [
+            { tag: '[PageNumber]', description: '當前頁碼 (如 第 [PageNumber] 頁)' },
+            { tag: '[TotalPages]', description: '總頁數 (如 共 [TotalPages] 頁)' },
+            { tag: '[ExecutionTime]', description: '報表產生列印時間' },
+          ],
+          sampleRecord: sampleOrderData14[0],
+        };
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(fieldMeta, null, 2),
             },
           ],
         };
@@ -337,6 +436,51 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'batch_update_controls': {
+        const { updates } = args as {
+          updates: Array<{
+            bandId: string;
+            controlId: string;
+            patch: Partial<ControlDefinition>;
+          }>;
+        };
+
+        if (!Array.isArray(updates) || updates.length === 0) {
+          throw new Error('請提供非空的 updates 陣列');
+        }
+
+        let updatedCount = 0;
+        const updatedBands = currentReport.bands.map((b) => {
+          const bandUpdates = updates.filter((u) => u.bandId === b.id || u.bandId === b.type);
+          if (bandUpdates.length === 0) return b;
+
+          const updatedControls = b.controls.map((c) => {
+            const target = bandUpdates.find((u) => u.controlId === c.id);
+            if (!target) return c;
+            updatedCount++;
+            return {
+              ...c,
+              ...target.patch,
+              style: { ...c.style, ...target.patch?.style },
+            };
+          });
+
+          return { ...b, controls: updatedControls };
+        });
+
+        currentReport.bands = updatedBands;
+        saveCurrentReport(currentReport);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `已成功批次更新 ${updatedCount} 個控制項屬性。`,
+            },
+          ],
+        };
+      }
+
       case 'delete_control': {
         const { bandId, controlId } = args as { bandId: string; controlId: string };
         let found = false;
@@ -418,6 +562,51 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: `已成功為 ${bandId} 批次置入 ${controls.length} 個控制項。`,
+            },
+          ],
+        };
+      }
+
+      case 'update_page_settings': {
+        const { size, orientation, margins } = (args as {
+          size?: 'A4' | 'Letter';
+          orientation?: 'portrait' | 'landscape';
+          margins?: { top?: number; right?: number; bottom?: number; left?: number };
+        }) || {};
+
+        if (size) currentReport.pageSettings.size = size;
+        if (orientation) currentReport.pageSettings.orientation = orientation;
+        if (margins) {
+          currentReport.pageSettings.margins = {
+            ...currentReport.pageSettings.margins,
+            ...margins,
+          };
+        }
+
+        saveCurrentReport(currentReport);
+
+        const printableWidth =
+          currentReport.pageSettings.size === 'A4'
+            ? (currentReport.pageSettings.orientation === 'landscape' ? 841.89 : 595.28) - (currentReport.pageSettings.margins.left + currentReport.pageSettings.margins.right)
+            : (currentReport.pageSettings.orientation === 'landscape' ? 792.0 : 612.0) - (currentReport.pageSettings.margins.left + currentReport.pageSettings.margins.right);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `頁面設定已更新：尺寸 ${currentReport.pageSettings.size}，方向 ${currentReport.pageSettings.orientation}，邊界 ${JSON.stringify(currentReport.pageSettings.margins)}，最新可繪寬度: ${printableWidth.toFixed(1)} pt。`,
+            },
+          ],
+        };
+      }
+
+      case 'reset_report_layout': {
+        saveCurrentReport(sampleOrderReport);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: '報表版面已成功重置回復為企業標準出貨單範本！',
             },
           ],
         };

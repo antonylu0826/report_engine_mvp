@@ -44,8 +44,9 @@ function mcpSyncPlugin(): Plugin {
               try {
                 const parsed = JSON.parse(body)
                 fs.writeFileSync(layoutPath, JSON.stringify(parsed, null, 2), 'utf-8')
+                const stat = fs.statSync(layoutPath)
                 res.setHeader('Content-Type', 'application/json')
-                res.end(JSON.stringify({ success: true }))
+                res.end(JSON.stringify({ success: true, mtime: stat.mtimeMs }))
               } catch (e) {
                 res.statusCode = 400
                 res.end(JSON.stringify({ error: (e as Error).message }))
