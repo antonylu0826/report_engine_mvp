@@ -13,13 +13,10 @@ import {
   X,
   Plus,
   Search,
-  SlidersHorizontal,
-  GripVertical,
   Calendar,
   Hash,
   ChevronDown,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { controlRegistry } from '@/controls/registry';
@@ -37,7 +34,6 @@ export const Toolbox: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [justAddedControlId, setJustAddedControlId] = useState<string | null>(null);
   const [fieldSearch, setFieldSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<'all' | 'params' | 'details'>('all');
   const [expandParams, setExpandParams] = useState(true);
   const [expandDetails, setExpandDetails] = useState(true);
 
@@ -169,37 +165,17 @@ export const Toolbox: React.FC = () => {
     },
   ];
 
-  // Helper: render type pill with color code
-  const renderTypeBadge = (type: string, formatHint?: string) => {
+  // Helper: render compact type icon
+  const renderTypeIcon = (type: string) => {
     switch (type) {
       case 'number':
-        return (
-          <span className="inline-flex items-center space-x-0.5 text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
-            <Hash className="h-2.5 w-2.5 mr-0.5 opacity-70" />
-            <span>{formatHint || '數值'}</span>
-          </span>
-        );
+        return <Hash className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />;
       case 'date':
-        return (
-          <span className="inline-flex items-center space-x-0.5 text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200/80 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800">
-            <Calendar className="h-2.5 w-2.5 mr-0.5 opacity-70" />
-            <span>日期</span>
-          </span>
-        );
+        return <Calendar className="h-3 w-3 text-purple-600 dark:text-purple-400 shrink-0" />;
       case 'boolean':
-        return (
-          <span className="inline-flex items-center space-x-0.5 text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800">
-            <CheckSquare className="h-2.5 w-2.5 mr-0.5 opacity-70" />
-            <span>布林</span>
-          </span>
-        );
+        return <CheckSquare className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />;
       default:
-        return (
-          <span className="inline-flex items-center space-x-0.5 text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/80 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
-            <Type className="h-2.5 w-2.5 mr-0.5 opacity-70" />
-            <span>字串</span>
-          </span>
-        );
+        return <Type className="h-3 w-3 text-blue-600 dark:text-blue-400 shrink-0" />;
     }
   };
 
@@ -263,54 +239,42 @@ export const Toolbox: React.FC = () => {
         </div>
       </aside>
 
-      {/* 2. Redesigned Field List Drawer (320px Flyout Explorer for Dataset Fields ONLY) */}
+      {/* 2. Simplified Clean Field List Drawer (256px Compact Tree List) */}
       {isExpanded && (
-        <aside className="w-80 border-r border-slate-200 bg-white/98 backdrop-blur-md h-[calc(100vh-3.25rem)] shadow-xl flex flex-col z-30 animate-in slide-in-from-left-2 duration-150 dark:bg-slate-900/95 dark:border-slate-800">
-          {/* Drawer Header */}
-          <div className="p-3 border-b border-slate-200/80 flex items-center justify-between dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80">
-            <div className="flex items-center space-x-2 min-w-0">
-              <div className="flex items-center justify-center h-6 w-6 rounded-md bg-blue-600 text-white shadow-xs">
-                <Database className="h-3.5 w-3.5" />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center space-x-1.5">
-                  <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
-                    資料集欄位總管
-                  </span>
-                  <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300">
-                    {parameters.length + detailFields.length}
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-400 truncate">
-                  {dataSource?.name || '標準銷貨資料源'}
-                </span>
-              </div>
+        <aside className="w-64 border-r border-slate-200 bg-white h-[calc(100vh-3.25rem)] shadow-lg flex flex-col z-30 animate-in slide-in-from-left-2 duration-150 dark:bg-slate-950 dark:border-slate-800">
+          {/* Header */}
+          <div className="px-3 py-2.5 border-b border-slate-200 flex items-center justify-between dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 min-w-0">
+              <Database className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+              <span className="truncate">資料集總管</span>
+              <span className="text-[10px] font-mono text-slate-400">
+                ({parameters.length + detailFields.length})
+              </span>
             </div>
             <button
               onClick={() => setIsExpanded(false)}
-              className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors"
-              title="關閉資料集總管"
+              className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+              title="關閉"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
 
           {/* Search Box */}
-          <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="p-2 border-b border-slate-100 dark:border-slate-800">
             <div className="relative">
               <Search className="h-3 w-3 absolute left-2.5 top-2.5 text-slate-400" />
               <input
                 type="text"
-                placeholder="搜尋欄位名稱、key 或說明..."
+                placeholder="搜尋欄位..."
                 value={fieldSearch}
                 onChange={(e) => setFieldSearch(e.target.value)}
-                className="w-full text-xs pl-7 pr-7 py-1.5 rounded-md border border-slate-200 bg-slate-50/80 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-100"
+                className="w-full text-xs pl-7 pr-6 py-1 rounded border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500 transition-colors dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
               />
               {fieldSearch && (
                 <button
                   onClick={() => setFieldSearch('')}
-                  className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded"
-                  title="清除搜尋"
+                  className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -318,267 +282,182 @@ export const Toolbox: React.FC = () => {
             </div>
           </div>
 
-          {/* Segmented Filter Tabs */}
-          <div className="px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40 flex items-center justify-between text-[11px]">
-            <div className="flex items-center space-x-1 p-0.5 bg-slate-200/60 dark:bg-slate-800 rounded-md w-full">
-              <button
-                onClick={() => setActiveCategory('all')}
-                className={`flex-1 py-1 rounded text-center font-medium transition-all ${
-                  activeCategory === 'all'
-                    ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-slate-100'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
-                }`}
-              >
-                全部 ({filteredParameters.length + filteredDetailFields.length})
-              </button>
-              <button
-                onClick={() => setActiveCategory('params')}
-                className={`flex-1 py-1 rounded text-center font-medium transition-all ${
-                  activeCategory === 'params'
-                    ? 'bg-white text-blue-700 shadow-xs dark:bg-slate-700 dark:text-blue-300'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
-                }`}
-              >
-                單頭 ({filteredParameters.length})
-              </button>
-              <button
-                onClick={() => setActiveCategory('details')}
-                className={`flex-1 py-1 rounded text-center font-medium transition-all ${
-                  activeCategory === 'details'
-                    ? 'bg-white text-emerald-700 shadow-xs dark:bg-slate-700 dark:text-emerald-300'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
-                }`}
-              >
-                明細 ({filteredDetailFields.length})
-              </button>
-            </div>
-          </div>
+          {/* Compact List */}
+          <div className="flex-1 overflow-y-auto p-1.5 space-y-2">
+            {/* Group 1: Parameters */}
+            {filteredParameters.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setExpandParams(!expandParams)}
+                  className="w-full flex items-center justify-between px-1.5 py-1 text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 select-none"
+                >
+                  <div className="flex items-center space-x-1">
+                    {expandParams ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                    <span>單頭主檔參數</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    {filteredParameters.length}
+                  </span>
+                </button>
 
-          {/* Fields List with Collapsible Groups & Rich Micro-Cards */}
-          <div className="flex-1 overflow-y-auto p-2.5 space-y-3">
-            {/* Group 1: Parameters (Master / Header) */}
-            {(activeCategory === 'all' || activeCategory === 'params') &&
-              filteredParameters.length > 0 && (
-                <div className="space-y-1.5">
-                  <button
-                    onClick={() => setExpandParams(!expandParams)}
-                    className="w-full flex items-center justify-between px-1 py-0.5 text-[11px] font-semibold text-blue-700 dark:text-blue-400 hover:text-blue-800 transition-colors select-none"
-                  >
-                    <div className="flex items-center space-x-1.5">
-                      {expandParams ? (
-                        <ChevronDown className="h-3 w-3" />
-                      ) : (
-                        <ChevronRight className="h-3 w-3" />
-                      )}
-                      <SlidersHorizontal className="h-3 w-3" />
-                      <span>單頭主檔參數</span>
-                    </div>
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
-                      {filteredParameters.length}
-                    </span>
-                  </button>
+                {expandParams && (
+                  <div className="space-y-0.5 mt-0.5">
+                    {filteredParameters.map((param) => {
+                      const sampleVal =
+                        dataSource?.data?.parameters?.[param.name] ?? param.sampleValue;
+                      const sampleTooltip = `[${param.name}] ${param.label}\n型別: ${param.type}\n範例值: ${sampleVal ?? '無'}\n按住可拖曳至畫布`;
 
-                  {expandParams && (
-                    <div className="space-y-1.5">
-                      {filteredParameters.map((param) => {
-                        const sampleVal =
-                          dataSource?.data?.parameters?.[param.name] ??
-                          param.sampleValue;
-                        const sampleStr =
-                          typeof sampleVal === 'boolean'
-                            ? sampleVal
-                              ? 'true (已核選)'
-                              : 'false (未核選)'
-                            : String(sampleVal ?? '');
-
-                        return (
-                          <div
-                            key={param.name}
-                            draggable={true}
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData('report-control-type', 'Field');
-                              e.dataTransfer.setData('report-field-name', param.name);
-                              e.dataTransfer.setData('text/plain', `[${param.name}]`);
-                              e.dataTransfer.effectAllowed = 'copy';
-                            }}
-                            className="group relative flex items-start justify-between p-2 rounded-lg bg-white border border-slate-200/80 hover:border-blue-400/80 hover:shadow-sm hover:bg-blue-50/20 transition-all cursor-grab active:cursor-grabbing select-none dark:bg-slate-900/80 dark:border-slate-800 dark:hover:border-blue-600"
-                            title={`${param.description || param.label} - 按住拖曳至畫布`}
-                          >
-                            <div className="flex items-start space-x-1.5 min-w-0 flex-1">
-                              <GripVertical className="h-3.5 w-3.5 text-slate-300 group-hover:text-blue-500 shrink-0 mt-0.5 transition-colors" />
-                              <div className="flex flex-col min-w-0 flex-1">
-                                <div className="flex items-center space-x-1.5 flex-wrap">
-                                  <span className="font-semibold text-xs text-slate-900 dark:text-slate-100">
-                                    {param.label}
-                                  </span>
-                                  {renderTypeBadge(param.type)}
-                                </div>
-                                <span className="text-[10px] font-mono text-slate-400 truncate mt-0.5">
-                                  [{param.name}]
-                                </span>
-                                {sampleStr && (
-                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 bg-slate-50 dark:bg-slate-800/60 px-1 py-0.2 rounded border border-slate-100 dark:border-slate-700/60">
-                                    值: <span className="font-mono text-slate-700 dark:text-slate-300">{sampleStr}</span>
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <button
-                              onClick={() => {
-                                const target =
-                                  targetBand ||
-                                  report.bands.find((b) => b.type === 'ReportHeader') ||
-                                  report.bands[0];
-                                if (target) {
-                                  addControl(target.id, {
-                                    type: param.type === 'boolean' ? 'CheckBox' : 'Field',
-                                    x: 20,
-                                    y: 6,
-                                    width: param.type === 'boolean' ? 110 : 130,
-                                    height: 16,
-                                    fieldName: param.name,
-                                    text: param.label,
-                                    style: { fontSize: 9, color: '#0f172a' },
-                                  });
-                                }
-                              }}
-                              className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-100/80 transition-all dark:hover:bg-blue-900 shrink-0"
-                              title={`快速加入 [${param.name}] 至 ${targetBand?.type || 'ReportHeader'}`}
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </button>
+                      return (
+                        <div
+                          key={param.name}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('report-control-type', 'Field');
+                            e.dataTransfer.setData('report-field-name', param.name);
+                            e.dataTransfer.setData('text/plain', `[${param.name}]`);
+                            e.dataTransfer.effectAllowed = 'copy';
+                          }}
+                          title={sampleTooltip}
+                          className="group flex items-center justify-between px-2 py-1 rounded text-xs hover:bg-blue-50 dark:hover:bg-slate-800/80 cursor-grab active:cursor-grabbing transition-colors"
+                        >
+                          <div className="flex items-center space-x-1.5 min-w-0 flex-1">
+                            {renderTypeIcon(param.type)}
+                            <span className="truncate text-slate-700 dark:text-slate-200 text-[11px]">
+                              {param.label}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400 truncate">
+                              {param.name}
+                            </span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
 
-            {/* Group 2: Detail List Fields */}
-            {(activeCategory === 'all' || activeCategory === 'details') &&
-              filteredDetailFields.length > 0 && (
-                <div className="space-y-1.5">
-                  <button
-                    onClick={() => setExpandDetails(!expandDetails)}
-                    className="w-full flex items-center justify-between px-1 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 transition-colors select-none"
-                  >
-                    <div className="flex items-center space-x-1.5">
-                      {expandDetails ? (
-                        <ChevronDown className="h-3 w-3" />
-                      ) : (
-                        <ChevronRight className="h-3 w-3" />
-                      )}
-                      <Database className="h-3 w-3" />
-                      <span>明細列資料欄位</span>
-                    </div>
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">
-                      {filteredDetailFields.length}
-                    </span>
-                  </button>
-
-                  {expandDetails && (
-                    <div className="space-y-1.5">
-                      {filteredDetailFields.map((field) => {
-                        const sampleVal =
-                          dataSource?.data?.items?.[0]?.[field.name] ??
-                          field.sampleValue;
-                        const sampleStr =
-                          typeof sampleVal === 'boolean'
-                            ? sampleVal
-                              ? 'true (已點收)'
-                              : 'false (未點收)'
-                            : typeof sampleVal === 'number' && field.formatHint === 'C0'
-                            ? `NT$ ${sampleVal.toLocaleString()}`
-                            : String(sampleVal ?? '');
-
-                        return (
-                          <div
-                            key={field.name}
-                            draggable={true}
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData('report-control-type', 'Field');
-                              e.dataTransfer.setData('report-field-name', field.name);
-                              e.dataTransfer.setData('text/plain', `[${field.name}]`);
-                              e.dataTransfer.effectAllowed = 'copy';
+                          <button
+                            onClick={() => {
+                              const target =
+                                targetBand ||
+                                report.bands.find((b) => b.type === 'ReportHeader') ||
+                                report.bands[0];
+                              if (target) {
+                                addControl(target.id, {
+                                  type: param.type === 'boolean' ? 'CheckBox' : 'Field',
+                                  x: 20,
+                                  y: 6,
+                                  width: param.type === 'boolean' ? 100 : 120,
+                                  height: 16,
+                                  fieldName: param.name,
+                                  text: param.label,
+                                  style: { fontSize: 9, color: '#0f172a' },
+                                });
+                              }
                             }}
-                            className="group relative flex items-start justify-between p-2 rounded-lg bg-white border border-slate-200/80 hover:border-emerald-400/80 hover:shadow-sm hover:bg-emerald-50/20 transition-all cursor-grab active:cursor-grabbing select-none dark:bg-slate-900/80 dark:border-slate-800 dark:hover:border-emerald-600"
-                            title={`${field.description || field.label} - 按住拖曳至畫布`}
+                            className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-blue-600 hover:bg-white rounded transition-all dark:hover:bg-slate-700 shrink-0"
+                            title={`加入至 ${targetBand?.type || 'ReportHeader'}`}
                           >
-                            <div className="flex items-start space-x-1.5 min-w-0 flex-1">
-                              <GripVertical className="h-3.5 w-3.5 text-slate-300 group-hover:text-emerald-500 shrink-0 mt-0.5 transition-colors" />
-                              <div className="flex flex-col min-w-0 flex-1">
-                                <div className="flex items-center space-x-1.5 flex-wrap">
-                                  <span className="font-semibold text-xs text-slate-900 dark:text-slate-100">
-                                    {field.label}
-                                  </span>
-                                  {renderTypeBadge(field.type, field.formatHint)}
-                                </div>
-                                <span className="text-[10px] font-mono text-slate-400 truncate mt-0.5">
-                                  [{field.name}]
-                                </span>
-                                {sampleStr && (
-                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 bg-slate-50 dark:bg-slate-800/60 px-1 py-0.2 rounded border border-slate-100 dark:border-slate-700/60">
-                                    值: <span className="font-mono text-slate-700 dark:text-slate-300">{sampleStr}</span>
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <button
-                              onClick={() => {
-                                const target =
-                                  targetBand ||
-                                  report.bands.find((b) => b.type === 'Detail') ||
-                                  report.bands[0];
-                                if (target) {
-                                  addControl(target.id, {
-                                    type: field.type === 'boolean' ? 'CheckBox' : 'Field',
-                                    x: 30,
-                                    y: 4,
-                                    width: field.type === 'boolean' ? 80 : 100,
-                                    height: 14,
-                                    fieldName: field.name,
-                                    formatString: field.formatHint,
-                                    text: field.label,
-                                    style: {
-                                      fontSize: 9,
-                                      color: '#0f172a',
-                                      textAlign: field.type === 'number' ? 'right' : 'left',
-                                    },
-                                  });
-                                }
-                              }}
-                              className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-100/80 transition-all dark:hover:bg-emerald-900 shrink-0"
-                              title={`快速加入 [${field.name}] 至 ${targetBand?.type || 'Detail'}`}
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-            {filteredParameters.length === 0 && filteredDetailFields.length === 0 && (
-              <div className="p-6 text-center text-xs text-slate-400">
-                找不到相符的欄位名稱「{fieldSearch}」
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
-          </div>
 
-          {/* Drawer Footer Status */}
-          <div className="p-2.5 border-t border-slate-200/80 bg-slate-50/80 dark:bg-slate-900/80 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
-            <span className="flex items-center space-x-1">
-              <Sparkles className="h-3 w-3 text-amber-500" />
-              <span>明細筆數：{data?.length || 14} 筆</span>
-            </span>
-            <span className="font-mono text-[9px] text-slate-400">
-              按住卡片直接拖放
-            </span>
+            {/* Group 2: Detail Fields */}
+            {filteredDetailFields.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setExpandDetails(!expandDetails)}
+                  className="w-full flex items-center justify-between px-1.5 py-1 text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 select-none"
+                >
+                  <div className="flex items-center space-x-1">
+                    {expandDetails ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                    <span>明細列欄位</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    {filteredDetailFields.length}
+                  </span>
+                </button>
+
+                {expandDetails && (
+                  <div className="space-y-0.5 mt-0.5">
+                    {filteredDetailFields.map((field) => {
+                      const sampleVal =
+                        dataSource?.data?.items?.[0]?.[field.name] ?? field.sampleValue;
+                      const sampleTooltip = `[${field.name}] ${field.label}\n型別: ${field.type}\n範例值: ${sampleVal ?? '無'}\n按住可拖曳至畫布`;
+
+                      return (
+                        <div
+                          key={field.name}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('report-control-type', 'Field');
+                            e.dataTransfer.setData('report-field-name', field.name);
+                            e.dataTransfer.setData('text/plain', `[${field.name}]`);
+                            e.dataTransfer.effectAllowed = 'copy';
+                          }}
+                          title={sampleTooltip}
+                          className="group flex items-center justify-between px-2 py-1 rounded text-xs hover:bg-emerald-50 dark:hover:bg-slate-800/80 cursor-grab active:cursor-grabbing transition-colors"
+                        >
+                          <div className="flex items-center space-x-1.5 min-w-0 flex-1">
+                            {renderTypeIcon(field.type)}
+                            <span className="truncate text-slate-700 dark:text-slate-200 text-[11px]">
+                              {field.label}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400 truncate">
+                              {field.name}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              const target =
+                                targetBand ||
+                                report.bands.find((b) => b.type === 'Detail') ||
+                                report.bands[0];
+                              if (target) {
+                                addControl(target.id, {
+                                  type: field.type === 'boolean' ? 'CheckBox' : 'Field',
+                                  x: 30,
+                                  y: 4,
+                                  width: field.type === 'boolean' ? 80 : 100,
+                                  height: 14,
+                                  fieldName: field.name,
+                                  formatString: field.formatHint,
+                                  text: field.label,
+                                  style: {
+                                    fontSize: 9,
+                                    color: '#0f172a',
+                                    textAlign: field.type === 'number' ? 'right' : 'left',
+                                  },
+                                });
+                              }
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded transition-all dark:hover:bg-slate-700 shrink-0"
+                            title={`加入至 ${targetBand?.type || 'Detail'}`}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {filteredParameters.length === 0 && filteredDetailFields.length === 0 && (
+              <div className="p-4 text-center text-xs text-slate-400">
+                無相符欄位「{fieldSearch}」
+              </div>
+            )}
           </div>
         </aside>
       )}
