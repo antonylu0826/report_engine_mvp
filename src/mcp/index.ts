@@ -84,7 +84,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'get_report_layout',
-        description: '取得當前整份報表的像素級架構 (包含頁面設定、可繪寬度、各 Band 及其所有控制項精確 X/Y/寬高/邊框與文字樣式)',
+        description: 'Get the complete pixel-level report definition (pageSize, printableWidth, bands, and controls with exact x/y/width/height and styles).',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -92,7 +92,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'get_available_data_fields',
-        description: '取得報表可供綁定的資料集欄位清單 (包含明細資料欄位名稱、資料型別、範例值、系統聚合函式及格式化建議)，方便 Agent 精準綁定 fieldName 或撰寫計算公式',
+        description: 'Get bindable dataset schema including detail fields, data types, sample values, and built-in aggregate formula suggestions.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -100,31 +100,33 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'add_control',
-        description: '在指定 Band 內新增一個精確座標的控制項 (Label, Field, Expression, Line, Image, Barcode, QRCode, CheckBox, Panel)',
+        description: 'Add a control with precise coordinates into a target band or nested SubReport.',
         inputSchema: {
           type: 'object',
           properties: {
-            bandId: { type: 'string', description: '目標 Band ID (如 band-report-header, band-page-header, band-detail, band-report-footer, band-page-footer)' },
+            bandId: { type: 'string', description: 'Target Band ID (e.g., band-page-header, band-detail, sub-band-header, sub-band-detail)' },
+            subReportControlId: { type: 'string', description: 'Optional. SubReport control ID if adding into a nested subreport band' },
             control: {
               type: 'object',
-              description: '控制項定義 (必須包含 type, x, y, width, height, text/fieldName, 以及可選 style)',
+              description: 'Control definition object',
               properties: {
-                id: { type: 'string', description: '自訂控制項唯一 ID (若未提供則自動生成)' },
-                type: { type: 'string', enum: ['Label', 'Field', 'Expression', 'Line', 'Image', 'Barcode', 'QRCode', 'CheckBox', 'Panel'], description: '控制項型別' },
-                x: { type: 'number', description: '相對於 Band 左邊界的 X 座標 (pt)' },
-                y: { type: 'number', description: '相對於 Band 上邊界的 Y 座標 (pt)' },
-                width: { type: 'number', description: '寬度 (pt)' },
-                height: { type: 'number', description: '高度 (pt)' },
-                text: { type: 'string', description: '靜態文字 (Label, Barcode, QRCode, CheckBox 用)' },
-                fieldName: { type: 'string', description: '資料綁定欄位名稱 (Field, Barcode, QRCode, CheckBox 用)' },
-                expression: { type: 'string', description: '計算公式 (Expression 用，如 =SUM(amount))' },
-                formatString: { type: 'string', description: '格式化 (如 C0, N0)' },
-                barcodeFormat: { type: 'string', enum: ['CODE128', 'EAN13', 'UPC', 'CODE39'], description: '條碼碼別 (Barcode 用)' },
-                displayValue: { type: 'boolean', description: '是否顯示條碼文字 (Barcode 用)' },
-                qrErrorLevel: { type: 'string', enum: ['L', 'M', 'Q', 'H'], description: '容錯率等級 (QRCode 用)' },
-                checked: { type: 'boolean', description: '預設是否勾選 (CheckBox 用)' },
-                panelTitle: { type: 'string', description: '容器標題文字 (Panel 用)' },
-                style: { type: 'object', description: '字體大小、顏色、背景色、對齊、邊框寬度/顏色等樣式物件' },
+                id: { type: 'string', description: 'Unique control ID' },
+                type: { type: 'string', enum: ['Label', 'Field', 'Expression', 'Line', 'Image', 'Barcode', 'QRCode', 'CheckBox', 'Panel', 'SubReport'], description: 'Control type' },
+                x: { type: 'number', description: 'X position in points (pt) relative to band left' },
+                y: { type: 'number', description: 'Y position in points (pt) relative to band top' },
+                width: { type: 'number', description: 'Width in points (pt)' },
+                height: { type: 'number', description: 'Height in points (pt)' },
+                text: { type: 'string', description: 'Static text' },
+                fieldName: { type: 'string', description: 'Bound data field name' },
+                expression: { type: 'string', description: 'Calculation formula (e.g. =SUM(amount))' },
+                formatString: { type: 'string', description: 'Format string (e.g. C0, N0)' },
+                barcodeFormat: { type: 'string', enum: ['CODE128', 'EAN13', 'UPC', 'CODE39'], description: 'Barcode format' },
+                displayValue: { type: 'boolean', description: 'Whether to show text under barcode' },
+                qrErrorLevel: { type: 'string', enum: ['L', 'M', 'Q', 'H'], description: 'QR error correction level' },
+                checked: { type: 'boolean', description: 'Checkbox checked state' },
+                subReportTitle: { type: 'string', description: 'SubReport title' },
+                subReportBinding: { type: 'string', description: 'SubReport nested data key (e.g. serials)' },
+                style: { type: 'object', description: 'Style object (fontSize, color, backgroundColor, textAlign, borderWidth, borderColor)' },
               },
               required: ['type', 'x', 'y', 'width', 'height'],
             },
@@ -134,15 +136,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'update_control',
-        description: '修改指定 Band 內特定控制項的座標 (x, y)、尺寸 (width, height)、文字內容或樣式屬性',
+        description: 'Update coordinates, dimensions, text, bindings, or styles of a specific control in a band or nested SubReport.',
         inputSchema: {
           type: 'object',
           properties: {
-            bandId: { type: 'string', description: '目標 Band ID' },
-            controlId: { type: 'string', description: '欲修改的控制項 ID' },
+            bandId: { type: 'string', description: 'Target Band ID' },
+            controlId: { type: 'string', description: 'Control ID to update' },
+            subReportControlId: { type: 'string', description: 'Optional. SubReport control ID if control is inside a nested subreport' },
             patch: {
               type: 'object',
-              description: '要覆蓋修改的屬性物件 (可包含 x, y, width, height, text, fieldName, style 等)',
+              description: 'Patch object containing properties to update',
             },
           },
           required: ['bandId', 'controlId', 'patch'],
@@ -150,19 +153,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'batch_update_controls',
-        description: '一次性批次更新多個控制項的屬性與樣式 (適合整組欄位改字體、微調位置或套用統一風格，大幅節省操作輪次)',
+        description: 'Batch update multiple controls in a single call to save turns and tokens.',
         inputSchema: {
           type: 'object',
           properties: {
             updates: {
               type: 'array',
-              description: '更新清單陣列',
+              description: 'Array of update objects',
               items: {
                 type: 'object',
                 properties: {
-                  bandId: { type: 'string', description: '目標 Band ID' },
-                  controlId: { type: 'string', description: '欲修改的控制項 ID' },
-                  patch: { type: 'object', description: '屬性補丁 (x, y, width, height, text, style 等)' },
+                  bandId: { type: 'string', description: 'Target Band ID' },
+                  controlId: { type: 'string', description: 'Control ID' },
+                  subReportControlId: { type: 'string', description: 'Optional SubReport control ID' },
+                  patch: { type: 'object', description: 'Property patch' },
                 },
                 required: ['bandId', 'controlId', 'patch'],
               },
@@ -173,38 +177,41 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'delete_control',
-        description: '從指定 Band 中刪除特定控制項',
+        description: 'Delete a control from a specified band or nested SubReport.',
         inputSchema: {
           type: 'object',
           properties: {
-            bandId: { type: 'string', description: '目標 Band ID' },
-            controlId: { type: 'string', description: '欲刪除的控制項 ID' },
+            bandId: { type: 'string', description: 'Target Band ID' },
+            controlId: { type: 'string', description: 'Control ID to delete' },
+            subReportControlId: { type: 'string', description: 'Optional SubReport control ID' },
           },
           required: ['bandId', 'controlId'],
         },
       },
       {
         name: 'set_band_height',
-        description: '調整指定 Band 的物理高度 (pt)',
+        description: 'Set physical height (in pt) of a band or nested subreport band.',
         inputSchema: {
           type: 'object',
           properties: {
-            bandId: { type: 'string', description: '目標 Band ID' },
-            height: { type: 'number', description: '新的 Band 高度 (pt)' },
+            bandId: { type: 'string', description: 'Target Band ID' },
+            subReportControlId: { type: 'string', description: 'Optional SubReport control ID' },
+            height: { type: 'number', description: 'New height in points (pt)' },
           },
           required: ['bandId', 'height'],
         },
       },
       {
         name: 'set_band_controls',
-        description: '批次置換某個 Band 的全部控制項陣列 (非常適合 Agent 一次性排好整組客戶資訊卡、表頭或核決章矩陣)',
+        description: 'Replace all controls in a band with a new array of control definitions.',
         inputSchema: {
           type: 'object',
           properties: {
-            bandId: { type: 'string', description: '目標 Band ID' },
+            bandId: { type: 'string', description: 'Target Band ID' },
+            subReportControlId: { type: 'string', description: 'Optional SubReport control ID' },
             controls: {
               type: 'array',
-              description: '新的控制項物件陣列',
+              description: 'New array of control definitions',
               items: { type: 'object' },
             },
           },
@@ -213,28 +220,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'update_page_settings',
-        description: '更新報表全域頁面設定 (如紙張尺寸 A4/Letter、方向 portrait/landscape、上下左右邊界 margins)',
+        description: 'Update global page settings (size, orientation, margins).',
         inputSchema: {
           type: 'object',
           properties: {
-            size: { type: 'string', enum: ['A4', 'Letter'], description: '紙張規格' },
-            orientation: { type: 'string', enum: ['portrait', 'landscape'], description: '紙張方向' },
+            size: { type: 'string', enum: ['A4', 'Letter'], description: 'Paper size' },
+            orientation: { type: 'string', enum: ['portrait', 'landscape'], description: 'Page orientation' },
             margins: {
               type: 'object',
               properties: {
-                top: { type: 'number', description: '上邊界 (pt)' },
-                right: { type: 'number', description: '右邊界 (pt)' },
-                bottom: { type: 'number', description: '下邊界 (pt)' },
-                left: { type: 'number', description: '左邊界 (pt)' },
+                top: { type: 'number', description: 'Top margin (pt)' },
+                right: { type: 'number', description: 'Right margin (pt)' },
+                bottom: { type: 'number', description: 'Bottom margin (pt)' },
+                left: { type: 'number', description: 'Left margin (pt)' },
               },
-              description: '邊界設定 (pt)'
+              description: 'Margins in points'
             },
           },
         },
       },
       {
         name: 'reset_report_layout',
-        description: '一鍵重置報表版面結構回復為乾淨的企業標準出貨單範本 (若排版錯亂或測試後需還原時使用)',
+        description: 'Reset report definition back to clean default shipping invoice template.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -242,35 +249,35 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'set_full_report',
-        description: '直接替換整份報表的 ReportDefinition (適合 Agent 一次性生成整張全新架構單據)',
+        description: 'Replace the entire ReportDefinition object.',
         inputSchema: {
           type: 'object',
           properties: {
-            report: { type: 'object', description: '完整的 ReportDefinition 物件' },
+            report: { type: 'object', description: 'Complete ReportDefinition object' },
           },
           required: ['report'],
         },
       },
       {
         name: 'export_pdf',
-        description: '使用當前的像素級架構與資料渲染出正式 PDF 檔案，供外部檢查排版與邊框效果',
+        description: 'Compile and render the current report into an actual PDF file on disk.',
         inputSchema: {
           type: 'object',
           properties: {
             outputPath: {
               type: 'string',
-              description: '輸出的 PDF 檔案路徑 (預設為 export_output.pdf)',
+              description: 'Target PDF file path (default: export_output.pdf)',
             },
             recordCount: {
               type: 'number',
-              description: '產生的測試筆數 (預設 45 筆以測試多頁跨頁與表頭重複效果)',
+              description: 'Sample record count (default: 45)',
             },
           },
         },
       },
       {
         name: 'inspect_and_preview_layout',
-        description: '【Agent 排版感知必備】秒級排版幾何健檢與視覺預覽。自動檢測控制項溢出破版、文字碰撞重疊、表頭與明細欄位垂直對齊度，並同步輸出首頁 SVG 向量圖與實體 PDF 檔案供 Agent 檢閱。',
+        description: 'Run geometric health audit (overflow, collision, alignment including nested SubReports) and generate SVG preview snapshot and live PDF.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -346,8 +353,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'add_control': {
-        const { bandId, control } = args as {
+        const { bandId, subReportControlId, control } = args as {
           bandId: string;
+          subReportControlId?: string;
           control: Partial<ControlDefinition> & { type: string; x: number; y: number; width: number; height: number };
         };
         const newId = control.id || `ctl-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
@@ -355,6 +363,41 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ...control,
           id: newId,
         } as ControlDefinition;
+
+        if (subReportControlId) {
+          // Add into nested SubReport definition
+          let foundSub = false;
+          let foundBand = false;
+          currentReport.bands.forEach((b) => {
+            const subCtrl = b.controls.find((c) => c.id === subReportControlId && c.type === 'SubReport');
+            if (subCtrl) {
+              foundSub = true;
+              if (!subCtrl.subReportDefinition) {
+                subCtrl.subReportDefinition = {
+                  id: `subdef-${subReportControlId}`,
+                  name: subCtrl.subReportTitle || 'SubReport',
+                  pageSettings: { size: 'A4', orientation: 'portrait', margins: { top: 0, right: 0, bottom: 0, left: 0 } },
+                  bands: [],
+                };
+              }
+              subCtrl.subReportDefinition.bands = subCtrl.subReportDefinition.bands.map((sb) => {
+                if (sb.id === bandId || sb.type === bandId) {
+                  foundBand = true;
+                  return { ...sb, controls: [...sb.controls, fullControl] };
+                }
+                return sb;
+              });
+            }
+          });
+
+          if (!foundSub) throw new Error(`找不到指定的 SubReport 控制項: ${subReportControlId}`);
+          if (!foundBand) throw new Error(`在 SubReport 內找不到指定的 Band: ${bandId}`);
+
+          saveCurrentReport(currentReport);
+          return {
+            content: [{ type: 'text', text: `已成功在子報表 [${subReportControlId}] 的區段 ${bandId} 新增控制項 (${newId})。` }],
+          };
+        }
 
         let found = false;
         const updatedBands = currentReport.bands.map((b) => {
@@ -386,11 +429,46 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'update_control': {
-        const { bandId, controlId, patch } = args as {
+        const { bandId, controlId, subReportControlId, patch } = args as {
           bandId: string;
           controlId: string;
+          subReportControlId?: string;
           patch: Partial<ControlDefinition>;
         };
+
+        if (subReportControlId) {
+          let foundSub = false;
+          let foundCtrl = false;
+          currentReport.bands.forEach((b) => {
+            const subCtrl = b.controls.find((c) => c.id === subReportControlId && c.type === 'SubReport');
+            if (subCtrl && subCtrl.subReportDefinition) {
+              foundSub = true;
+              subCtrl.subReportDefinition.bands = subCtrl.subReportDefinition.bands.map((sb) => {
+                if (sb.id === bandId || sb.type === bandId) {
+                  return {
+                    ...sb,
+                    controls: sb.controls.map((c) => {
+                      if (c.id === controlId) {
+                        foundCtrl = true;
+                        return { ...c, ...patch, style: { ...c.style, ...patch.style } };
+                      }
+                      return c;
+                    }),
+                  };
+                }
+                return sb;
+              });
+            }
+          });
+
+          if (!foundSub) throw new Error(`找不到指定的 SubReport 控制項: ${subReportControlId}`);
+          if (!foundCtrl) throw new Error(`在子報表 [${subReportControlId}] 區段 ${bandId} 內找不到控制項: ${controlId}`);
+
+          saveCurrentReport(currentReport);
+          return {
+            content: [{ type: 'text', text: `已成功更新子報表 [${subReportControlId}] 內的控制項 ${controlId}。` }],
+          };
+        }
 
         let found = false;
         const updatedBands = currentReport.bands.map((b) => {
@@ -435,6 +513,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           updates: Array<{
             bandId: string;
             controlId: string;
+            subReportControlId?: string;
             patch: Partial<ControlDefinition>;
           }>;
         };
@@ -445,21 +524,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         let updatedCount = 0;
         const updatedBands = currentReport.bands.map((b) => {
-          const bandUpdates = updates.filter((u) => u.bandId === b.id || u.bandId === b.type);
-          if (bandUpdates.length === 0) return b;
+          const directUpdates = updates.filter((u) => !u.subReportControlId && (u.bandId === b.id || u.bandId === b.type));
 
-          const updatedControls = b.controls.map((c) => {
-            const target = bandUpdates.find((u) => u.controlId === c.id);
-            if (!target) return c;
-            updatedCount++;
-            return {
-              ...c,
-              ...target.patch,
-              style: { ...c.style, ...target.patch?.style },
-            };
+          let newControls = b.controls.map((c) => {
+            const target = directUpdates.find((u) => u.controlId === c.id);
+            if (target) {
+              updatedCount++;
+              return {
+                ...c,
+                ...target.patch,
+                style: { ...c.style, ...target.patch?.style },
+              };
+            }
+
+            // Also check if any updates target inside this SubReport
+            if (c.type === 'SubReport' && c.subReportDefinition) {
+              const subUpdates = updates.filter((u) => u.subReportControlId === c.id);
+              if (subUpdates.length > 0) {
+                c.subReportDefinition.bands = c.subReportDefinition.bands.map((sb) => {
+                  const sbUpdates = subUpdates.filter((u) => u.bandId === sb.id || u.bandId === sb.type);
+                  if (sbUpdates.length === 0) return sb;
+                  return {
+                    ...sb,
+                    controls: sb.controls.map((sc) => {
+                      const st = sbUpdates.find((u) => u.controlId === sc.id);
+                      if (!st) return sc;
+                      updatedCount++;
+                      return { ...sc, ...st.patch, style: { ...sc.style, ...st.patch?.style } };
+                    }),
+                  };
+                });
+              }
+            }
+
+            return c;
           });
 
-          return { ...b, controls: updatedControls };
+          return { ...b, controls: newControls };
         });
 
         currentReport.bands = updatedBands;
@@ -476,7 +577,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'delete_control': {
-        const { bandId, controlId } = args as { bandId: string; controlId: string };
+        const { bandId, controlId, subReportControlId } = args as { bandId: string; controlId: string; subReportControlId?: string };
+
+        if (subReportControlId) {
+          let foundSub = false;
+          let deleted = false;
+          currentReport.bands.forEach((b) => {
+            const subCtrl = b.controls.find((c) => c.id === subReportControlId && c.type === 'SubReport');
+            if (subCtrl && subCtrl.subReportDefinition) {
+              foundSub = true;
+              subCtrl.subReportDefinition.bands = subCtrl.subReportDefinition.bands.map((sb) => {
+                if (sb.id === bandId || sb.type === bandId) {
+                  const prevLen = sb.controls.length;
+                  const filtered = sb.controls.filter((c) => c.id !== controlId);
+                  if (filtered.length !== prevLen) deleted = true;
+                  return { ...sb, controls: filtered };
+                }
+                return sb;
+              });
+            }
+          });
+
+          if (!foundSub) throw new Error(`找不到指定的 SubReport 控制項: ${subReportControlId}`);
+          if (!deleted) throw new Error(`在子報表 [${subReportControlId}] 區段 ${bandId} 內找不到控制項: ${controlId}`);
+
+          saveCurrentReport(currentReport);
+          return {
+            content: [{ type: 'text', text: `已成功自子報表 [${subReportControlId}] 刪除控制項 ${controlId}。` }],
+          };
+        }
+
         let found = false;
         const updatedBands = currentReport.bands.map((b) => {
           if (b.id === bandId || b.type === bandId) {
@@ -506,7 +636,34 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'set_band_height': {
-        const { bandId, height } = args as { bandId: string; height: number };
+        const { bandId, height, subReportControlId } = args as { bandId: string; height: number; subReportControlId?: string };
+
+        if (subReportControlId) {
+          let foundSub = false;
+          let foundBand = false;
+          currentReport.bands.forEach((b) => {
+            const subCtrl = b.controls.find((c) => c.id === subReportControlId && c.type === 'SubReport');
+            if (subCtrl && subCtrl.subReportDefinition) {
+              foundSub = true;
+              subCtrl.subReportDefinition.bands = subCtrl.subReportDefinition.bands.map((sb) => {
+                if (sb.id === bandId || sb.type === bandId) {
+                  foundBand = true;
+                  return { ...sb, height };
+                }
+                return sb;
+              });
+            }
+          });
+
+          if (!foundSub) throw new Error(`找不到指定的 SubReport 控制項: ${subReportControlId}`);
+          if (!foundBand) throw new Error(`在子報表 [${subReportControlId}] 找不到區段: ${bandId}`);
+
+          saveCurrentReport(currentReport);
+          return {
+            content: [{ type: 'text', text: `已將子報表 [${subReportControlId}] 的區段 ${bandId} 高度設定為 ${height} pt。` }],
+          };
+        }
+
         let found = false;
         const updatedBands = currentReport.bands.map((b) => {
           if (b.id === bandId || b.type === bandId) {
@@ -534,7 +691,34 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'set_band_controls': {
-        const { bandId, controls } = args as { bandId: string; controls: ControlDefinition[] };
+        const { bandId, controls, subReportControlId } = args as { bandId: string; controls: ControlDefinition[]; subReportControlId?: string };
+
+        if (subReportControlId) {
+          let foundSub = false;
+          let foundBand = false;
+          currentReport.bands.forEach((b) => {
+            const subCtrl = b.controls.find((c) => c.id === subReportControlId && c.type === 'SubReport');
+            if (subCtrl && subCtrl.subReportDefinition) {
+              foundSub = true;
+              subCtrl.subReportDefinition.bands = subCtrl.subReportDefinition.bands.map((sb) => {
+                if (sb.id === bandId || sb.type === bandId) {
+                  foundBand = true;
+                  return { ...sb, controls };
+                }
+                return sb;
+              });
+            }
+          });
+
+          if (!foundSub) throw new Error(`找不到指定的 SubReport 控制項: ${subReportControlId}`);
+          if (!foundBand) throw new Error(`在子報表 [${subReportControlId}] 找不到區段: ${bandId}`);
+
+          saveCurrentReport(currentReport);
+          return {
+            content: [{ type: 'text', text: `已成功為子報表 [${subReportControlId}] 區段 ${bandId} 批次置入 ${controls.length} 個控制項。` }],
+          };
+        }
+
         let found = false;
         const updatedBands = currentReport.bands.map((b) => {
           if (b.id === bandId || b.type === bandId) {

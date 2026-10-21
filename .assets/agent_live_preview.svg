@@ -3,15 +3,15 @@
 <rect x="40" y="35" width="515.28" height="771.89" fill="none" stroke="#f1f5f9" stroke-dasharray="4,4" />
 <text x="297.5" y="51.333333333333336" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="middle">台灣智慧系統股份有限公司</text>
 <text x="297.5" y="66.66666666666667" font-size="8" font-weight="normal" fill="#64748b" text-anchor="middle">TAIWAN INTELLIGENT SYSTEMS CORP. | 台北市信義區信義路五段 7 號 50 樓</text>
-<text x="297.5" y="87.33333333333333" font-size="13" font-weight="bold" fill="#1e293b" text-anchor="middle">【 出貨驗收單(台中) 】</text>
+<text x="297.5" y="87.33333333333333" font-size="13" font-weight="bold" fill="#1e293b" text-anchor="middle">【 出 貨 驗 收 清 冊 】</text>
 <rect x="40" y="97" width="515" height="72" fill="#ffffff" stroke="#94a3b8" stroke-width="1" />
 <line x1="300" y1="97" x2="300" y2="169" stroke="#cbd5e1" stroke-width="1" />
 <text x="52" y="111.33333333333333" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="start">客戶名稱：台積光電科技股份有限公司</text>
 <text x="52" y="128.33333333333334" font-size="8.5" font-weight="normal" fill="#334155" text-anchor="start">統一編號：88765432  | 負責窗口：陳建宏 經理</text>
 <text x="52" y="145.16666666666666" font-size="8" font-weight="normal" fill="#334155" text-anchor="start">送貨地址：新竹市東區科學園區創新一路 88 號 5 樓</text>
-<text x="52" y="162.16666666666666" font-size="8" font-weight="normal" fill="#475569" text-anchor="start">聯絡電話：(03) 578-9999 分機 978、778</text>
-<text x="312" y="111.33333333333333" font-size="8.5" font-weight="bold" fill="#0f172a" text-anchor="start">單據編號：DO-20261020-0089</text>
-<text x="312" y="128.33333333333334" font-size="8.5" font-weight="normal" fill="#334155" text-anchor="start">出貨日期：2026 年 10 月 20 日</text>
+<text x="52" y="162.16666666666666" font-size="8" font-weight="normal" fill="#475569" text-anchor="start">聯絡電話：(03) 578-9999 分機 203</text>
+<text x="312" y="111.33333333333333" font-size="8.5" font-weight="bold" fill="#0f172a" text-anchor="start">單據編號：ORD-20261020-0089</text>
+<text x="312" y="128.33333333333334" font-size="8.5" font-weight="normal" fill="#334155" text-anchor="start">出貨日期：2026 年 10 月 21 日</text>
 <text x="312" y="145.16666666666666" font-size="8" font-weight="normal" fill="#334155" text-anchor="start">採購單號：PO-TW-2026-904</text>
 <text x="312" y="162.16666666666666" font-size="8" font-weight="normal" fill="#475569" text-anchor="start">付款條件：月結 30 天 (電匯付款) | 幣別：新台幣 NTD</text>
 <rect x="40" y="173" width="35" height="24" fill="#f1f5f9" stroke="#64748b" stroke-width="0" />
@@ -72,124 +72,189 @@
 <line x1="475" y1="219" x2="555" y2="219" stroke="#cbd5e1" stroke-width="0.5" />
 <line x1="555" y1="197" x2="555" y2="219" stroke="#cbd5e1" stroke-width="1" />
 <text x="551" y="210.66666666666666" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 104,900</text>
-<line x1="40" y1="241" x2="75" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="40" y1="219" x2="40" y2="241" stroke="#cbd5e1" stroke-width="1" />
-<line x1="75" y1="219" x2="75" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="57.5" y="232.66666666666666" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">2</text>
-<line x1="75" y1="241" x2="160" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="160" y1="219" x2="160" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="79" y="232.5" font-size="7.5" font-weight="normal" fill="#334155" text-anchor="start">IT-DELL-U2723QE</text>
-<line x1="160" y1="241" x2="330" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="330" y1="219" x2="330" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="164" y="232.66666666666666" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="start">Dell UltraSharp 27&quot; 4K HDR USB-C 專業顯示器</text>
-<line x1="330" y1="241" x2="375" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="375" y1="219" x2="375" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="371" y="232.66666666666666" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">2</text>
-<line x1="375" y1="241" x2="410" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="410" y1="219" x2="410" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="392.5" y="232.66666666666666" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">台</text>
-<line x1="410" y1="241" x2="475" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="475" y1="219" x2="475" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="471" y="232.66666666666666" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">NT$ 18,900</text>
-<line x1="475" y1="241" x2="555" y2="241" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="555" y1="219" x2="555" y2="241" stroke="#cbd5e1" stroke-width="1" />
-<text x="551" y="232.66666666666666" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 37,800</text>
-<line x1="40" y1="263" x2="75" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="40" y1="241" x2="40" y2="263" stroke="#cbd5e1" stroke-width="1" />
-<line x1="75" y1="241" x2="75" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="57.5" y="254.66666666666666" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">3</text>
-<line x1="75" y1="263" x2="160" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="160" y1="241" x2="160" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="79" y="254.5" font-size="7.5" font-weight="normal" fill="#334155" text-anchor="start">IT-MX-MASTER3S</text>
-<line x1="160" y1="263" x2="330" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="330" y1="241" x2="330" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="164" y="254.66666666666666" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="start">Logitech MX Master 3S 無線人體工學靜音滑鼠</text>
-<line x1="330" y1="263" x2="375" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="375" y1="241" x2="375" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="371" y="254.66666666666666" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">3</text>
-<line x1="375" y1="263" x2="410" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="410" y1="241" x2="410" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="392.5" y="254.66666666666666" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">隻</text>
-<line x1="410" y1="263" x2="475" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="475" y1="241" x2="475" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="471" y="254.66666666666666" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">NT$ 3,290</text>
-<line x1="475" y1="263" x2="555" y2="263" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="555" y1="241" x2="555" y2="263" stroke="#cbd5e1" stroke-width="1" />
-<text x="551" y="254.66666666666666" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 9,870</text>
-<line x1="40" y1="285" x2="75" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="40" y1="263" x2="40" y2="285" stroke="#cbd5e1" stroke-width="1" />
-<line x1="75" y1="263" x2="75" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="57.5" y="276.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">4</text>
-<line x1="75" y1="285" x2="160" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="160" y1="263" x2="160" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="79" y="276.5" font-size="7.5" font-weight="normal" fill="#334155" text-anchor="start">IT-KEYCHRON-Q1</text>
-<line x1="160" y1="285" x2="330" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="330" y1="263" x2="330" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="164" y="276.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="start">Keychron Q1 Pro 客製化全鋁機械鍵盤 (紅軸)</text>
-<line x1="330" y1="285" x2="375" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="375" y1="263" x2="375" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="371" y="276.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">4</text>
-<line x1="375" y1="285" x2="410" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="410" y1="263" x2="410" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="392.5" y="276.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">把</text>
-<line x1="410" y1="285" x2="475" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="475" y1="263" x2="475" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="471" y="276.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">NT$ 5,680</text>
-<line x1="475" y1="285" x2="555" y2="285" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="555" y1="263" x2="555" y2="285" stroke="#cbd5e1" stroke-width="1" />
-<text x="551" y="276.6666666666667" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 22,720</text>
-<line x1="40" y1="307" x2="75" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="40" y1="285" x2="40" y2="307" stroke="#cbd5e1" stroke-width="1" />
-<line x1="75" y1="285" x2="75" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="57.5" y="298.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">5</text>
-<line x1="75" y1="307" x2="160" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="160" y1="285" x2="160" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="79" y="298.5" font-size="7.5" font-weight="normal" fill="#334155" text-anchor="start">IT-CALDIGIT-TS4</text>
-<line x1="160" y1="307" x2="330" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="330" y1="285" x2="330" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="164" y="298.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="start">CalDigit TS4 Thunderbolt 4 旗艦擴充基座</text>
-<line x1="330" y1="307" x2="375" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="375" y1="285" x2="375" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="371" y="298.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">5</text>
-<line x1="375" y1="307" x2="410" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="410" y1="285" x2="410" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="392.5" y="298.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">組</text>
-<line x1="410" y1="307" x2="475" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="475" y1="285" x2="475" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<text x="471" y="298.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">NT$ 12,500</text>
-<line x1="475" y1="307" x2="555" y2="307" stroke="#cbd5e1" stroke-width="0.5" />
-<line x1="555" y1="285" x2="555" y2="307" stroke="#cbd5e1" stroke-width="1" />
-<text x="551" y="298.6666666666667" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 62,500</text>
-<rect x="40" y="311" width="515" height="68" fill="#ffffff" stroke="#94a3b8" stroke-width="1" />
-<line x1="360" y1="311" x2="360" y2="379" stroke="#cbd5e1" stroke-width="1" />
-<text x="52" y="323.5" font-size="7.5" font-weight="bold" fill="#475569" text-anchor="start">備註與驗收條款 (Terms &amp; Instructions)：</text>
-<text x="52" y="337.3333333333333" font-size="7" font-weight="normal" fill="#64748b" text-anchor="start">1. 本批貨物經點收簽章後視同驗收合格；若有瑕疵，請於三日內通知我司換貨。</text>
-<text x="52" y="349.3333333333333" font-size="7" font-weight="normal" fill="#64748b" text-anchor="start">2. 電匯帳號：華南商業銀行 營業部 (008)  帳號：100-20-889901-8</text>
-<text x="52" y="368" font-size="9" font-weight="bold" fill="#0f172a" text-anchor="start">金額大寫：新臺幣陸拾肆萬伍仟柒佰伍拾元整</text>
-<text x="372" y="326.6666666666667" font-size="8" font-weight="normal" fill="#475569" text-anchor="start">銷售合計 (未稅)：</text>
-<text x="544" y="326.8333333333333" font-size="8.5" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 615,000</text>
-<text x="372" y="342.6666666666667" font-size="8" font-weight="normal" fill="#475569" text-anchor="start">營業稅額 (5%)：</text>
-<text x="544" y="342.8333333333333" font-size="8.5" font-weight="normal" fill="#475569" text-anchor="end">NT$ 30,750</text>
-<text x="372" y="363" font-size="9" font-weight="bold" fill="#0284c7" text-anchor="start">應收總計 (含稅)：</text>
-<line x1="458" y1="369" x2="548" y2="369" stroke="#0284c7" stroke-width="1.5" />
-<text x="544" y="363.3333333333333" font-size="10" font-weight="bold" fill="#0284c7" text-anchor="end">NT$ 645,750</text>
-<rect x="40" y="389" width="122" height="58" fill="none" stroke="#94a3b8" stroke-width="1" />
-<rect x="40" y="389" width="122" height="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="0" />
-<line x1="40" y1="405" x2="162" y2="405" stroke="#94a3b8" stroke-width="0.5" />
-<text x="101" y="399.6666666666667" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">製單人員</text>
-<rect x="168" y="389" width="122" height="58" fill="none" stroke="#94a3b8" stroke-width="1" />
-<rect x="168" y="389" width="122" height="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="0" />
-<line x1="168" y1="405" x2="290" y2="405" stroke="#94a3b8" stroke-width="0.5" />
-<text x="229" y="399.6666666666667" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">業務主管</text>
-<rect x="296" y="389" width="122" height="58" fill="none" stroke="#94a3b8" stroke-width="1" />
-<rect x="296" y="389" width="122" height="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="0" />
-<line x1="296" y1="405" x2="418" y2="405" stroke="#94a3b8" stroke-width="0.5" />
-<text x="357" y="399.6666666666667" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">倉管點收</text>
-<rect x="424" y="389" width="131" height="58" fill="none" stroke="#94a3b8" stroke-width="1" />
-<rect x="424" y="389" width="131" height="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="0" />
-<line x1="424" y1="405" x2="555" y2="405" stroke="#94a3b8" stroke-width="0.5" />
-<text x="489.5" y="399.6666666666667" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">客戶簽收 / 蓋發票章</text>
-<line x1="40" y1="457" x2="555" y2="457" stroke="#cbd5e1" stroke-width="1" />
-<text x="44" y="470.5" font-size="7.5" font-weight="normal" fill="#94a3b8" text-anchor="start">列印日期：2026-10-20 | 系統版本：ERP-V8.5 Enterprise | 內部機密</text>
-<text x="551" y="470.5" font-size="7.5" font-weight="normal" fill="#64748b" text-anchor="end">第 [PageNumber] 頁，共 [TotalPages] 頁</text>
+<rect x="75" y="219" width="480" height="38" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="75" y1="219" x2="75" y2="257" stroke="#0284c7" stroke-width="2" />
+<rect x="75" y="219" width="480" height="15" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="83" y="229.5" font-size="7" font-weight="bold" fill="#475569">出廠序號 (S/N)</text>
+<text x="191" y="229.5" font-size="7" font-weight="bold" fill="#475569">序號條碼 (CODE128)</text>
+<text x="305" y="229.5" font-size="7" font-weight="bold" fill="#475569">生產批號</text>
+<text x="394" y="229.5" font-size="7" font-weight="bold" fill="#475569">出貨儲位</text>
+<text x="474" y="229.5" font-size="7" font-weight="bold" fill="#475569">品檢結果</text>
+<text x="83" y="246" font-size="7" font-weight="normal" fill="#334155">MBP16-2026-001-01</text>
+<text x="191" y="246" font-size="7" font-weight="normal" fill="#0284c7">||||||||||||||||||||||||</text>
+<text x="305" y="246" font-size="7" font-weight="normal" fill="#334155">LOT-20261000</text>
+<text x="394" y="246" font-size="7" font-weight="normal" fill="#334155">倉位 1-01</text>
+<text x="474" y="246" font-size="7" font-weight="bold" fill="#059669">合格 PASS</text>
+<line x1="40" y1="281" x2="75" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="40" y1="259" x2="40" y2="281" stroke="#cbd5e1" stroke-width="1" />
+<line x1="75" y1="259" x2="75" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="57.5" y="272.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">2</text>
+<line x1="75" y1="281" x2="160" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="160" y1="259" x2="160" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="79" y="272.5" font-size="7.5" font-weight="normal" fill="#334155" text-anchor="start">IT-DELL-U2723QE</text>
+<line x1="160" y1="281" x2="330" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="330" y1="259" x2="330" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="164" y="272.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="start">Dell UltraSharp 27&quot; 4K HDR USB-C 專業顯示器</text>
+<line x1="330" y1="281" x2="375" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="375" y1="259" x2="375" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="371" y="272.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">2</text>
+<line x1="375" y1="281" x2="410" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="410" y1="259" x2="410" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="392.5" y="272.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">台</text>
+<line x1="410" y1="281" x2="475" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="475" y1="259" x2="475" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="471" y="272.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">NT$ 18,900</text>
+<line x1="475" y1="281" x2="555" y2="281" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="555" y1="259" x2="555" y2="281" stroke="#cbd5e1" stroke-width="1" />
+<text x="551" y="272.6666666666667" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 37,800</text>
+<rect x="75" y="281" width="480" height="38" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="75" y1="281" x2="75" y2="319" stroke="#0284c7" stroke-width="2" />
+<rect x="75" y="281" width="480" height="15" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="83" y="291.5" font-size="7" font-weight="bold" fill="#475569">出廠序號 (S/N)</text>
+<text x="191" y="291.5" font-size="7" font-weight="bold" fill="#475569">序號條碼 (CODE128)</text>
+<text x="305" y="291.5" font-size="7" font-weight="bold" fill="#475569">生產批號</text>
+<text x="394" y="291.5" font-size="7" font-weight="bold" fill="#475569">出貨儲位</text>
+<text x="474" y="291.5" font-size="7" font-weight="bold" fill="#475569">品檢結果</text>
+<text x="83" y="308" font-size="7" font-weight="normal" fill="#334155">DELL-2026-002-01</text>
+<text x="191" y="308" font-size="7" font-weight="normal" fill="#0284c7">||||||||||||||||||||||||</text>
+<text x="305" y="308" font-size="7" font-weight="normal" fill="#334155">LOT-20261001</text>
+<text x="394" y="308" font-size="7" font-weight="normal" fill="#334155">倉位 2-01</text>
+<text x="474" y="308" font-size="7" font-weight="bold" fill="#059669">合格 PASS</text>
+<line x1="40" y1="343" x2="75" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="40" y1="321" x2="40" y2="343" stroke="#cbd5e1" stroke-width="1" />
+<line x1="75" y1="321" x2="75" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="57.5" y="334.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">3</text>
+<line x1="75" y1="343" x2="160" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="160" y1="321" x2="160" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="79" y="334.5" font-size="7.5" font-weight="normal" fill="#334155" text-anchor="start">IT-MX-MASTER3S</text>
+<line x1="160" y1="343" x2="330" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="330" y1="321" x2="330" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="164" y="334.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="start">Logitech MX Master 3S 無線人體工學靜音滑鼠</text>
+<line x1="330" y1="343" x2="375" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="375" y1="321" x2="375" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="371" y="334.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">3</text>
+<line x1="375" y1="343" x2="410" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="410" y1="321" x2="410" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="392.5" y="334.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">隻</text>
+<line x1="410" y1="343" x2="475" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="475" y1="321" x2="475" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="471" y="334.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">NT$ 3,290</text>
+<line x1="475" y1="343" x2="555" y2="343" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="555" y1="321" x2="555" y2="343" stroke="#cbd5e1" stroke-width="1" />
+<text x="551" y="334.6666666666667" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 9,870</text>
+<rect x="75" y="343" width="480" height="38" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="75" y1="343" x2="75" y2="381" stroke="#0284c7" stroke-width="2" />
+<rect x="75" y="343" width="480" height="15" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="83" y="353.5" font-size="7" font-weight="bold" fill="#475569">出廠序號 (S/N)</text>
+<text x="191" y="353.5" font-size="7" font-weight="bold" fill="#475569">序號條碼 (CODE128)</text>
+<text x="305" y="353.5" font-size="7" font-weight="bold" fill="#475569">生產批號</text>
+<text x="394" y="353.5" font-size="7" font-weight="bold" fill="#475569">出貨儲位</text>
+<text x="474" y="353.5" font-size="7" font-weight="bold" fill="#475569">品檢結果</text>
+<text x="83" y="370" font-size="7" font-weight="normal" fill="#334155">MX-2026-003-01</text>
+<text x="191" y="370" font-size="7" font-weight="normal" fill="#0284c7">||||||||||||||||||||||||</text>
+<text x="305" y="370" font-size="7" font-weight="normal" fill="#334155">LOT-20261002</text>
+<text x="394" y="370" font-size="7" font-weight="normal" fill="#334155">倉位 3-01</text>
+<text x="474" y="370" font-size="7" font-weight="bold" fill="#059669">合格 PASS</text>
+<line x1="40" y1="405" x2="75" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="40" y1="383" x2="40" y2="405" stroke="#cbd5e1" stroke-width="1" />
+<line x1="75" y1="383" x2="75" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="57.5" y="396.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">4</text>
+<line x1="75" y1="405" x2="160" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="160" y1="383" x2="160" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="79" y="396.5" font-size="7.5" font-weight="normal" fill="#334155" text-anchor="start">IT-KEYCHRON-Q1</text>
+<line x1="160" y1="405" x2="330" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="330" y1="383" x2="330" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="164" y="396.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="start">Keychron Q1 Pro 客製化全鋁機械鍵盤 (紅軸)</text>
+<line x1="330" y1="405" x2="375" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="375" y1="383" x2="375" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="371" y="396.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">4</text>
+<line x1="375" y1="405" x2="410" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="410" y1="383" x2="410" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="392.5" y="396.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">把</text>
+<line x1="410" y1="405" x2="475" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="475" y1="383" x2="475" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="471" y="396.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">NT$ 5,680</text>
+<line x1="475" y1="405" x2="555" y2="405" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="555" y1="383" x2="555" y2="405" stroke="#cbd5e1" stroke-width="1" />
+<text x="551" y="396.6666666666667" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 22,720</text>
+<rect x="75" y="405" width="480" height="38" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="75" y1="405" x2="75" y2="443" stroke="#0284c7" stroke-width="2" />
+<rect x="75" y="405" width="480" height="15" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="83" y="415.5" font-size="7" font-weight="bold" fill="#475569">出廠序號 (S/N)</text>
+<text x="191" y="415.5" font-size="7" font-weight="bold" fill="#475569">序號條碼 (CODE128)</text>
+<text x="305" y="415.5" font-size="7" font-weight="bold" fill="#475569">生產批號</text>
+<text x="394" y="415.5" font-size="7" font-weight="bold" fill="#475569">出貨儲位</text>
+<text x="474" y="415.5" font-size="7" font-weight="bold" fill="#475569">品檢結果</text>
+<text x="83" y="432" font-size="7" font-weight="normal" fill="#334155">KEYCHRON-2026-004-01</text>
+<text x="191" y="432" font-size="7" font-weight="normal" fill="#0284c7">||||||||||||||||||||||||</text>
+<text x="305" y="432" font-size="7" font-weight="normal" fill="#334155">LOT-20261003</text>
+<text x="394" y="432" font-size="7" font-weight="normal" fill="#334155">倉位 1-01</text>
+<text x="474" y="432" font-size="7" font-weight="bold" fill="#059669">合格 PASS</text>
+<line x1="40" y1="467" x2="75" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="40" y1="445" x2="40" y2="467" stroke="#cbd5e1" stroke-width="1" />
+<line x1="75" y1="445" x2="75" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="57.5" y="458.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">5</text>
+<line x1="75" y1="467" x2="160" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="160" y1="445" x2="160" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="79" y="458.5" font-size="7.5" font-weight="normal" fill="#334155" text-anchor="start">IT-CALDIGIT-TS4</text>
+<line x1="160" y1="467" x2="330" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="330" y1="445" x2="330" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="164" y="458.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="start">CalDigit TS4 Thunderbolt 4 旗艦擴充基座</text>
+<line x1="330" y1="467" x2="375" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="375" y1="445" x2="375" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="371" y="458.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">5</text>
+<line x1="375" y1="467" x2="410" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="410" y1="445" x2="410" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="392.5" y="458.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="middle">組</text>
+<line x1="410" y1="467" x2="475" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="475" y1="445" x2="475" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="471" y="458.6666666666667" font-size="8" font-weight="normal" fill="#0f172a" text-anchor="end">NT$ 12,500</text>
+<line x1="475" y1="467" x2="555" y2="467" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="555" y1="445" x2="555" y2="467" stroke="#cbd5e1" stroke-width="1" />
+<text x="551" y="458.6666666666667" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 62,500</text>
+<rect x="75" y="467" width="480" height="38" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.5" />
+<line x1="75" y1="467" x2="75" y2="505" stroke="#0284c7" stroke-width="2" />
+<rect x="75" y="467" width="480" height="15" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="0.5" />
+<text x="83" y="477.5" font-size="7" font-weight="bold" fill="#475569">出廠序號 (S/N)</text>
+<text x="191" y="477.5" font-size="7" font-weight="bold" fill="#475569">序號條碼 (CODE128)</text>
+<text x="305" y="477.5" font-size="7" font-weight="bold" fill="#475569">生產批號</text>
+<text x="394" y="477.5" font-size="7" font-weight="bold" fill="#475569">出貨儲位</text>
+<text x="474" y="477.5" font-size="7" font-weight="bold" fill="#475569">品檢結果</text>
+<text x="83" y="494" font-size="7" font-weight="normal" fill="#334155">CALDIGIT-2026-005-01</text>
+<text x="191" y="494" font-size="7" font-weight="normal" fill="#0284c7">||||||||||||||||||||||||</text>
+<text x="305" y="494" font-size="7" font-weight="normal" fill="#334155">LOT-20261004</text>
+<text x="394" y="494" font-size="7" font-weight="normal" fill="#334155">倉位 2-01</text>
+<text x="474" y="494" font-size="7" font-weight="bold" fill="#059669">合格 PASS</text>
+<rect x="40" y="511" width="515" height="68" fill="#ffffff" stroke="#94a3b8" stroke-width="1" />
+<line x1="360" y1="511" x2="360" y2="579" stroke="#cbd5e1" stroke-width="1" />
+<text x="52" y="523.5" font-size="7.5" font-weight="bold" fill="#475569" text-anchor="start">備註與驗收條款 (Terms &amp; Instructions)：</text>
+<text x="52" y="537.3333333333334" font-size="7" font-weight="normal" fill="#64748b" text-anchor="start">1. 本批貨物經點收簽章後視同驗收合格；若有瑕疵，請於三日內通知我司換貨。</text>
+<text x="52" y="549.3333333333334" font-size="7" font-weight="normal" fill="#64748b" text-anchor="start">2. 電匯帳號：華南商業銀行 營業部 (008)  帳號：100-20-889901-8</text>
+<text x="52" y="568" font-size="9" font-weight="bold" fill="#0f172a" text-anchor="start">金額大寫：新臺幣壹拾陸萬貳仟玖佰陸拾元整</text>
+<text x="372" y="526.6666666666666" font-size="8" font-weight="normal" fill="#475569" text-anchor="start">銷售合計 (未稅)：</text>
+<text x="544" y="526.8333333333334" font-size="8.5" font-weight="bold" fill="#0f172a" text-anchor="end">NT$ 615,000</text>
+<text x="372" y="542.6666666666666" font-size="8" font-weight="normal" fill="#475569" text-anchor="start">營業稅額 (5%)：</text>
+<text x="544" y="542.8333333333334" font-size="8.5" font-weight="normal" fill="#475569" text-anchor="end">NT$ 7,760</text>
+<text x="372" y="563" font-size="9" font-weight="bold" fill="#0284c7" text-anchor="start">應收總計 (含稅)：</text>
+<line x1="458" y1="569" x2="548" y2="569" stroke="#0284c7" stroke-width="1.5" />
+<text x="544" y="563.3333333333334" font-size="10" font-weight="bold" fill="#0284c7" text-anchor="end">NT$ 162,960</text>
+<rect x="40" y="589" width="122" height="58" fill="none" stroke="#94a3b8" stroke-width="1" />
+<rect x="40" y="589" width="122" height="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="0" />
+<line x1="40" y1="605" x2="162" y2="605" stroke="#94a3b8" stroke-width="0.5" />
+<text x="101" y="599.6666666666666" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">製單人員</text>
+<rect x="168" y="589" width="122" height="58" fill="none" stroke="#94a3b8" stroke-width="1" />
+<rect x="168" y="589" width="122" height="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="0" />
+<line x1="168" y1="605" x2="290" y2="605" stroke="#94a3b8" stroke-width="0.5" />
+<text x="229" y="599.6666666666666" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">業務主管</text>
+<rect x="296" y="589" width="122" height="58" fill="none" stroke="#94a3b8" stroke-width="1" />
+<rect x="296" y="589" width="122" height="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="0" />
+<line x1="296" y1="605" x2="418" y2="605" stroke="#94a3b8" stroke-width="0.5" />
+<text x="357" y="599.6666666666666" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">倉管點收</text>
+<rect x="424" y="589" width="131" height="58" fill="none" stroke="#94a3b8" stroke-width="1" />
+<rect x="424" y="589" width="131" height="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="0" />
+<line x1="424" y1="605" x2="555" y2="605" stroke="#94a3b8" stroke-width="0.5" />
+<text x="489.5" y="599.6666666666666" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">客戶簽收 / 蓋發票章</text>
+<line x1="40" y1="657" x2="555" y2="657" stroke="#cbd5e1" stroke-width="1" />
+<text x="44" y="670.5" font-size="7.5" font-weight="normal" fill="#94a3b8" text-anchor="start">列印日期：2026-10-21 | 系統版本：ERP-V8.5 Enterprise | 內部機密</text>
+<text x="551" y="670.5" font-size="7.5" font-weight="normal" fill="#64748b" text-anchor="end">第 [PageNumber] 頁，共 [TotalPages] 頁</text>
 </svg>

@@ -92,7 +92,7 @@ export function createDefaultSubReportDefinition(title = '序號與檢驗明細'
             type: 'Barcode',
             x: 112,
             y: 1,
-            width: 105,
+            width: 110,
             height: 19,
             fieldName: 'serialNo',
             barcodeFormat: 'CODE128',

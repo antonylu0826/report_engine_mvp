@@ -586,7 +586,7 @@ export const sampleOrderReport: ReportDefinition = {
                     type: 'Barcode',
                     x: 112,
                     y: 1,
-                    width: 105,
+                    width: 110,
                     height: 18,
                     fieldName: 'serialNo',
                     barcodeFormat: 'CODE128',

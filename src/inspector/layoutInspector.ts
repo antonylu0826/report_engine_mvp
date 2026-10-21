@@ -127,6 +127,61 @@ export function inspectReportLayout(report: ReportDefinition): LayoutInspectionR
     }
   }
 
+  // 3. Deep SubReport Nested Hierarchy & Column Alignment Doctor
+  const subReportControls = report.bands.flatMap((b) =>
+    b.controls.filter((c) => c.type === 'SubReport' && c.subReportDefinition)
+  );
+
+  subReportControls.forEach((subCtrl) => {
+    const subDef = subCtrl.subReportDefinition!;
+    const subIndent = 35; // Standard hierarchical indentation for subreport
+    const subAvailableWidth = printableWidth - subIndent; // Typically 480pt on A4
+
+    subDef.bands.forEach((subBand) => {
+      totalControls += subBand.controls.length;
+
+      // Check sub-control overflow within subreport container
+      subBand.controls.forEach((c) => {
+        if (c.x + c.width > subAvailableWidth + 0.5) {
+          diagnostics.push({
+            bandId: subBand.id,
+            bandType: `SubReport[${subBand.type}]`,
+            controlId: c.id,
+            severity: 'error',
+            category: 'overflow',
+            message: `子報表控制項「${c.id}」超出子表格右邊界！(X: ${c.x} + 寬: ${c.width} = ${(c.x + c.width).toFixed(1)}pt > 可用寬度 ${subAvailableWidth.toFixed(1)}pt)`,
+          });
+        }
+      });
+    });
+
+    // Check SubReport internal column alignment (sub-header vs sub-detail)
+    const subHeader = subDef.bands.find((b) => b.type === 'PageHeader' || b.type === 'ReportHeader');
+    const subDetail = subDef.bands.find((b) => b.type === 'Detail');
+
+    if (subHeader && subDetail) {
+      const subThCols = subHeader.controls.filter((c) => c.text !== '').sort((a, b) => a.x - b.x);
+      const subTdCols = subDetail.controls.filter((c) => c.fieldName || c.text).sort((a, b) => a.x - b.x);
+
+      if (subThCols.length === subTdCols.length) {
+        for (let i = 0; i < subThCols.length; i++) {
+          const th = subThCols[i];
+          const td = subTdCols[i];
+          if (Math.abs(th.x - td.x) > 1 || Math.abs(th.width - td.width) > 1) {
+            diagnostics.push({
+              bandId: subHeader.id,
+              bandType: `SubReport[Header vs Detail]`,
+              controlId: `${th.id} vs ${td.id}`,
+              severity: 'error',
+              category: 'alignment',
+              message: `子報表第 ${i + 1} 欄未對齊！子表頭「${th.text || th.id}」(X: ${th.x}, W: ${th.width}) vs 子明細「${td.fieldName || td.id}」(X: ${td.x}, W: ${td.width})，相差 X: ${Math.abs(th.x - td.x).toFixed(1)}pt`,
+            });
+          }
+        }
+      }
+    }
+  });
+
   // 3. Generate ASCII Wireframe
   const asciiLines: string[] = [];
   asciiLines.push(`+-------------------------------------------------------------+`);
@@ -237,6 +292,74 @@ export function renderReportToSvg(
         svgParts.push(`<line x1="${x}" y1="${y}" x2="${x}" y2="${y + h}" stroke="${lineColor}" stroke-width="${w || 1}" />`);
       } else {
         svgParts.push(`<line x1="${x}" y1="${y}" x2="${x + w}" y2="${y}" stroke="${lineColor}" stroke-width="${h || 1}" />`);
+      }
+      return;
+    }
+
+    // 2.5 Draw SubReport Mini Table Hierarchy in SVG
+    if (ctrl.type === 'SubReport') {
+      const subX = x + 35; // 35pt hierarchical indentation
+      const subW = 480;
+      const subH = h;
+      
+      // SubReport Container Card
+      svgParts.push(
+        `<rect x="${subX}" y="${y}" width="${subW}" height="${subH}" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.5" />`
+      );
+      // Cyan accent marker on left border
+      svgParts.push(
+        `<line x1="${subX}" y1="${y}" x2="${subX}" y2="${y + subH}" stroke="#0284c7" stroke-width="2" />`
+      );
+
+      const subDef = ctrl.subReportDefinition;
+      if (subDef && subDef.bands) {
+        const subHeader = subDef.bands.find((b) => b.type === 'PageHeader' || b.type === 'ReportHeader');
+        const subDetail = subDef.bands.find((b) => b.type === 'Detail');
+
+        // Draw SubReport Header
+        if (subHeader) {
+          svgParts.push(
+            `<rect x="${subX}" y="${y}" width="${subW}" height="${subHeader.height}" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="0.5" />`
+          );
+          subHeader.controls.forEach((th) => {
+            const thX = subX + th.x + 4;
+            const thY = y + subHeader.height / 2 + 3;
+            svgParts.push(
+              `<text x="${thX}" y="${thY}" font-size="7" font-weight="bold" fill="#475569">${th.text || ''}</text>`
+            );
+          });
+        }
+
+        // Draw Mock Sub-Detail Rows
+        if (subDetail) {
+          const binding = ctrl.subReportBinding || 'serials';
+          const nestedItems = (sampleRow && sampleRow[binding] ? (sampleRow[binding] as any[]) : []) as Record<string, unknown>[];
+          const displayItems = nestedItems.length > 0 ? nestedItems.slice(0, 1) : [{ serialNo: 'MBP-2026-001', lotNo: 'LOT-20261001', location: '倉位 1-01', qcStatus: '合格 PASS' }];
+          
+          let rowY = y + (subHeader?.height || 16);
+          displayItems.forEach((subItem) => {
+            subDetail.controls.forEach((td) => {
+              const tdX = subX + td.x + 4;
+              const tdY = rowY + subDetail.height / 2 + 2;
+              let txt = String(subItem[td.fieldName || ''] || td.text || '');
+              let color = '#334155';
+              let weight = 'normal';
+
+              if (td.type === 'Barcode') {
+                txt = '||||||||||||||||||||||||';
+                color = '#0284c7';
+              } else if (td.fieldName === 'qcStatus') {
+                color = '#059669';
+                weight = 'bold';
+              }
+
+              svgParts.push(
+                `<text x="${tdX}" y="${tdY}" font-size="7" font-weight="${weight}" fill="${color}">${txt}</text>`
+              );
+            });
+            rowY += subDetail.height;
+          });
+        }
       }
       return;
     }
