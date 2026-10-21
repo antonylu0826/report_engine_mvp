@@ -307,9 +307,8 @@ export const Toolbox: React.FC = () => {
                 {expandParams && (
                   <div className="space-y-0.5 mt-0.5">
                     {filteredParameters.map((param) => {
-                      const sampleVal =
-                        dataSource?.data?.parameters?.[param.name] ?? param.sampleValue;
-                      const sampleTooltip = `[${param.name}] ${param.label}\n型別: ${param.type}\n範例值: ${sampleVal ?? '無'}\n按住可拖曳至畫布`;
+                      const sampleVal = dataSource?.data?.parameters?.[param.name];
+                      const sampleTooltip = `[${param.name}] ${param.label}\n型別: ${param.type}${sampleVal !== undefined ? `\n範例值: ${sampleVal}` : ''}\n按住可拖曳至畫布`;
 
                       return (
                         <div
@@ -389,9 +388,8 @@ export const Toolbox: React.FC = () => {
                 {expandDetails && (
                   <div className="space-y-0.5 mt-0.5">
                     {filteredDetailFields.map((field) => {
-                      const sampleVal =
-                        dataSource?.data?.items?.[0]?.[field.name] ?? field.sampleValue;
-                      const sampleTooltip = `[${field.name}] ${field.label}\n型別: ${field.type}\n範例值: ${sampleVal ?? '無'}\n按住可拖曳至畫布`;
+                      const sampleVal = dataSource?.data?.items?.[0]?.[field.name];
+                      const sampleTooltip = `[${field.name}] ${field.label}\n型別: ${field.type}${sampleVal !== undefined ? `\n範例值: ${sampleVal}` : ''}\n按住可拖曳至畫布`;
 
                       return (
                         <div

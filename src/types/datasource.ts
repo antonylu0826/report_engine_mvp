@@ -16,8 +16,6 @@ export interface DataFieldSchema {
   formatHint?: string;
   /** Optional field description for tooltips and AI prompt context */
   description?: string;
-  /** Mock value for designer canvas previews */
-  sampleValue?: unknown;
 }
 
 export interface DataSourceSchema {
