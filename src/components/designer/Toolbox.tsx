@@ -20,7 +20,8 @@ import {
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { controlRegistry } from '@/controls/registry';
-import type { ControlType } from '@/types/report';
+import type { ControlType, BandType } from '@/types/report';
+import { BAND_NAMES, CONTROL_NAMES, DATA_TYPE_NAMES } from '@/constants/labels';
 
 export const Toolbox: React.FC = () => {
   const {
@@ -118,22 +119,22 @@ export const Toolbox: React.FC = () => {
       items: [
         {
           type: 'Label' as ControlType,
-          name: '文字標籤 (Label)',
+          name: CONTROL_NAMES.Label,
           icon: Type,
         },
         {
           type: 'CheckBox' as ControlType,
-          name: '核取方塊 (CheckBox)',
+          name: CONTROL_NAMES.CheckBox,
           icon: CheckSquare,
         },
         {
           type: 'Panel' as ControlType,
-          name: '面板容器 / 框線 (Panel)',
+          name: CONTROL_NAMES.Panel,
           icon: Square,
         },
         {
           type: 'Image' as ControlType,
-          name: '靜態影像 (Image)',
+          name: CONTROL_NAMES.Image,
           icon: ImageIcon,
         },
       ],
@@ -143,22 +144,22 @@ export const Toolbox: React.FC = () => {
       items: [
         {
           type: 'Line' as ControlType,
-          name: '線條 (Line)',
+          name: CONTROL_NAMES.Line,
           icon: Minus,
         },
         {
           type: 'Barcode' as ControlType,
-          name: '一維條碼 (Barcode - Code128)',
+          name: CONTROL_NAMES.Barcode,
           icon: BarcodeIcon,
         },
         {
           type: 'QRCode' as ControlType,
-          name: '二維碼 (QR Code)',
+          name: CONTROL_NAMES.QRCode,
           icon: QrCodeIcon,
         },
         {
           type: 'Expression' as ControlType,
-          name: '計算與統計式 (Expression ∑)',
+          name: CONTROL_NAMES.Expression,
           icon: Calculator,
         },
       ],
@@ -308,7 +309,8 @@ export const Toolbox: React.FC = () => {
                   <div className="space-y-0.5 mt-0.5">
                     {filteredParameters.map((param) => {
                       const sampleVal = dataSource?.data?.parameters?.[param.name];
-                      const sampleTooltip = `[${param.name}] ${param.label}\n型別: ${param.type}${sampleVal !== undefined ? `\n範例值: ${sampleVal}` : ''}\n按住可拖曳至畫布`;
+                      const typeZh = DATA_TYPE_NAMES[param.type] || param.type;
+                      const sampleTooltip = `[${param.name}] ${param.label}\n型別: ${typeZh}${sampleVal !== undefined ? `\n範例值: ${sampleVal}` : ''}\n按住可拖曳至畫布`;
 
                       return (
                         <div
@@ -353,7 +355,7 @@ export const Toolbox: React.FC = () => {
                               }
                             }}
                             className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-blue-600 hover:bg-white rounded transition-all dark:hover:bg-slate-700 shrink-0"
-                            title={`加入至 ${targetBand?.type || 'ReportHeader'}`}
+                            title={`加入至 ${BAND_NAMES[targetBand?.type as BandType] || '報表表頭'}`}
                           >
                             <Plus className="h-3 w-3" />
                           </button>
@@ -389,7 +391,8 @@ export const Toolbox: React.FC = () => {
                   <div className="space-y-0.5 mt-0.5">
                     {filteredDetailFields.map((field) => {
                       const sampleVal = dataSource?.data?.items?.[0]?.[field.name];
-                      const sampleTooltip = `[${field.name}] ${field.label}\n型別: ${field.type}${sampleVal !== undefined ? `\n範例值: ${sampleVal}` : ''}\n按住可拖曳至畫布`;
+                      const typeZh = DATA_TYPE_NAMES[field.type] || field.type;
+                      const sampleTooltip = `[${field.name}] ${field.label}\n型別: ${typeZh}${sampleVal !== undefined ? `\n範例值: ${sampleVal}` : ''}\n按住可拖曳至畫布`;
 
                       return (
                         <div
@@ -439,7 +442,7 @@ export const Toolbox: React.FC = () => {
                               }
                             }}
                             className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded transition-all dark:hover:bg-slate-700 shrink-0"
-                            title={`加入至 ${targetBand?.type || 'Detail'}`}
+                            title={`加入至 ${BAND_NAMES[targetBand?.type as BandType] || '明細區'}`}
                           >
                             <Plus className="h-3 w-3" />
                           </button>

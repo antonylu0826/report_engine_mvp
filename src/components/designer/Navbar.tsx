@@ -142,11 +142,11 @@ export const Navbar: React.FC = () => {
               {report.name}
             </span>
             <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
-              {report.pageSettings.size} • {report.pageSettings.orientation}
+              {report.pageSettings.size} • {report.pageSettings.orientation === 'portrait' ? '直向' : '橫向'}
             </span>
           </div>
           <p className="text-[11px] text-slate-500">
-            TypeScript 帶狀報表引擎 (XtraReport MVP)
+            企業級報表引擎
           </p>
         </div>
       </div>
@@ -162,7 +162,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Sliders className="h-3.5 w-3.5" />
-          <span>可視化設計</span>
+          <span>報表設計</span>
         </button>
 
         <button
@@ -174,7 +174,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Eye className="h-3.5 w-3.5" />
-          <span>即時 PDF 預覽</span>
+          <span>即時預覽</span>
         </button>
 
         <button
@@ -186,7 +186,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Sparkles className="h-3.5 w-3.5 text-blue-500" />
-          <span>Agent 協作模式</span>
+          <span>智慧助理</span>
         </button>
 
         <button
@@ -198,7 +198,7 @@ export const Navbar: React.FC = () => {
           }`}
         >
           <Code2 className="h-3.5 w-3.5" />
-          <span>帶狀 IR Schema</span>
+          <span>規格定義</span>
         </button>
       </div>
 

@@ -23,17 +23,8 @@ import {
   Compass,
 } from 'lucide-react';
 import { controlRegistry } from '@/controls/registry';
-import type { PageSize, PageOrientation } from '@/types/report';
-
-const BAND_META_NAMES: Record<string, string> = {
-  ReportHeader: '報表表頭 (ReportHeader)',
-  PageHeader: '頁面表頭 (PageHeader)',
-  GroupHeader: '分組表頭 (GroupHeader)',
-  Detail: '資料明細 (Detail)',
-  GroupFooter: '分組小計 (GroupFooter)',
-  PageFooter: '頁面頁尾 (PageFooter)',
-  ReportFooter: '報表總計 (ReportFooter)',
-};
+import type { PageSize, PageOrientation, BandType } from '@/types/report';
+import { BAND_NAMES, CONTROL_NAMES, ORIENTATION_NAMES } from '@/constants/labels';
 
 export const PropertyPanel: React.FC = () => {
   const {
@@ -105,14 +96,14 @@ export const PropertyPanel: React.FC = () => {
         <div className="p-3 border-b border-slate-200 flex items-center space-x-1.5 dark:border-slate-800">
           <FileText className="h-4 w-4 text-slate-500" />
           <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-            報表與版面設定 (Report Settings)
+            報表與版面設定
           </span>
         </div>
 
         <div className="p-3 space-y-4 text-xs">
           {/* Report Name */}
           <div className="space-y-1">
-            <Label className="text-[10px] text-slate-500">報表名稱 (Report Name)</Label>
+            <Label className="text-[10px] text-slate-500">報表名稱</Label>
             <Input
               value={report.name}
               onChange={(e) => setReport({ ...report, name: e.target.value })}
@@ -128,7 +119,7 @@ export const PropertyPanel: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-[10px] text-slate-500">紙張規格 (Size)</Label>
+                <Label className="text-[10px] text-slate-500">紙張規格</Label>
                 <select
                   value={report.pageSettings.size}
                   onChange={(e) => updatePageSettings({ size: e.target.value as PageSize })}
@@ -140,7 +131,7 @@ export const PropertyPanel: React.FC = () => {
               </div>
 
               <div>
-                <Label className="text-[10px] text-slate-500">版面方向 (Orientation)</Label>
+                <Label className="text-[10px] text-slate-500">版面方向</Label>
                 <select
                   value={report.pageSettings.orientation}
                   onChange={(e) =>
@@ -148,8 +139,8 @@ export const PropertyPanel: React.FC = () => {
                   }
                   className="w-full text-xs rounded border border-slate-300 p-1.5 bg-white dark:bg-slate-800 font-medium"
                 >
-                  <option value="portrait">直向 (Portrait)</option>
-                  <option value="landscape">橫向 (Landscape)</option>
+                  <option value="portrait">{ORIENTATION_NAMES.portrait}</option>
+                  <option value="landscape">{ORIENTATION_NAMES.landscape}</option>
                 </select>
               </div>
             </div>
@@ -159,14 +150,14 @@ export const PropertyPanel: React.FC = () => {
           <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-                頁面邊界 (Margins in pt)
+                頁面邊界 (pt)
               </span>
               <span className="text-[9px] text-slate-400 font-mono">1 pt = 1/72 in</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-[10px] text-slate-500">上邊界 (Top)</Label>
+                <Label className="text-[10px] text-slate-500">上邊界</Label>
                 <Input
                   type="number"
                   value={report.pageSettings.margins.top}
@@ -174,7 +165,7 @@ export const PropertyPanel: React.FC = () => {
                 />
               </div>
               <div>
-                <Label className="text-[10px] text-slate-500">下邊界 (Bottom)</Label>
+                <Label className="text-[10px] text-slate-500">下邊界</Label>
                 <Input
                   type="number"
                   value={report.pageSettings.margins.bottom}
@@ -182,7 +173,7 @@ export const PropertyPanel: React.FC = () => {
                 />
               </div>
               <div>
-                <Label className="text-[10px] text-slate-500">左邊界 (Left)</Label>
+                <Label className="text-[10px] text-slate-500">左邊界</Label>
                 <Input
                   type="number"
                   value={report.pageSettings.margins.left}
@@ -190,7 +181,7 @@ export const PropertyPanel: React.FC = () => {
                 />
               </div>
               <div>
-                <Label className="text-[10px] text-slate-500">右邊界 (Right)</Label>
+                <Label className="text-[10px] text-slate-500">右邊界</Label>
                 <Input
                   type="number"
                   value={report.pageSettings.margins.right}
@@ -207,7 +198,7 @@ export const PropertyPanel: React.FC = () => {
               <span>操作小提示</span>
             </div>
             <p className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">
-              點選畫布上的任何控制項或帶狀區塊 (Band)，即可於此處檢視與設定個別物件專屬座標、資料綁定與樣式。
+              點選畫布上的任何控制項或報表區段，即可於此處檢視與設定個別物件專屬座標、資料綁定與樣式。
             </p>
           </div>
         </div>
@@ -223,7 +214,7 @@ export const PropertyPanel: React.FC = () => {
         <div className="flex items-center space-x-1.5">
           <SlidersHorizontal className="h-3.5 w-3.5 text-slate-500" />
           <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider dark:text-slate-300">
-            屬性檢查器 (Properties)
+            屬性面板
           </span>
         </div>
 
@@ -248,12 +239,12 @@ export const PropertyPanel: React.FC = () => {
             {selectedControl ? (
               <>
                 <ControlIcon className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-                <span>{controlPlugin?.displayName || `${selectedControl.type} 控制項`}</span>
+                <span>{CONTROL_NAMES[selectedControl.type] || `${selectedControl.type} 控制項`}</span>
               </>
             ) : (
               <>
                 <Layers className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-                <span>{BAND_META_NAMES[selectedBand?.type || ''] || `${selectedBand?.type} 區塊`}</span>
+                <span>{BAND_NAMES[selectedBand?.type as BandType] || `${selectedBand?.type} 區段`}</span>
               </>
             )}
           </div>
@@ -272,7 +263,7 @@ export const PropertyPanel: React.FC = () => {
               </span>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-[10px] text-slate-500">X (水平偏移)</Label>
+                  <Label className="text-[10px] text-slate-500">水平座標 X</Label>
                   <Input
                     type="number"
                     value={selectedControl.x}
@@ -284,7 +275,7 @@ export const PropertyPanel: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-slate-500">Y (垂直偏移)</Label>
+                  <Label className="text-[10px] text-slate-500">垂直座標 Y</Label>
                   <Input
                     type="number"
                     value={selectedControl.y}
@@ -296,7 +287,7 @@ export const PropertyPanel: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-slate-500">寬度 (Width)</Label>
+                  <Label className="text-[10px] text-slate-500">寬度</Label>
                   <Input
                     type="number"
                     value={selectedControl.width}
@@ -308,7 +299,7 @@ export const PropertyPanel: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-slate-500">高度 (Height)</Label>
+                  <Label className="text-[10px] text-slate-500">高度</Label>
                   <Input
                     type="number"
                     value={selectedControl.height}
@@ -331,7 +322,7 @@ export const PropertyPanel: React.FC = () => {
               {/* Label */}
               {selectedControl.type === 'Label' && (
                 <div>
-                  <Label className="text-[10px] text-slate-500">顯示文字 (Text)</Label>
+                  <Label className="text-[10px] text-slate-500">文字內容</Label>
                   <Input
                     value={selectedControl.text ?? ''}
                     onChange={(e) =>
@@ -346,7 +337,7 @@ export const PropertyPanel: React.FC = () => {
               {/* Field (with auto-suggest dropdown) */}
               {selectedControl.type === 'Field' && (
                 <div className="space-y-1">
-                  <Label className="text-[10px] text-slate-500">繫結欄位名稱 (Field Name)</Label>
+                  <Label className="text-[10px] text-slate-500">資料欄位名稱</Label>
                   <div className="flex space-x-1">
                     <Input
                       value={selectedControl.fieldName ?? ''}
@@ -384,7 +375,7 @@ export const PropertyPanel: React.FC = () => {
               {/* Expression */}
               {selectedControl.type === 'Expression' && (
                 <div>
-                  <Label className="text-[10px] text-slate-500">運算式 (Expression)</Label>
+                  <Label className="text-[10px] text-slate-500">計算運算式</Label>
                   <Input
                     value={selectedControl.expression ?? ''}
                     onChange={(e) =>
@@ -404,11 +395,11 @@ export const PropertyPanel: React.FC = () => {
                 <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
                   <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
                     <Minus className="h-3.5 w-3.5 text-slate-500" />
-                    <span>線條設定 (Line)</span>
+                    <span>線條樣式</span>
                   </div>
 
                   <div>
-                    <Label className="text-[10px] text-slate-500">線條方向 (Orientation)</Label>
+                    <Label className="text-[10px] text-slate-500">線條方向</Label>
                     <select
                       value={selectedControl.lineOrientation || 'horizontal'}
                       onChange={(e) => {
@@ -421,8 +412,8 @@ export const PropertyPanel: React.FC = () => {
                       }}
                       className="w-full text-xs rounded border border-slate-300 p-1.5 bg-white dark:bg-slate-850"
                     >
-                      <option value="horizontal">水平分隔線 (Horizontal)</option>
-                      <option value="vertical">垂直分隔線 (Vertical)</option>
+                      <option value="horizontal">水平</option>
+                      <option value="vertical">垂直</option>
                     </select>
                   </div>
 
@@ -458,11 +449,11 @@ export const PropertyPanel: React.FC = () => {
                 <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
                   <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
                     <ImageIcon className="h-3.5 w-3.5 text-slate-500" />
-                    <span>圖片來源與縮放 (Image)</span>
+                    <span>圖片來源與縮放</span>
                   </div>
 
                   <div>
-                    <Label className="text-[10px] text-slate-500">圖片網址 (URL)</Label>
+                    <Label className="text-[10px] text-slate-500">圖片網址</Label>
                     <Input
                       value={selectedControl.src ?? ''}
                       placeholder="https://... 或 Base64"
@@ -476,7 +467,7 @@ export const PropertyPanel: React.FC = () => {
 
                   {/* Local Image File Upload */}
                   <div>
-                    <Label className="text-[10px] text-slate-500">或上傳本機圖檔 (轉 DataURL)</Label>
+                    <Label className="text-[10px] text-slate-500">或上傳本機圖檔</Label>
                     <label className="flex items-center justify-center space-x-1.5 px-2 py-1.5 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 cursor-pointer text-[11px] shadow-2xs transition-colors">
                       <Upload className="h-3.5 w-3.5 text-slate-500" />
                       <span>選擇圖檔...</span>
@@ -503,7 +494,7 @@ export const PropertyPanel: React.FC = () => {
                   </div>
 
                   <div>
-                    <Label className="text-[10px] text-slate-500">縮放適應方式 (Fit)</Label>
+                    <Label className="text-[10px] text-slate-500">縮放方式</Label>
                     <select
                       value={selectedControl.objectFit || 'contain'}
                       onChange={(e) =>
@@ -513,9 +504,9 @@ export const PropertyPanel: React.FC = () => {
                       }
                       className="w-full text-xs rounded border border-slate-300 p-1.5 bg-white dark:bg-slate-850"
                     >
-                      <option value="contain">等比完整容納 (contain - 推薦)</option>
-                      <option value="cover">等比填滿裁切 (cover)</option>
-                      <option value="fill">填滿變形 (fill)</option>
+                      <option value="contain">等比完整容納 (推薦)</option>
+                      <option value="cover">等比填滿裁切</option>
+                      <option value="fill">填滿變形</option>
                     </select>
                   </div>
                 </div>
@@ -526,7 +517,7 @@ export const PropertyPanel: React.FC = () => {
                 <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
                   <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
                     <CheckSquare className="h-3.5 w-3.5 text-slate-500" />
-                    <span>核取方塊設定 (CheckBox)</span>
+                    <span>核取方塊設定</span>
                   </div>
 
                   <label className="flex items-center space-x-2 text-[11px] cursor-pointer">
@@ -540,11 +531,11 @@ export const PropertyPanel: React.FC = () => {
                       }
                       className="rounded border-slate-300"
                     />
-                    <span>預設勾選狀態 (Checked)</span>
+                    <span>預設勾選</span>
                   </label>
 
                   <div>
-                    <Label className="text-[10px] text-slate-500">說明文字 (Label)</Label>
+                    <Label className="text-[10px] text-slate-500">標籤文字</Label>
                     <Input
                       value={selectedControl.checkText ?? ''}
                       placeholder="如 核取項目、已發貨"
@@ -557,7 +548,7 @@ export const PropertyPanel: React.FC = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-[10px] text-slate-500">或綁定布林欄位 (動態勾選)</Label>
+                    <Label className="text-[10px] text-slate-500">或綁定布林欄位</Label>
                     <div className="flex space-x-1">
                       <Input
                         value={selectedControl.fieldName ?? ''}
@@ -598,7 +589,7 @@ export const PropertyPanel: React.FC = () => {
                 <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
                   <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
                     <Square className="h-3.5 w-3.5 text-slate-500" />
-                    <span>面板框線與圓角 (Panel)</span>
+                    <span>面板框線與圓角</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -666,11 +657,11 @@ export const PropertyPanel: React.FC = () => {
                 <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
                   <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
                     <BarcodeIcon className="h-3.5 w-3.5 text-slate-500" />
-                    <span>條碼格式與編碼 (Barcode)</span>
+                    <span>條碼格式與編碼</span>
                   </div>
 
                   <div>
-                    <Label className="text-[10px] text-slate-500">條碼碼別 (Format)</Label>
+                    <Label className="text-[10px] text-slate-500">條碼碼別</Label>
                     <select
                       value={selectedControl.barcodeFormat || 'CODE128'}
                       onChange={(e) =>
@@ -680,9 +671,9 @@ export const PropertyPanel: React.FC = () => {
                       }
                       className="w-full text-xs rounded border border-slate-300 p-1.5 bg-white dark:bg-slate-850"
                     >
-                      <option value="CODE128">Code 128 (標準英數物流碼)</option>
-                      <option value="EAN13">EAN-13 (標準商品條碼)</option>
-                      <option value="UPC">UPC-A (美規商品碼)</option>
+                      <option value="CODE128">Code 128 (標準物流碼)</option>
+                      <option value="EAN13">EAN-13 (國際商品條碼)</option>
+                      <option value="UPC">UPC-A (商品條碼)</option>
                       <option value="CODE39">Code 39 (工業條碼)</option>
                     </select>
                   </div>
@@ -701,7 +692,7 @@ export const PropertyPanel: React.FC = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-[10px] text-slate-500">或動態綁定欄位 (可選)</Label>
+                    <Label className="text-[10px] text-slate-500">或動態綁定欄位</Label>
                     <div className="flex space-x-1">
                       <Input
                         value={selectedControl.fieldName ?? ''}
@@ -756,11 +747,11 @@ export const PropertyPanel: React.FC = () => {
                 <div className="space-y-2 bg-slate-50 p-2.5 rounded-md border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
                   <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
                     <QrCodeIcon className="h-3.5 w-3.5 text-slate-500" />
-                    <span>二維碼設定 (QR Code)</span>
+                    <span>二維碼設定</span>
                   </div>
 
                   <div>
-                    <Label className="text-[10px] text-slate-500">容錯率等級 (Error Level)</Label>
+                    <Label className="text-[10px] text-slate-500">容錯率等級</Label>
                     <select
                       value={selectedControl.qrErrorLevel || 'M'}
                       onChange={(e) =>
@@ -770,10 +761,10 @@ export const PropertyPanel: React.FC = () => {
                       }
                       className="w-full text-xs rounded border border-slate-300 p-1.5 bg-white dark:bg-slate-850"
                     >
-                      <option value="L">L (7% 低容錯，最簡潔)</option>
-                      <option value="M">M (15% 中等容錯，推薦)</option>
+                      <option value="L">L (7% 低容錯)</option>
+                      <option value="M">M (15% 中等容錯)</option>
                       <option value="Q">Q (25% 高容錯)</option>
-                      <option value="H">H (30% 極高容錯)</option>
+                      <option value="H">H (30% 最高容錯)</option>
                     </select>
                   </div>
 
@@ -791,7 +782,7 @@ export const PropertyPanel: React.FC = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-[10px] text-slate-500">或動態綁定欄位 (可選)</Label>
+                    <Label className="text-[10px] text-slate-500">或動態綁定欄位</Label>
                     <div className="flex space-x-1">
                       <Input
                         value={selectedControl.fieldName ?? ''}
@@ -830,10 +821,10 @@ export const PropertyPanel: React.FC = () => {
               {/* Format String for text controls */}
               {['Field', 'Expression'].includes(selectedControl.type) && (
                 <div>
-                  <Label className="text-[10px] text-slate-500">格式化字串 (Format String)</Label>
+                  <Label className="text-[10px] text-slate-500">數值格式化</Label>
                   <Input
                     value={selectedControl.formatString ?? ''}
-                    placeholder="如 C0 (貨幣), N0 (千分位), date"
+                    placeholder="如 C0 (金額貨幣), N0 (整數), date (日期)"
                     onChange={(e) =>
                       updateControl(selectedBand.id, selectedControl.id, {
                         formatString: e.target.value,
@@ -896,7 +887,7 @@ export const PropertyPanel: React.FC = () => {
 
                 {/* Bold Toggle */}
                 <div className="flex items-center justify-between py-1">
-                  <span className="text-[11px] text-slate-600 dark:text-slate-400">文字粗體 (Bold)</span>
+                  <span className="text-[11px] text-slate-600 dark:text-slate-400">文字粗體</span>
                   <button
                     onClick={() =>
                       updateControl(selectedBand.id, selectedControl.id, {
@@ -949,7 +940,7 @@ export const PropertyPanel: React.FC = () => {
             {isBackgroundCapable && (
               <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
                 <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-                  背景填色 (Background)
+                  背景填色
                 </span>
                 <div className="flex items-center space-x-1">
                   <input
@@ -1003,7 +994,7 @@ export const PropertyPanel: React.FC = () => {
         {!selectedControl && selectedBand && (
           <div className="space-y-3">
             <div>
-              <Label className="text-[10px] text-slate-500">區塊高度 (Height in pt)</Label>
+              <Label className="text-[10px] text-slate-500">區段高度 (pt)</Label>
               <Input
                 type="number"
                 value={selectedBand.height}
@@ -1018,11 +1009,11 @@ export const PropertyPanel: React.FC = () => {
               <div className="p-2.5 rounded-md bg-slate-50 border border-slate-200 space-y-2 dark:bg-slate-900 dark:border-slate-800">
                 <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200 flex items-center space-x-1">
                   <Layers className="h-3.5 w-3.5 text-slate-500" />
-                  <span>分組小計與換頁設定 (Grouping)</span>
+                  <span>分組小計與換頁設定</span>
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-[10px] text-slate-600">分組依據欄位 (Group By Field)</Label>
+                  <Label className="text-[10px] text-slate-600">分組依據欄位</Label>
                   <div className="flex space-x-1">
                     <Input
                       value={selectedBand.groupBy ?? ''}
@@ -1060,8 +1051,8 @@ export const PropertyPanel: React.FC = () => {
                     }
                     className="w-full text-xs rounded border border-slate-300 p-1.5 bg-white dark:bg-slate-850"
                   >
-                    <option value="asc">升冪排序 (Ascending A-Z / 1-9)</option>
-                    <option value="desc">降冪排序 (Descending Z-A / 9-1)</option>
+                    <option value="asc">升冪排序</option>
+                    <option value="desc">降冪排序</option>
                   </select>
                 </div>
 
@@ -1075,7 +1066,7 @@ export const PropertyPanel: React.FC = () => {
                     />
                     <span className="flex items-center space-x-1">
                       <ArrowDownUp className="h-3 w-3 text-slate-500" />
-                      <span>每組結束後獨立分頁 (Page Break)</span>
+                      <span>分組後自動換頁</span>
                     </span>
                   </label>
                 </div>
@@ -1103,12 +1094,12 @@ export const PropertyPanel: React.FC = () => {
 
             <div className="p-2.5 rounded-md bg-white border border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300">
               <div className="text-[11px] font-medium mb-1">
-                跨頁不中斷 (Keep Together)
+                跨頁不分割
               </div>
               <p className="text-[10px] text-slate-400">
                 {selectedBand.keepTogether
-                  ? '已啟用：避免該 Band 在跨頁邊界被截斷'
-                  : '未啟用：允許 Band 內部內容自然跨頁'}
+                  ? '已啟用：避免此區段在跨頁邊界被截斷'
+                  : '未啟用：允許此區段內容自然跨頁'}
               </p>
             </div>
           </div>

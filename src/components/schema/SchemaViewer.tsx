@@ -39,7 +39,7 @@ export const SchemaViewer: React.FC = () => {
       {/* Schema Toolbar */}
       <div className="h-10 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs">
         <div className="flex items-center space-x-2">
-          <span className="font-semibold text-slate-200">報表定義 Schema JSON</span>
+          <span className="font-semibold text-slate-200">報表定義結構</span>
           <span className="text-[11px] text-slate-400">
             • 宣告式報表結構 • 可持久化至資料庫
           </span>
@@ -55,7 +55,7 @@ export const SchemaViewer: React.FC = () => {
             className="h-7 text-xs bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 space-x-1"
           >
             {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-            <span>{copied ? '已複製' : '複製 JSON'}</span>
+            <span>{copied ? '已複製' : '複製定義'}</span>
           </Button>
 
           <Button

@@ -126,13 +126,13 @@ export const AgentCopilot: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Sparkles className="h-4 w-4 text-blue-400" />
             <span className="font-semibold text-xs text-slate-200">
-              AI 報表設計代理人 (Pixel-Level Agent Copilot)
+              AI 智慧報表設計助理
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full flex items-center space-x-1">
               <Ruler className="h-2.5 w-2.5 mr-0.5" />
-              <span>像素級 Banded 引擎</span>
+              <span>帶狀報表引擎</span>
             </span>
           </div>
         </div>
@@ -141,7 +141,7 @@ export const AgentCopilot: React.FC = () => {
         <div className="p-3 bg-slate-900/40 border-b border-slate-800 space-y-2">
           <div className="flex items-center space-x-1.5 text-[11px] font-medium text-slate-400">
             <Zap className="h-3.5 w-3.5 text-amber-400" />
-            <span>Agent 像素級原子操作示範 (精準控制 X/Y/寬高/邊框)：</span>
+            <span>智慧助理操作示範：</span>
           </div>
 
           <div className="flex flex-wrap gap-1.5">
@@ -216,13 +216,13 @@ export const AgentCopilot: React.FC = () => {
                 {log.role === 'agent' && (
                   <div className="flex items-center space-x-1.5 text-[10px] text-blue-400 font-semibold mb-1">
                     <Sparkles className="h-3 w-3" />
-                    <span>Agent Assistant</span>
+                    <span>AI 智慧助理</span>
                   </div>
                 )}
                 <p className="whitespace-pre-wrap">{log.text}</p>
                 {log.action && (
                   <div className="mt-1.5 pt-1.5 border-t border-slate-700/60 font-mono text-[10px] text-emerald-400">
-                    <span className="text-slate-400">調用像素操作: </span>
+                    <span className="text-slate-400">調用操作: </span>
                     {log.action}
                   </div>
                 )}
@@ -259,7 +259,7 @@ export const AgentCopilot: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Code2 className="h-4 w-4 text-emerald-400" />
             <span className="font-semibold text-xs text-slate-200">
-              像素級 Banded 報表模型 (ReportDefinition IR)
+              報表規格定義模型
             </span>
           </div>
 
@@ -278,7 +278,7 @@ export const AgentCopilot: React.FC = () => {
               ) : (
                 <>
                   <Copy className="h-3.5 w-3.5 mr-1" />
-                  <span>複製 JSON</span>
+                  <span>複製定義</span>
                 </>
               )}
             </Button>
@@ -289,7 +289,7 @@ export const AgentCopilot: React.FC = () => {
               className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
             >
               <Save className="h-3.5 w-3.5 mr-1" />
-              <span>套用 JSON</span>
+              <span>套用定義</span>
             </Button>
 
             <Button
@@ -299,7 +299,7 @@ export const AgentCopilot: React.FC = () => {
               className="h-7 text-xs border-blue-700 bg-blue-950/60 hover:bg-blue-900 text-blue-300"
             >
               <FileCheck className="h-3.5 w-3.5 mr-1" />
-              <span>看即時 PDF</span>
+              <span>即時預覽</span>
             </Button>
           </div>
         </div>
@@ -309,11 +309,11 @@ export const AgentCopilot: React.FC = () => {
           <div className="flex items-center space-x-4">
             <span className="flex items-center space-x-1">
               <Layers className="h-3.5 w-3.5 text-slate-500" />
-              <span>{report.bands.length} 個 Bands</span>
+              <span>{report.bands.length} 個區段</span>
             </span>
             <span className="flex items-center space-x-1">
               <CheckCircle2 className="h-3.5 w-3.5 text-slate-500" />
-              <span>{totalControls} 個像素級控制項</span>
+              <span>{totalControls} 個控制項</span>
             </span>
           </div>
           <div className="text-slate-400 font-mono text-[10px]">

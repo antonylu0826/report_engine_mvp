@@ -494,13 +494,13 @@ export const BandCanvas: React.FC = () => {
     string,
     { nameTw: string; dotColor: string; stripBg: string; textColor: string; border: string }
   > = {
-    ReportHeader: { ...defaultMeta, nameTw: '報表主抬頭/首頁封面' },
-    PageHeader: { ...defaultMeta, nameTw: '每頁頁首表頭 (重複)' },
-    GroupHeader: { ...defaultMeta, nameTw: '群組開頭/類別標題' },
-    Detail: { ...defaultMeta, nameTw: '資料列逐筆明細 (動態迴圈)' },
-    GroupFooter: { ...defaultMeta, nameTw: '群組小計/統計' },
-    ReportFooter: { ...defaultMeta, nameTw: '全表總計/簽核區' },
-    PageFooter: { ...defaultMeta, nameTw: '每頁頁尾/頁碼' },
+    ReportHeader: { ...defaultMeta, nameTw: '報表表頭' },
+    PageHeader: { ...defaultMeta, nameTw: '頁首' },
+    GroupHeader: { ...defaultMeta, nameTw: '群組首' },
+    Detail: { ...defaultMeta, nameTw: '明細區' },
+    GroupFooter: { ...defaultMeta, nameTw: '群組尾' },
+    ReportFooter: { ...defaultMeta, nameTw: '報表表尾' },
+    PageFooter: { ...defaultMeta, nameTw: '頁尾' },
   };
 
   return (
@@ -570,10 +570,7 @@ export const BandCanvas: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
                       <span className={`text-[11px] font-bold tracking-wide ${meta.textColor}`}>
-                        {band.type}
-                      </span>
-                      <span className="text-[10px] text-slate-600 font-medium hidden sm:inline">
-                        • {meta.nameTw}
+                        {meta.nameTw}
                       </span>
 
                       {/* Grouping Field Selector (Directly on GroupHeader / GroupFooter) */}
@@ -612,7 +609,7 @@ export const BandCanvas: React.FC = () => {
                           title="在資料列上下加入群組表頭與群組小計"
                         >
                           <Plus className="h-3 w-3" />
-                          <span>新增分組小計 (Group)</span>
+                          <span>新增分組小計</span>
                         </button>
                       )}
 
