@@ -1,6 +1,5 @@
+import React from 'react';
 import { CheckSquare } from 'lucide-react';
-import { View, Text } from '@react-pdf/renderer';
-import { getNestedValue } from '@/compiler/evaluator';
 import type { ReportControlPlugin } from '../types';
 
 export const CheckBoxControl: ReportControlPlugin = {
@@ -24,7 +23,7 @@ export const CheckBoxControl: ReportControlPlugin = {
     },
     ...overrides,
   }),
-  DesignerComponent: ({ control }) => {
+  DesignerComponent: ({ control }): React.ReactElement => {
     const isChecked = !!control.checked;
     return (
       <div className="w-full h-full flex items-center space-x-1.5 select-none overflow-hidden">
@@ -62,68 +61,6 @@ export const CheckBoxControl: ReportControlPlugin = {
           {control.checkText || (control.fieldName ? `[${control.fieldName}]` : '')}
         </span>
       </div>
-    );
-  },
-  renderPdf: ({ control, context }) => {
-    // Determine checked state dynamically from row data or static property
-    let isChecked = !!control.checked;
-    if (control.fieldName && context.currentRow) {
-      const val = getNestedValue(context.currentRow, control.fieldName);
-      isChecked = val === true || val === 1 || val === '1' || val === 'true' || val === 'TRUE' || val === 'Y';
-    }
-
-    const labelText = control.checkText || '';
-
-    return (
-      <View
-        key={control.id}
-        style={{
-          position: 'absolute',
-          left: control.x,
-          top: control.y,
-          width: control.width,
-          height: control.height,
-          flexDirection: 'row',
-          alignItems: 'center',
-        }}
-      >
-        <View
-          style={{
-            width: 9,
-            height: 9,
-            borderWidth: 1,
-            borderColor: '#334155',
-            backgroundColor: isChecked ? '#1e293b' : '#ffffff',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: 4,
-          }}
-        >
-          {isChecked && (
-            <Text
-              style={{
-                fontSize: 7,
-                color: '#ffffff',
-                fontFamily: 'Helvetica',
-                marginTop: -1,
-              }}
-            >
-              ✓
-            </Text>
-          )}
-        </View>
-        {labelText ? (
-          <Text
-            style={{
-              fontSize: control.style?.fontSize || 9,
-              color: control.style?.color || '#0f172a',
-              fontFamily: control.style?.fontFamily || 'Helvetica',
-            }}
-          >
-            {labelText}
-          </Text>
-        ) : null}
-      </View>
     );
   },
 };

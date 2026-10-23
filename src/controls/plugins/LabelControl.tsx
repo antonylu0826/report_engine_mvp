@@ -1,7 +1,6 @@
+import React from 'react';
 import { Type } from 'lucide-react';
-import { Text } from '@react-pdf/renderer';
 import type { ReportControlPlugin } from '../types';
-import { mapControlStyle } from '../styleUtils';
 
 export const LabelControl: ReportControlPlugin = {
   type: 'Label',
@@ -24,7 +23,7 @@ export const LabelControl: ReportControlPlugin = {
     },
     ...overrides,
   }),
-  DesignerComponent: ({ control }) => {
+  DesignerComponent: ({ control }): React.ReactElement => {
     return (
       <span
         className="truncate select-none"
@@ -35,14 +34,6 @@ export const LabelControl: ReportControlPlugin = {
       >
         {control.text}
       </span>
-    );
-  },
-  renderPdf: ({ control }) => {
-    const style = mapControlStyle(control);
-    return (
-      <Text key={control.id} style={style}>
-        {control.text ?? ''}
-      </Text>
     );
   },
 };

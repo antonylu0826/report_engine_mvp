@@ -14,6 +14,7 @@ import { controlRegistry } from '@/controls/registry';
 import { mapDesignerControlStyle } from '@/controls/styleUtils';
 import { useTranslations, useCurrentLocale } from '@/i18n';
 import { getBandName } from '@/constants/labels';
+import { CSS_PIXELS_PER_POINT, getPageGeometry, getSubReportGeometry } from '@/report/geometry';
 
 export type ResizeDirection = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
@@ -29,12 +30,12 @@ interface ResizingControlState {
   initialHeight: number;
 }
 
-const createUniqueId = (prefix: string) => `${prefix}-${Date.now().toString().slice(-4)}`;
+const createUniqueId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 
 export const BandCanvas: React.FC = () => {
   const {
     report,
-    data,
+    getActiveData,
     selectedBandId,
     selectedControlId,
     selectControl,
@@ -42,7 +43,7 @@ export const BandCanvas: React.FC = () => {
     addControl,
     removeControl,
     updateBandHeight,
-    setReport,
+    updateActiveReport,
     zoom,
     setZoom,
     editingSubReportPath,
@@ -55,6 +56,7 @@ export const BandCanvas: React.FC = () => {
   const tControls = useTranslations('controls');
 
   const activeReport = getActiveReport();
+  const data = getActiveData();
   const { pageSettings, bands } = activeReport;
 
   // Track hover state when dragging a control from palette over a band
@@ -139,8 +141,8 @@ export const BandCanvas: React.FC = () => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       // 1. Control Resizing via 8-way drag handles
       if (resizingControl) {
-        const dx = (e.clientX - resizingControl.startX) / zoom;
-        const dy = (e.clientY - resizingControl.startY) / zoom;
+        const dx = (e.clientX - resizingControl.startX) / (zoom * CSS_PIXELS_PER_POINT);
+        const dy = (e.clientY - resizingControl.startY) / (zoom * CSS_PIXELS_PER_POINT);
 
         let newX = resizingControl.initialX;
         let newY = resizingControl.initialY;
@@ -184,8 +186,8 @@ export const BandCanvas: React.FC = () => {
 
       // 2. Control Move Dragging
       if (draggingControl) {
-        const dx = (e.clientX - draggingControl.startX) / zoom;
-        const dy = (e.clientY - draggingControl.startY) / zoom;
+        const dx = (e.clientX - draggingControl.startX) / (zoom * CSS_PIXELS_PER_POINT);
+        const dy = (e.clientY - draggingControl.startY) / (zoom * CSS_PIXELS_PER_POINT);
         const nextX = Math.max(0, Math.round(draggingControl.initialX + dx));
         const nextY = Math.max(0, Math.round(draggingControl.initialY + dy));
 
@@ -198,7 +200,7 @@ export const BandCanvas: React.FC = () => {
 
       // 3. Band Height Resizing
       if (resizingBand) {
-        const dy = (e.clientY - resizingBand.startY) / zoom;
+        const dy = (e.clientY - resizingBand.startY) / (zoom * CSS_PIXELS_PER_POINT);
         const nextHeight = Math.max(16, Math.round(resizingBand.initialHeight + dy));
         updateBandHeight(resizingBand.bandId, nextHeight);
       }
@@ -253,7 +255,7 @@ export const BandCanvas: React.FC = () => {
         selectedControlId &&
         ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)
       ) {
-        const band = report.bands.find((b) => b.id === selectedBandId);
+        const band = getActiveReport().bands.find((b) => b.id === selectedBandId);
         const control = band?.controls.find((c) => c.id === selectedControlId);
         if (!control) return;
 
@@ -276,7 +278,7 @@ export const BandCanvas: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedBandId, selectedControlId, report, removeControl, selectControl, updateControl]);
+  }, [selectedBandId, selectedControlId, report, getActiveReport, removeControl, selectControl, updateControl]);
 
   // Ctrl + Wheel to zoom canvas smoothly
   const handleWheel = (e: React.WheelEvent) => {
@@ -320,8 +322,8 @@ export const BandCanvas: React.FC = () => {
 
     // Calculate mouse position relative to Band workspace in points (pt)
     const rect = e.currentTarget.getBoundingClientRect();
-    const rawX = (e.clientX - rect.left) / zoom;
-    const rawY = (e.clientY - rect.top) / zoom;
+    const rawX = (e.clientX - rect.left) / (zoom * CSS_PIXELS_PER_POINT);
+    const rawY = (e.clientY - rect.top) / (zoom * CSS_PIXELS_PER_POINT);
 
     const width = defaults.width ?? plugin.defaultWidth;
     const height = defaults.height ?? plugin.defaultHeight;
@@ -330,36 +332,18 @@ export const BandCanvas: React.FC = () => {
     const dropY = Math.max(0, Math.round(rawY - 5));
 
     addControl(bandId, {
-      type: controlType,
-      x: dropX,
-      y: dropY,
-      width,
-      height,
+      ...defaults,
+      type: controlType, x: dropX, y: dropY, width, height,
       fieldName: fieldName || defaults.fieldName,
-      text: fieldName ? `[${fieldName}]` : defaults.text,
-      expression: defaults.expression,
-      src: defaults.src,
-      objectFit: defaults.objectFit,
-      checked: defaults.checked,
-      checkText: defaults.checkText,
-      barcodeFormat: defaults.barcodeFormat,
-      displayValue: defaults.displayValue,
-      qrErrorLevel: defaults.qrErrorLevel,
-      lineOrientation: defaults.lineOrientation,
-      style: {
-        fontSize: 9,
-        color: '#0f172a',
-        textAlign: 'left',
-        ...defaults.style,
-      },
+      text: fieldName ? '[' + fieldName + ']' : defaults.text,
+      style: { fontSize: 9, color: '#0f172a', textAlign: 'left', ...defaults.style },
     });
-
-    selectControl(bandId, null);
   };
 
-  // Printable page width in pt
-  const pageWidth = pageSettings.size === 'A4' ? 595.28 : 612;
-  const contentWidth = pageWidth - pageSettings.margins.left - pageSettings.margins.right;
+  const { width: pageWidth, height: pageHeight, printableWidth } = getPageGeometry(pageSettings);
+  const parentControl = editingSubReportPath && report.bands.find(b => b.id === editingSubReportPath.bandId)
+    ?.controls.find(c => c.id === editingSubReportPath.controlId);
+  const contentWidth = parentControl ? getSubReportGeometry(parentControl).width : printableWidth;
 
   // Available dataset fields for grouping selector
   const sampleFields = data && data.length > 0 ? Object.keys(data[0]) : ['category', 'sku'];
@@ -465,7 +449,7 @@ export const BandCanvas: React.FC = () => {
     // Insert GroupHeader before Detail
     newBands.splice(detailIndex, 0, groupHeader);
 
-    setReport({ ...report, bands: newBands });
+    updateActiveReport(active => ({ ...active, bands: newBands }));
     selectControl(groupHeader.id, null);
   };
 
@@ -474,7 +458,7 @@ export const BandCanvas: React.FC = () => {
     const updated = bands.filter(
       (b) => b.type !== 'GroupHeader' && b.type !== 'GroupFooter'
     );
-    setReport({ ...report, bands: updated });
+    updateActiveReport(active => ({ ...active, bands: updated }));
     selectControl(null, null);
   };
 
@@ -492,11 +476,10 @@ export const BandCanvas: React.FC = () => {
       }
       return b;
     });
-    setReport({ ...report, bands: updated });
+    updateActiveReport(active => ({ ...active, bands: updated }));
   };
 
-  // Band visual appearance metadata: unified clean professional style across all bands
-  // Band visual appearance metadata: unified clean professional style across all bands
+  // Shared band appearance.
   const defaultMeta = {
     dotColor: 'bg-slate-500',
     stripBg: 'bg-slate-100 hover:bg-slate-200/90 text-slate-800',
@@ -504,8 +487,8 @@ export const BandCanvas: React.FC = () => {
     border: 'border-slate-300',
   };
 
-  const getBandDisplayName = (type: string) => {
-    return getBandName(type as any, locale);
+  const getBandDisplayName = (type: BandDefinition['type']) => {
+    return getBandName(type, locale);
   };
 
   return (
@@ -554,7 +537,7 @@ export const BandCanvas: React.FC = () => {
           className="bg-white shadow-2xl border border-slate-300/80 rounded-xs overflow-hidden text-slate-900 relative"
           style={{
             width: `${pageWidth}pt`,
-            minHeight: '842pt',
+            minHeight: `${pageHeight}pt`,
             paddingTop: `${pageSettings.margins.top}pt`,
             paddingBottom: `${pageSettings.margins.bottom}pt`,
             paddingLeft: `${pageSettings.margins.left}pt`,

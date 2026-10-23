@@ -14,7 +14,8 @@ import {
   Ruler,
   FileCheck,
 } from 'lucide-react';
-import type { ReportDefinition } from '@/types/report';
+import { parseReport } from '@/report/schema';
+import { getPageGeometry } from '@/report/geometry';
 import { useCurrentLocale } from '@/i18n';
 
 export const AgentCopilot: React.FC = () => {
@@ -54,7 +55,7 @@ export const AgentCopilot: React.FC = () => {
 
   const handleApplyJson = () => {
     try {
-      const parsed: ReportDefinition = JSON.parse(jsonText);
+      const parsed = parseReport(JSON.parse(jsonText));
       if (!parsed.bands || !Array.isArray(parsed.bands)) {
         throw new Error('報表定義格式不正確，缺少 bands 陣列。');
       }
@@ -67,10 +68,7 @@ export const AgentCopilot: React.FC = () => {
 
   // Calculate printable width and total controls
   const totalControls = report.bands.reduce((acc, b) => acc + b.controls.length, 0);
-  const printableWidth =
-    report.pageSettings.size === 'A4'
-      ? 595.28 - (report.pageSettings.margins.left + report.pageSettings.margins.right)
-      : 612.0 - (report.pageSettings.margins.left + report.pageSettings.margins.right);
+  const { printableWidth } = getPageGeometry(report.pageSettings);
 
   const handleSendPrompt = () => {
     if (!promptInput.trim()) return;

@@ -5,6 +5,14 @@ import JsBarcode from 'jsbarcode';
 const barcodeCache = new Map<string, string>();
 const qrCache = new Map<string, string>();
 
+export function getBarcodePattern(text: string, format = 'CODE128') {
+  const output: { encodings?: { data: string; text: string }[] } = {};
+  // JsBarcode supports a DOM-free object renderer; its published types omit it.
+  const encode = JsBarcode as unknown as (target: typeof output, text: string, options: { format: string }) => void;
+  encode(output, text, { format });
+  return { data: output.encodings!.map(part => part.data).join(''), text: output.encodings!.map(part => part.text).join('') };
+}
+
 /**
  * Generate a PNG Data URL for a 1D Barcode (e.g. Code128)
  */
@@ -20,7 +28,7 @@ export function generateBarcodeDataUrl(
   const cleanText = text || '00000000';
   const format = options.format || 'CODE128';
   const displayValue = options.displayValue ?? false;
-  const cacheKey = `${format}_${displayValue}_${cleanText}`;
+  const cacheKey = `${format}_${displayValue}_${options.width ?? 1.5}_${options.height ?? 40}_${cleanText}`;
 
   if (barcodeCache.has(cacheKey)) {
     return barcodeCache.get(cacheKey)!;
@@ -34,8 +42,8 @@ export function generateBarcodeDataUrl(
         displayValue,
         fontSize: 10,
         margin: 2,
-        height: 40,
-        width: 1.5,
+        height: options.height ?? 40,
+        width: options.width ?? 1.5,
       });
       const dataUrl = canvas.toDataURL('image/png');
       barcodeCache.set(cacheKey, dataUrl);
@@ -61,7 +69,7 @@ export async function generateQrCodeDataUrl(
 ): Promise<string> {
   const cleanText = text || 'https://example.com';
   const level = options.errorCorrectionLevel || 'M';
-  const cacheKey = `${level}_${cleanText}`;
+  const cacheKey = `${level}_${options.margin ?? 1}_${cleanText}`;
 
   if (qrCache.has(cacheKey)) {
     return qrCache.get(cacheKey)!;
@@ -92,7 +100,7 @@ export function getQrCodeDataUrlSync(
 ): string {
   const cleanText = text || 'https://example.com';
   const level = options.errorCorrectionLevel || 'M';
-  const cacheKey = `${level}_${cleanText}`;
+  const cacheKey = `${level}_1_${cleanText}`;
 
   if (qrCache.has(cacheKey)) {
     return qrCache.get(cacheKey)!;

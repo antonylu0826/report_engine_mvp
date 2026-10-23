@@ -22,6 +22,7 @@ import {
 import { useReportStore } from '@/store/useReportStore';
 import { controlRegistry } from '@/controls/registry';
 import type { ControlType, BandType } from '@/types/report';
+import type { DataFieldSchema } from '@/types/datasource';
 import { DATA_TYPE_NAMES, getBandName } from '@/constants/labels';
 import { useTranslations, useCurrentLocale } from '@/i18n';
 
@@ -31,12 +32,16 @@ export const Toolbox: React.FC = () => {
   const tControls = useTranslations('controls');
   const tCommon = useTranslations('common');
   const {
-    report,
+    getActiveReport,
+    getActiveData,
+    editingSubReportPath,
     dataSource,
-    data,
     addControl,
     selectedBandId,
   } = useReportStore();
+
+  const report = getActiveReport();
+  const data = getActiveData();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [justAddedControlId, setJustAddedControlId] = useState<string | null>(null);
@@ -59,28 +64,11 @@ export const Toolbox: React.FC = () => {
     const defaults = plugin.createDefault();
 
     addControl(targetBand.id, {
-      type,
-      x: 20,
-      y: 6,
+      ...defaults,
+      type, x: 20, y: 6,
       width: defaults.width ?? plugin.defaultWidth,
       height: defaults.height ?? plugin.defaultHeight,
-      text: defaults.text,
-      fieldName: defaults.fieldName,
-      expression: defaults.expression,
-      src: defaults.src,
-      objectFit: defaults.objectFit,
-      checked: defaults.checked,
-      checkText: defaults.checkText,
-      barcodeFormat: defaults.barcodeFormat,
-      displayValue: defaults.displayValue,
-      qrErrorLevel: defaults.qrErrorLevel,
-      lineOrientation: defaults.lineOrientation,
-      style: {
-        fontSize: 9,
-        color: '#0f172a',
-        textAlign: 'left',
-        ...defaults.style,
-      },
+      style: { fontSize: 9, color: '#0f172a', textAlign: 'left', ...defaults.style },
     });
 
     setJustAddedControlId(type);
@@ -89,8 +77,8 @@ export const Toolbox: React.FC = () => {
 
   // Normalized Schema fields (Parameters + Detail Fields)
   const parameters = dataSource?.schema?.parameters || [];
-  const detailFields =
-    dataSource?.schema?.detailFields ||
+  const detailFields: DataFieldSchema[] =
+    (!editingSubReportPath ? dataSource?.schema?.detailFields : undefined) ||
     (data && data.length > 0
       ? Object.keys(data[0]).map((key) => ({
           name: key,
@@ -403,7 +391,7 @@ export const Toolbox: React.FC = () => {
                 {expandDetails && (
                   <div className="space-y-0.5 mt-0.5">
                     {filteredDetailFields.map((field) => {
-                      const sampleVal = dataSource?.data?.items?.[0]?.[field.name];
+                      const sampleVal = data[0]?.[field.name];
                       const typeZh = DATA_TYPE_NAMES[field.type] || field.type;
                       const sampleTooltip = `[${field.name}] ${field.label}\nType: ${typeZh}${sampleVal !== undefined ? `\nSample: ${sampleVal}` : ''}`;
 

@@ -1,5 +1,5 @@
+import React from 'react';
 import { Minus } from 'lucide-react';
-import { View } from '@react-pdf/renderer';
 import type { ReportControlPlugin } from '../types';
 
 export const LineControl: ReportControlPlugin = {
@@ -21,7 +21,7 @@ export const LineControl: ReportControlPlugin = {
     },
     ...overrides,
   }),
-  DesignerComponent: ({ control }) => {
+  DesignerComponent: ({ control }): React.ReactElement => {
     const isVertical = control.lineOrientation === 'vertical';
     return (
       <div
@@ -29,22 +29,6 @@ export const LineControl: ReportControlPlugin = {
         style={{
           width: isVertical ? `${control.width}pt` : '100%',
           height: isVertical ? '100%' : `${control.height}pt`,
-          backgroundColor: control.style?.color || '#cbd5e1',
-        }}
-      />
-    );
-  },
-  renderPdf: ({ control }) => {
-    const isVertical = control.lineOrientation === 'vertical';
-    return (
-      <View
-        key={control.id}
-        style={{
-          position: 'absolute',
-          left: control.x,
-          top: control.y,
-          width: isVertical ? 1 : control.width,
-          height: isVertical ? control.height : 1,
           backgroundColor: control.style?.color || '#cbd5e1',
         }}
       />

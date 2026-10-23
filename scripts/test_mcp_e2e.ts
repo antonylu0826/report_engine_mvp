@@ -1,51 +1,91 @@
-import { inspectReportLayout, renderReportToSvg } from '../src/inspector/layoutInspector';
-import { sampleOrderReport, sampleOrderData14 } from '../src/mock/sampleReport';
-import fs from 'fs';
-import path from 'path';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { temporaryDirectory } from '../tests/helpers';
 
-console.log('=====================================================');
-console.log('🚀 Report Engine MCP & SubReport 端到端 (E2E) 測試');
-console.log('=====================================================\n');
-
-// 1. 深度排版健檢
-console.log('【測試 1：子報表深度排版幾何健檢 (Deep Inspection)】');
-const inspection = inspectReportLayout(sampleOrderReport);
-console.log(`- 健檢狀態: ${inspection.isValid ? '✅ PASS (完全零溢出、零對齊錯誤)' : '❌ FAIL'}`);
-console.log(`- 可繪製寬度: ${inspection.printableWidth.toFixed(1)} pt`);
-console.log(`- 總控制項數 (包含 SubReport 二級控制項): ${inspection.totalControls} 個`);
-
-const alignmentErrors = inspection.diagnostics.filter(d => d.category === 'alignment');
-console.log(`- 欄位垂直對齊錯誤數: ${alignmentErrors.length} 項`);
-if (alignmentErrors.length === 0) {
-  console.log('  ✨ 主表格 7 欄與子報表 5 欄均達 100% 精準垂直對齊！');
-} else {
-  alignmentErrors.forEach(e => console.log('  ⚠️', e.message));
+const temporary = temporaryDirectory();
+const layoutFile = path.join(temporary.directory, 'layout.json');
+const client = new Client({ name: 'report-engine-regression-tests', version: '1.0.0' });
+const transport = new StdioClientTransport({
+  command: process.execPath,
+  args: ['--import', import.meta.resolve('tsx'), path.resolve('src/mcp/index.ts')],
+  cwd: temporary.directory,
+  env: {
+    ...Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined)),
+    TSX_TSCONFIG_PATH: path.resolve('tsconfig.app.json'),
+    REPORT_ENGINE_LAYOUT_FILE: layoutFile,
+    REPORT_ENGINE_ASSETS_DIR: temporary.directory,
+  },
+  stderr: 'pipe',
+});
+let stderr = '';
+transport.stderr?.on('data', chunk => { stderr += String(chunk); });
+async function call(name: string, args: Record<string, unknown> = {}) {
+  const result = await client.callTool({ name, arguments: args });
+  assert.ok(!result.isError, JSON.stringify(result));
+  return result;
+}
+async function read() {
+  const result = await call('get_report_layout');
+  const content = result.content as { type: string; text: string }[];
+  return JSON.parse(content[0].text);
 }
 
-// 2. SVG 階層快照渲染測試
-console.log('\n【測試 2：子報表 SVG 向量階層快照渲染】');
-const svg = renderReportToSvg(sampleOrderReport, sampleOrderData14);
-const svgPath = path.resolve(process.cwd(), '.assets/agent_live_preview.svg');
-fs.writeFileSync(svgPath, svg, 'utf-8');
-console.log(`- SVG 檔案已寫入: ${svgPath}`);
-console.log(`- 是否包含子報表縮排外框: ${svg.includes('rect x="75"') || svg.includes('stroke="#0284c7"') ? '✅ YES' : '❌ NO'}`);
-console.log(`- 是否包含子報表表頭 (出廠序號): ${svg.includes('出廠序號') ? '✅ YES' : '❌ NO'}`);
-console.log(`- 是否包含條碼視覺線條: ${svg.includes('||||||||||||||||||||||||') ? '✅ YES' : '❌ NO'}`);
-console.log(`- 是否包含品檢 PASS 狀態: ${svg.includes('合格 PASS') ? '✅ YES' : '❌ NO'}`);
-
-// 3. 子報表二級畫布控制項操作 (SubReport Targeting)
-console.log('\n【測試 3：子報表內部控制項單一 Patch 操作測試】');
-const subCtrl = sampleOrderReport.bands.flatMap(b => b.controls).find(c => c.id === 'ctl-subreport-serials');
-if (subCtrl && subCtrl.subReportDefinition) {
-  const headerBand = subCtrl.subReportDefinition.bands.find(b => b.id === 'sub-band-header');
-  const detailBand = subCtrl.subReportDefinition.bands.find(b => b.id === 'sub-band-detail');
-  console.log(`- 目標子報表 ID: ${subCtrl.id}`);
-  console.log(`- 子表頭欄位數: ${headerBand?.controls.length} 個 (寬度 480pt 內完美排版)`);
-  console.log(`- 子明細欄位數: ${detailBand?.controls.length} 個`);
-  console.log(`- 第 5 欄 (品檢結果) 座標: X=${detailBand?.controls[4].x}, W=${detailBand?.controls[4].width} (完美切齊右緣)`);
-  console.log('  ✅ 子報表已具備獨立 subReportControlId 操作能力！');
+try {
+  await client.connect(transport);
+  assert.equal((await client.listTools()).tools.length, 13);
+  await call('update_page_settings', { orientation: 'landscape' });
+  assert.equal((await read()).pageInfo.printableWidth, 761.89);
+  await call('reset_report_layout');
+  await call('add_control', {
+    bandId: 'Detail',
+    control: { id: 'test-label', type: 'Label', x: 0, y: 0, width: 10, height: 10, text: 'Before', style: { fontSize: 8, color: '#111111' } },
+  });
+  await call('batch_update_controls', { updates: [
+    { bandId: 'Detail', controlId: 'test-label', patch: { text: 'After' } },
+    { bandId: 'Detail', controlId: 'test-label', patch: { style: { color: '#222222' } } },
+  ] });
+  let layout = await read();
+  const control = layout.report.bands.find((b: { type: string }) => b.type === 'Detail').controls.find((c: { id: string }) => c.id === 'test-label');
+  assert.equal(control.text, 'After');
+  assert.deepEqual(control.style, { fontSize: 8, color: '#222222' });
+  const beforeFailedBatch = fs.readFileSync(layoutFile, 'utf8');
+  const failed = await client.callTool({ name: 'batch_update_controls', arguments: { updates: [
+    { bandId: 'Detail', controlId: 'test-label', patch: { text: 'Must roll back' } },
+    { bandId: 'Detail', controlId: 'missing', patch: { text: 'No target' } },
+  ] } });
+  assert.equal(failed.isError, true);
+  assert.equal(fs.readFileSync(layoutFile, 'utf8'), beforeFailedBatch);
+  const invalid = await client.callTool({ name: 'set_band_height', arguments: { bandId: 'Detail', height: -1 } });
+  assert.equal(invalid.isError, true);
+  assert.equal(fs.readFileSync(layoutFile, 'utf8'), beforeFailedBatch);
+  await call('update_control', {
+    subReportControlId: 'ctl-subreport-serials', bandId: 'sub-band-detail', controlId: 'sub-td-qc', patch: { style: { color: '#123456' } },
+  });
+  layout = await read();
+  const sub = layout.report.bands.flatMap((b: { controls: { id: string }[] }) => b.controls).find((c: { id: string }) => c.id === 'ctl-subreport-serials');
+  assert.equal(sub.subReportDefinition.bands.find((b: { id: string }) => b.id === 'sub-band-detail').controls.find((c: { id: string }) => c.id === 'sub-td-qc').style.color, '#123456');
+  await call('delete_control', { bandId: 'Detail', controlId: 'test-label' });
+  await call('export_pdf', { outputPath: path.join(temporary.directory, 'empty.pdf'), recordCount: 0 });
+  await call('export_pdf', { outputPath: path.join(temporary.directory, 'two.pdf'), recordCount: 2 });
+  const empty = fs.readFileSync(path.join(temporary.directory, 'empty.pdf'));
+  const two = fs.readFileSync(path.join(temporary.directory, 'two.pdf'));
+  assert.equal(two.subarray(0, 5).toString(), '%PDF-');
+  assert.ok(two.length > empty.length, 'recordCount must change the compiled output');
+  const invalidReport = await client.callTool({ name: 'set_full_report', arguments: { report: { bands: [] } } });
+  assert.equal(invalidReport.isError, true);
+  fs.writeFileSync(layoutFile, '{corrupt');
+  assert.equal((await client.callTool({ name: 'get_report_layout', arguments: {} })).isError, true);
+  assert.equal(fs.readFileSync(layoutFile, 'utf8'), '{corrupt');
+  await call('reset_report_layout');
+  assert.equal((await read()).report.id, layout.report.id);
+  console.log('MCP integration passed: 13 tools, nested updates, atomic batches, validation, recovery and real PDF export.');
+} catch (error) {
+  console.error(stderr);
+  throw error;
+} finally {
+  await client.close();
+  temporary.cleanup();
 }
-
-console.log('\n=====================================================');
-console.log('🎉 全部 MCP 功能與子報表排版驗證通過！');
-console.log('=====================================================');

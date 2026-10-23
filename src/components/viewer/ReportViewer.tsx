@@ -53,7 +53,7 @@ export const ReportViewer: React.FC = () => {
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
-              {locale === 'zh-TW' ? '14 筆 (單頁)' : '14 Rows (Single)'}
+              {locale === 'zh-TW' ? '14 筆' : '14 Rows'}
             </button>
             <button
               onClick={() => setData(sampleOrderData45)}
@@ -63,7 +63,7 @@ export const ReportViewer: React.FC = () => {
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
-              {locale === 'zh-TW' ? '45 筆 (2頁跨頁)' : '45 Rows (2 Pages)'}
+              {locale === 'zh-TW' ? '45 筆' : '45 Rows'}
             </button>
             <button
               onClick={() => setData(sampleOrderData100)}
@@ -73,7 +73,7 @@ export const ReportViewer: React.FC = () => {
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
-              {locale === 'zh-TW' ? '100 筆 (多頁大表)' : '100 Rows (Multi-page)'}
+              {locale === 'zh-TW' ? '100 筆' : '100 Rows'}
             </button>
           </div>
         </div>
@@ -82,7 +82,7 @@ export const ReportViewer: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => updateInstance(<ReportPDFDocument report={report} data={data} />)}
+            onClick={() => updateInstance(<ReportPDFDocument report={report} data={data} dataSource={dataSource} />)}
             className="text-slate-300 hover:text-white hover:bg-slate-700 h-7 text-xs space-x-1"
           >
             <RefreshCw className="h-3 w-3" />

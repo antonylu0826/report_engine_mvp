@@ -1,76 +1,30 @@
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import path from 'path'
-import fs from 'fs'
-import { defineConfig, type Plugin } from 'vite'
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import path from 'node:path';
+import { defineConfig } from 'vite';
+import { reportLayoutPlugin } from './src/server/layoutPlugin.ts';
 
-function mcpSyncPlugin(): Plugin {
-  return {
-    name: 'mcp-sync-plugin',
-    configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        const layoutPath = path.resolve(import.meta.dirname, 'current_report_layout.json')
-
-        if (req.url === '/api/report-layout') {
-          if (req.method === 'GET') {
-            if (fs.existsSync(layoutPath)) {
-              try {
-                const stat = fs.statSync(layoutPath)
-                const content = fs.readFileSync(layoutPath, 'utf-8')
-                res.setHeader('Content-Type', 'application/json')
-                res.end(
-                  JSON.stringify({
-                    mtime: stat.mtimeMs,
-                    report: JSON.parse(content),
-                  })
-                )
-                return
-              } catch (e) {
-                res.statusCode = 500
-                res.end(JSON.stringify({ error: (e as Error).message }))
-                return
-              }
-            } else {
-              res.statusCode = 404
-              res.end(JSON.stringify({ error: 'current_report_layout.json not found' }))
-              return
-            }
-          } else if (req.method === 'POST') {
-            let body = ''
-            req.on('data', (chunk) => {
-              body += chunk
-            })
-            req.on('end', () => {
-              try {
-                const parsed = JSON.parse(body)
-                fs.writeFileSync(layoutPath, JSON.stringify(parsed, null, 2), 'utf-8')
-                const stat = fs.statSync(layoutPath)
-                res.setHeader('Content-Type', 'application/json')
-                res.end(JSON.stringify({ success: true, mtime: stat.mtimeMs }))
-              } catch (e) {
-                res.statusCode = 400
-                res.end(JSON.stringify({ error: (e as Error).message }))
-              }
-            })
-            return
-          }
-        }
-        next()
-      })
-    },
-  }
-}
-
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    mcpSyncPlugin(),
-  ],
-  resolve: {
-    alias: {
-      '@': path.resolve(import.meta.dirname, './src'),
+  plugins: [react(), tailwindcss(), reportLayoutPlugin(process.env.REPORT_ENGINE_LAYOUT_FILE || path.resolve(import.meta.dirname, 'current_report_layout.json'))],
+  resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },
+  build: {
+    manifest: true,
+    rolldownOptions: {
+      preserveEntrySignatures: false,
+      output: {
+        strictExecutionOrder: true,
+        codeSplitting: {
+          // Keep shared dependencies out of PDF groups so the designer stays lazy.
+          includeDependenciesRecursively: false,
+          groups: [
+            { name: 'react', test: /node_modules[\\/](?:react|react-dom|scheduler)[\\/]/, priority: 40, entriesAware: true },
+            { name: 'pdf-fonts', test: /node_modules[\\/](?:fontkit|@react-pdf[\\/]font)[\\/]/, priority: 30, entriesAware: true },
+            { name: 'pdf-core', test: /node_modules[\\/]pdfkit[\\/]/, priority: 20, entriesAware: true },
+            { name: 'pdf-layout', test: /node_modules[\\/](?:yoga-layout|@react-pdf[\\/]layout)[\\/]/, priority: 10, entriesAware: true },
+            { name: 'pdf-runtime', test: /node_modules[\\/]@react-pdf[\\/]/, priority: 5, entriesAware: true, maxSize: 700_000 },
+          ],
+        },
+      },
     },
   },
-})
+});

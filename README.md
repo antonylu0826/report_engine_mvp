@@ -58,7 +58,7 @@
 - **完整雙語國際化 (i18n Architecture)**：
   - 支援繁體中文（台灣 `zh-TW`）與 英文（`en`）雙語切換。
   - 具備 TypeScript 強型別字典鍵校驗（`DeepStringRecord`）與 `localStorage` 偏好持久化。
-  - 全站 100% 多國語言覆蓋：導航列、工具箱、資料集欄位抽屜、屬性面板、次級導航、PDF 預覽器、Schema 檢視器與 Agent 協作面板。
+  - 導航列、工具箱、欄位抽屜、屬性面板及各工作分頁提供雙語字典；部分控制項提示仍待補齊。
 - **可擴充外掛控制項系統 (10 大外掛控制項)**：
   - 內建 10 大開箱即用控制項：
     1. `Label` (文字標籤)
@@ -86,10 +86,14 @@
   - **真實範例值預覽 (Sample Values)**：卡片內直接呈現當前資料來源的真實範例內容，排版時心智模型極其清晰。
 - **高標準程式碼品質與效能**：
   - 屬性面板採用高度解耦之微元件架構，移除超過 5 處重複的欄位選單與色彩選擇邏輯。
-  - 經由 `oxlint` 與 React Compiler 嚴格檢驗，維持 **0 Warnings / 0 Errors**。
-  - 生產環境 Bundle 894ms 快速建置，純前端向量運算直出 PDF。
+  - 以 `oxlint`、TypeScript、核心回歸測試及 MCP 整合測試驗證程式行為。
+  - 純前端向量運算直出 PDF；建置體積與效能仍需持續量測及優化。
 
 ---
+
+## 程式碼審查與重構
+
+2026-10-23 的審查結果、修正範圍、驗證方式與後續限制，見 [CODE_REVIEW.md](CODE_REVIEW.md)。
 
 ## 🛠️ 技術選型 (Tech Stack)
 
@@ -124,8 +128,14 @@ npm run dev
 ### 3. 程式碼品質與型別檢查
 
 ```bash
-npm run lint    # 毫秒級 Oxlint 靜態分析 (0 warnings / 0 errors)
-npx tsc --noEmit # TypeScript 雙向型別檢驗
+npm run check     # lint、型別、回歸測試、MCP 整合測試與正式建置
+
+# 分別執行
+npm run lint
+npm run typecheck # 同時檢查 src、scripts、tests
+npm run check:bundle # 建置後驗證 chunk、首頁大小與 PDF 延遲載入
+npm test          # 核心、狀態、同步 API／競態及實際 PDF 輸出
+npm run test:mcp  # 啟動隔離的 MCP server，以真正 client 呼叫工具
 ```
 
 ### 4. 啟動 MCP 伺服器 (供 Claude Desktop / Cursor / Antigravity 調用)
@@ -137,8 +147,10 @@ npm run mcp
 ### 5. 建置生產版本
 
 ```bash
-npm run build
+npm run build # 同時執行 bundle 預算檢查
 ```
+
+PDF 引擎僅在預覽或匯出時載入。建置維持預設 500 kB chunk 門檻，並檢查首頁全部 JavaScript 不超過 650 kB。設計器控制項登錄在 `src/controls/registry.ts`；PDF renderer 分開登錄於 `src/controls/pdfRegistry.tsx`，新增外掛時需同時提供兩個對應實作。
 
 ---
 
@@ -161,7 +173,7 @@ npm run build
 | `update_page_settings` | 更新報表全域頁面設定（紙張尺寸 A4/Letter、方向 portrait/landscape、上下左右邊界 margins），自動重新計算可繪寬度 |
 | `reset_report_layout` | 一鍵重置報表版面結構回復為企業標準出貨單範本（若排版錯亂時可安全還原） |
 | `set_full_report` | 直接替換整份 ReportDefinition（適合 Agent 一次性產生整張新單據） |
-| `inspect_and_preview_layout` | **【Agent 排版感知核心】** 秒級幾何健檢與視覺快照。自動偵測溢出破版、文字碰撞、表格欄位垂直對齊度，並同步輸出首頁 SVG 向量圖與實體 PDF 檔案 |
+| `inspect_and_preview_layout` | **【Agent 排版感知核心】** 秒級幾何健檢與視覺快照。自動偵測溢出破版、文字碰撞、表格欄位垂直對齊度，並同步輸出版面概覽 SVG 與實體 PDF 檔案（SVG 最多顯示 5 筆主明細，分頁請以 PDF 為準） |
 | `export_pdf` | 使用當前像素架構直接算繪高解析 PDF 輸出至本機磁碟供檢驗 |
 
 ---
@@ -196,8 +208,10 @@ npm run build
 ### 3. 🔄 前端即時雙向熱更新 (Bidirectional Live Sync)
 
 本專案內建 Vite 即時檔案同步中介層與狀態防抖引擎：
-- **外部 Agent ➔ 前端畫布**：瀏覽器介面每 1.5 秒自動監聽磁碟上的 `current_report_layout.json`。當外部 AI Agent 透過 MCP 執行修改時，**瀏覽器無需手動刷新，1 秒內自動熱重載最新版面與即時 PDF 預覽**！
-- **前端畫布 ➔ 外部 Agent**：當使用者在可視化設計器中手動拖曳控制項、微調尺寸或修改樣式時，系統透過 **500ms 防抖自動寫回磁碟**，Agent 呼叫 `get_report_layout` 即可立刻讀取到使用者的最新調整，達成 **100% 雙向協同**！
+- **外部 Agent ➔ 前端畫布**：瀏覽器介面每 1.5 秒自動監聽磁碟上的 `current_report_layout.json`。當外部 AI Agent 透過 MCP 執行修改時，**瀏覽器無需手動刷新，下一次輪詢會載入最新版面與即時 PDF 預覽**！
+- **前端畫布 ➔ 外部 Agent**：當使用者在可視化設計器中手動拖曳控制項、微調尺寸或修改樣式時，系統透過 **500ms 防抖自動寫回磁碟**，Agent 呼叫 `get_report_layout` 即可立刻讀取到使用者的最新調整，提供 **雙向協同**！
+- **衝突保護**：前端有未儲存變更時不套用背景讀取結果；寫入時以版本雜湊檢查磁碟內容。若外部 Agent 已修改同份報表，顯示同步衝突並保留本機變更，手動重新載入前會確認是否捨棄變更。
+- **測試隔離**：`npm test` 與 `npm run test:mcp` 使用 `scratch/` 下的暫存版面，不會改動使用者的 `current_report_layout.json`。可用 `REPORT_ENGINE_LAYOUT_FILE` 指定測試／開發版面位置。
 - **連線指示燈**：頂部導航列常駐 `🟢 雙向已同步 🔄` 狀態膠囊，寫入與同步狀態一目了然。
 
 ---

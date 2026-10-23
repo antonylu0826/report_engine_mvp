@@ -1,18 +1,8 @@
 import React from 'react';
 import { TableProperties, Layers } from 'lucide-react';
-import { View, Text } from '@react-pdf/renderer';
 import type { ReportControlPlugin } from '../types';
-import { getNestedValue, type EvalContext } from '@/compiler/evaluator';
-import { controlRegistry } from '../registry';
-import { useReportStore, createDefaultSubReportDefinition } from '@/store/useReportStore';
-
-export interface SubReportRowItem {
-  serialNo?: string;
-  lotNo?: string;
-  location?: string;
-  qcStatus?: string;
-  [key: string]: unknown;
-}
+import { useReportStore } from '@/store/useReportStore';
+import { createDefaultSubReportDefinition } from '@/report/defaultSubReport';
 
 export const SubReportControl: ReportControlPlugin = {
   type: 'SubReport',
@@ -40,7 +30,7 @@ export const SubReportControl: ReportControlPlugin = {
     ...overrides,
   }),
 
-  DesignerComponent: ({ control, isSelected }) => {
+  DesignerComponent: ({ control, isSelected }): React.ReactElement => {
     const title = control.subReportTitle || '序號與檢驗明細';
     const binding = control.subReportBinding || 'serials';
 
@@ -97,183 +87,4 @@ export const SubReportControl: ReportControlPlugin = {
       </div>
     );
   },
-
-  renderPdf: ({ control, context }) => {
-    // 1. Resolve nested sub-data array from current row
-    const binding = control.subReportBinding || 'serials';
-    const rawItems = context.currentRow
-      ? (getNestedValue(context.currentRow, binding) as SubReportRowItem[] | undefined)
-      : undefined;
-
-    // Default sample fallback if no runtime context
-    const items: SubReportRowItem[] = Array.isArray(rawItems) && rawItems.length > 0
-      ? rawItems
-      : [
-          {
-            serialNo: 'SN26-OPT-001',
-            lotNo: 'LOT-20261001',
-            location: '倉位 1-01',
-            qcStatus: '合格 PASS',
-          },
-        ];
-
-    // 2. Dynamic secondary canvas rendering if subReportDefinition is present (Plan B)
-    const subDef = control.subReportDefinition;
-    if (subDef && subDef.bands && subDef.bands.length > 0) {
-      const headerBand = subDef.bands.find(
-        (b) => b.type === 'PageHeader' || b.type === 'ReportHeader'
-      );
-      const detailBand = subDef.bands.find((b) => b.type === 'Detail');
-
-      return (
-        <View
-          key={control.id}
-          style={{
-            position: 'relative',
-            width: '100%',
-            marginTop: control.y,
-            marginBottom: 2,
-            paddingLeft: 35, // Align with SKU column for hierarchical indentation
-            paddingRight: 0,
-          }}
-        >
-          {/* SubReport Mini Box Container - Width 480 + Indent 35 = 515 (Perfect right alignment with main table) */}
-          <View
-            style={{
-              width: 480,
-              borderLeftWidth: 2,
-              borderLeftColor: '#0284c7', // Cyan left accent marker
-              borderBottomWidth: 0.5,
-              borderBottomColor: '#cbd5e1',
-              borderRightWidth: 0.5,
-              borderRightColor: '#cbd5e1',
-              borderTopWidth: 0.5,
-              borderTopColor: '#e2e8f0',
-              backgroundColor: '#f8fafc',
-              paddingVertical: 2,
-              paddingHorizontal: 0,
-            }}
-          >
-            {/* A. SubReport Header Band */}
-            {headerBand && (
-              <View
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  height: headerBand.height,
-                  borderBottomWidth: 0.5,
-                  borderBottomColor: '#cbd5e1',
-                  marginBottom: 1,
-                }}
-              >
-                {headerBand.controls.map((ctrl) => {
-                  const plugin = controlRegistry.get(ctrl.type);
-                  return plugin ? (
-                    <React.Fragment key={ctrl.id}>
-                      {plugin.renderPdf({ control: ctrl, context })}
-                    </React.Fragment>
-                  ) : null;
-                })}
-              </View>
-            )}
-
-            {/* B. SubReport Detail Rows (Repeating for each item) */}
-            {detailBand &&
-              items.map((subItem, sIdx) => {
-                const subContext: EvalContext = {
-                  ...context,
-                  currentRow: subItem,
-                  rowIndex: sIdx,
-                };
-
-                return (
-                  <View
-                    key={`sub-detail-${sIdx}`}
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      height: detailBand.height,
-                      borderBottomWidth: sIdx < items.length - 1 ? 0.3 : 0,
-                      borderBottomColor: '#e2e8f0',
-                    }}
-                  >
-                    {detailBand.controls.map((ctrl) => {
-                      const plugin = controlRegistry.get(ctrl.type);
-                      return plugin ? (
-                        <React.Fragment key={ctrl.id}>
-                          {plugin.renderPdf({ control: ctrl, context: subContext })}
-                        </React.Fragment>
-                      ) : null;
-                    })}
-                  </View>
-                );
-              })}
-          </View>
-        </View>
-      );
-    }
-
-    // 3. Fallback static layout
-    return (
-      <View
-        key={control.id}
-        style={{
-          position: 'relative',
-          width: control.width,
-          marginTop: control.y,
-          marginBottom: 2,
-          paddingLeft: 35,
-          paddingRight: 0,
-        }}
-      >
-        <View
-          style={{
-            width: 480,
-            borderLeftWidth: 2,
-            borderLeftColor: '#0284c7',
-            borderBottomWidth: 0.5,
-            borderBottomColor: '#cbd5e1',
-            borderRightWidth: 0.5,
-            borderRightColor: '#cbd5e1',
-            borderTopWidth: 0.5,
-            borderTopColor: '#e2e8f0',
-            backgroundColor: '#f8fafc',
-            paddingVertical: 3,
-            paddingHorizontal: 6,
-          }}
-        >
-          {items.map((sub, idx) => (
-            <View
-              key={`sub-${idx}`}
-              style={{
-                flexDirection: 'row',
-                paddingVertical: 1.5,
-                borderBottomWidth: idx < items.length - 1 ? 0.3 : 0,
-                borderBottomColor: '#e2e8f0',
-              }}
-            >
-              <Text style={{ width: '40%', fontSize: 6.8, color: '#1e293b' }}>
-                {`↳ ${String(sub.serialNo || '-')}`}
-              </Text>
-              <Text style={{ width: '30%', fontSize: 6.8, color: '#475569' }}>
-                {String(sub.lotNo || '-')}
-              </Text>
-              <Text
-                style={{
-                  width: '30%',
-                  fontSize: 6.8,
-                  fontWeight: 'bold',
-                  color: '#059669',
-                  textAlign: 'right',
-                }}
-              >
-                {String(sub.qcStatus || '合格')}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    );
-  },
 };
-

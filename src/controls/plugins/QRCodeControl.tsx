@@ -1,9 +1,8 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { QrCode as QrCodeIcon } from 'lucide-react';
-import { Image as PdfImage } from '@react-pdf/renderer';
 import type { ReportControlPlugin } from '../types';
 import { generateQrCodeDataUrl, getQrCodeDataUrlSync } from '../barcodeUtils';
-import { evaluateExpression } from '@/compiler/evaluator';
 
 export const QRCodeControl: ReportControlPlugin = {
   type: 'QRCode',
@@ -25,7 +24,7 @@ export const QRCodeControl: ReportControlPlugin = {
     },
     ...overrides,
   }),
-  DesignerComponent: ({ control }) => {
+  DesignerComponent: ({ control }): React.ReactElement => {
     const rawVal = control.fieldName
       ? `[${control.fieldName}]`
       : (control.text || 'https://example.com');
@@ -54,32 +53,6 @@ export const QRCodeControl: ReportControlPlugin = {
           className="max-w-full max-h-full object-contain pointer-events-none select-none"
         />
       </div>
-    );
-  },
-  renderPdf: ({ control, context }) => {
-    let val = control.text ?? '';
-    if (control.fieldName) {
-      const bound = evaluateExpression(undefined, control.fieldName, context);
-      if (bound !== undefined && bound !== null) {
-        val = String(bound);
-      }
-    }
-    const qrUrl = getQrCodeDataUrlSync(val || 'https://example.com', {
-      errorCorrectionLevel: control.qrErrorLevel,
-    });
-
-    return (
-      <PdfImage
-        key={control.id}
-        src={qrUrl}
-        style={{
-          position: 'absolute',
-          left: control.x,
-          top: control.y,
-          width: control.width,
-          height: control.height,
-        }}
-      />
     );
   },
 };

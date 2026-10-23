@@ -9,7 +9,9 @@ import { useTranslations } from '@/i18n';
 export const GlobalReportSettings: React.FC = () => {
   const tProps = useTranslations('propertyGrid');
   const tCommon = useTranslations('common');
-  const { report, setReport } = useReportStore();
+  const { getActiveReport, updateActiveReport } = useReportStore();
+  const report = getActiveReport();
+  const setReport = (next: typeof report) => updateActiveReport(() => next);
 
   const updatePageSettings = (patch: Partial<typeof report.pageSettings>) => {
     setReport({

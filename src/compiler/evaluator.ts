@@ -15,6 +15,7 @@ export function getNestedValue(obj: unknown, path: string): unknown {
     if (current === null || current === undefined || typeof current !== 'object') {
       return undefined;
     }
+    if (!Object.hasOwn(current, part)) return undefined;
     current = (current as Record<string, unknown>)[part];
   }
 
@@ -55,33 +56,33 @@ export function evaluateExpression(
   }
 
   const expr = expression.trim();
-  const dataset = context.groupRows || context.dataSource;
+  const dataset = context.groupRows ?? context.dataSource ?? [];
 
   // Aggregate: SUM(fieldname)
-  const sumMatch = expr.match(/^=?(?:SUM|sum)\s*\(\s*([a-zA-Z0-9_.]+)\s*\)$/);
-  if (sumMatch && dataset) {
+  const sumMatch = expr.match(/^=?SUM\s*\(\s*([a-zA-Z0-9_.]+)\s*\)$/i);
+  if (sumMatch) {
     const targetField = sumMatch[1];
     return dataset.reduce((acc, row) => {
-      const val = Number(getNestedValue(row, targetField)) || 0;
-      return acc + val;
+      const val = Number(getNestedValue(row, targetField));
+      return acc + (Number.isFinite(val) ? val : 0);
     }, 0);
   }
 
   // Aggregate: COUNT()
-  const countMatch = expr.match(/^=?(?:COUNT|count)\s*\(\s*\)$/);
-  if (countMatch && dataset) {
+  const countMatch = expr.match(/^=?COUNT\s*\(\s*\)$/i);
+  if (countMatch) {
     return dataset.length;
   }
 
   // Aggregate: AVG(fieldname)
-  const avgMatch = expr.match(/^=?(?:AVG|avg)\s*\(\s*([a-zA-Z0-9_.]+)\s*\)$/);
-  if (avgMatch && dataset && dataset.length > 0) {
+  const avgMatch = expr.match(/^=?AVG\s*\(\s*([a-zA-Z0-9_.]+)\s*\)$/i);
+  if (avgMatch) {
     const targetField = avgMatch[1];
     const total = dataset.reduce((acc, row) => {
-      const val = Number(getNestedValue(row, targetField)) || 0;
-      return acc + val;
+      const val = Number(getNestedValue(row, targetField));
+      return acc + (Number.isFinite(val) ? val : 0);
     }, 0);
-    return total / dataset.length;
+    return dataset.length ? total / dataset.length : 0;
   }
 
   // Row Index: ROW_INDEX or INDEX

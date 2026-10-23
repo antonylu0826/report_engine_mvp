@@ -19,13 +19,14 @@ export interface ReportControlPlugin {
     control: ControlDefinition;
     isSelected: boolean;
   }>;
-  renderPdf: (props: {
-    control: ControlDefinition;
-    context: EvalContext;
-  }) => React.ReactNode;
   renderInspector?: (props: {
     control: ControlDefinition;
     updateControl: (patch: Partial<ControlDefinition>) => void;
     sampleFields: string[];
   }) => React.ReactNode;
 }
+
+export type PdfControlRenderer = (props: {
+  control: ControlDefinition;
+  context: EvalContext;
+}) => React.ReactNode;

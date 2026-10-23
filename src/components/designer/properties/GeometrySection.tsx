@@ -23,7 +23,7 @@ export const GeometrySection: React.FC<GeometrySectionProps> = ({ control, onUpd
           <Input
             type="number"
             value={control.x}
-            onChange={(e) => onUpdate({ x: Number(e.target.value) || 0 })}
+            onChange={(e) => onUpdate({ x: Math.max(0, Number(e.target.value) || 0) })}
             className="bg-white dark:bg-slate-950"
           />
         </div>
@@ -32,7 +32,7 @@ export const GeometrySection: React.FC<GeometrySectionProps> = ({ control, onUpd
           <Input
             type="number"
             value={control.y}
-            onChange={(e) => onUpdate({ y: Number(e.target.value) || 0 })}
+            onChange={(e) => onUpdate({ y: Math.max(0, Number(e.target.value) || 0) })}
             className="bg-white dark:bg-slate-950"
           />
         </div>
@@ -41,7 +41,7 @@ export const GeometrySection: React.FC<GeometrySectionProps> = ({ control, onUpd
           <Input
             type="number"
             value={control.width}
-            onChange={(e) => onUpdate({ width: Number(e.target.value) || 0 })}
+            onChange={(e) => onUpdate({ width: Math.max(0, Number(e.target.value) || 0) })}
             className="bg-white dark:bg-slate-950"
           />
         </div>
@@ -50,7 +50,7 @@ export const GeometrySection: React.FC<GeometrySectionProps> = ({ control, onUpd
           <Input
             type="number"
             value={control.height}
-            onChange={(e) => onUpdate({ height: Number(e.target.value) || 0 })}
+            onChange={(e) => onUpdate({ height: Math.max(0, Number(e.target.value) || 0) })}
             className="bg-white dark:bg-slate-950"
           />
         </div>

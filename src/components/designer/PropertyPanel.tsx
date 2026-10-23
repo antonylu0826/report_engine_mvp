@@ -17,15 +17,14 @@ export const PropertyPanel: React.FC = () => {
   const tProps = useTranslations('propertyGrid');
 
   const {
-    report,
-    data,
+    getActiveData,
     selectedBandId,
     selectedControlId,
     updateControl,
     removeControl,
     updateBandHeight,
-    setReport,
-    editingSubReportPath,
+    updateActiveReport,
+    updateBand,
     getActiveReport,
   } = useReportStore();
 
@@ -34,32 +33,20 @@ export const PropertyPanel: React.FC = () => {
   const selectedControl = selectedBand?.controls.find((c) => c.id === selectedControlId);
 
   // Sample dataset fields for auto-suggest
-  const sampleFields = (() => {
-    if (editingSubReportPath) {
-      const nestedSample = data?.[0]?.serials as Record<string, unknown>[] | undefined;
-      if (nestedSample && nestedSample.length > 0) {
-        return Object.keys(nestedSample[0]);
-      }
-      return ['serialNo', 'lotNo', 'location', 'qcStatus'];
-    }
-    return data && data.length > 0 ? Object.keys(data[0]) : [];
-  })();
+  const sampleFields = Object.keys(getActiveData()[0] ?? {});
 
   // Update Band properties (e.g. groupBy, pageBreakAfter)
   const updateBandProp = (patch: Record<string, unknown>) => {
     if (!selectedBand) return;
-    const updatedBands = report.bands.map((b) =>
-      b.id === selectedBand.id ? { ...b, ...patch } : b
-    );
-    setReport({ ...report, bands: updatedBands });
+    updateBand(selectedBand.id, patch);
   };
 
   // Remove Grouping Bands
   const removeGroupingStructure = () => {
-    const updated = report.bands.filter(
+    const updated = activeReport.bands.filter(
       (b) => b.type !== 'GroupHeader' && b.type !== 'GroupFooter'
     );
-    setReport({ ...report, bands: updated });
+    updateActiveReport(active => ({ ...active, bands: updated }));
   };
 
   // Active Control Plugin & Metadata

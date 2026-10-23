@@ -1,5 +1,4 @@
 import React from 'react';
-(globalThis as any).React = React;
 import {
   Document,
   Page,
@@ -7,6 +6,7 @@ import {
   Text,
   Font,
   StyleSheet,
+  type DocumentProps,
 } from '@react-pdf/renderer';
 import type {
   ReportDefinition,
@@ -14,16 +14,18 @@ import type {
   ControlDefinition,
 } from '../types/report';
 import { type EvalContext } from './evaluator';
-import { controlRegistry } from '../controls/registry';
-import { groupDataRows } from './grouping';
+import { pdfControlRegistry } from '../controls/pdfRegistry';
+import { expandDetailBands } from './bandPipeline';
 
-// Construct font URL supporting both browser (origin) and Node/MCP (process.cwd)
+// Resolve the font independently of the caller's working directory.
 const getFontUrl = () => {
   if (typeof window !== 'undefined' && window.location) {
     return `${window.location.origin}/fonts/NotoSansTC.ttf`;
   }
-  if (typeof process !== 'undefined' && process.cwd) {
-    return `${process.cwd()}/public/fonts/NotoSansTC.ttf`.replace(/\\/g, '/');
+  if (typeof process !== 'undefined') {
+    const moduleUrl = import.meta.url;
+    const url = new URL('../../public/fonts/NotoSansTC.ttf', moduleUrl);
+    return decodeURIComponent(url.pathname).replace(/^\/([a-z]:\/)/i, '$1');
   }
   return '/fonts/NotoSansTC.ttf';
 };
@@ -44,9 +46,9 @@ function renderControl(
   control: ControlDefinition,
   context: EvalContext
 ): React.ReactElement {
-  const plugin = controlRegistry.get(control.type);
-  if (plugin) {
-    const rendered = plugin.renderPdf({ control, context });
+  const renderer = pdfControlRegistry.get(control.type);
+  if (renderer) {
+    const rendered = renderer({ control, context });
     return <React.Fragment key={control.id}>{rendered}</React.Fragment>;
   }
 
@@ -72,7 +74,8 @@ function renderControl(
 function renderBand(
   band: BandDefinition,
   context: EvalContext,
-  keyPrefix = ''
+  keyPrefix = '',
+  pageBreakBefore = band.pageBreakBefore,
 ): React.ReactElement {
   const hasSubReport = band.controls.some((c) => c.type === 'SubReport');
 
@@ -85,7 +88,7 @@ function renderBand(
         ...(hasSubReport ? { minHeight: band.height } : { height: band.height }),
       }}
       wrap={!band.keepTogether}
-      break={band.pageBreakBefore}
+      break={pageBreakBefore}
     >
       {band.controls.map((control) => renderControl(control, context))}
     </View>
@@ -102,12 +105,12 @@ export interface PDFCompilerProps {
 /**
  * Report PDF Document Component with Standardized Band Pipeline
  */
-export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
+export function ReportPDFDocument({
   report,
   data,
   parameters,
   dataSource,
-}) => {
+}: PDFCompilerProps): React.ReactElement<DocumentProps> {
   const { pageSettings, bands } = report;
 
   const actualData = data || dataSource?.data?.items || [];
@@ -118,9 +121,6 @@ export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
 
   const reportHeaderBand = bands.find((b) => b.type === 'ReportHeader');
   const pageHeaderBand = bands.find((b) => b.type === 'PageHeader');
-  const detailBand = bands.find((b) => b.type === 'Detail');
-  const groupHeaderBand = bands.find((b) => b.type === 'GroupHeader');
-  const groupFooterBand = bands.find((b) => b.type === 'GroupFooter');
   const reportFooterBand = bands.find((b) => b.type === 'ReportFooter');
   const pageFooterBand = bands.find((b) => b.type === 'PageFooter');
 
@@ -138,15 +138,7 @@ export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
 
   const pdfPageSize = pageSettings.size === 'Letter' ? 'LETTER' : pageSettings.size;
 
-  // Determine grouping field from GroupHeader or GroupFooter
-  const groupByField = groupHeaderBand?.groupBy || groupFooterBand?.groupBy;
-  const groupSortOrder = groupHeaderBand?.groupSortOrder || groupFooterBand?.groupSortOrder || 'asc';
-  const hasGrouping = Boolean(groupHeaderBand || groupFooterBand);
-
-  // Group data rows
-  const groups = hasGrouping
-    ? groupDataRows(actualData, groupByField, groupSortOrder)
-    : [{ key: 'all', field: '', rows: actualData }];
+  const detailInstances = expandDetailBands(report, globalContext);
 
   return (
     <Document title={report.name}>
@@ -169,44 +161,10 @@ export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
         )}
 
         {/* 3. Group & Detail Pipeline (分組表頭 -> 明細資料列 -> 分組小計) */}
-        {groups.map((group, gIdx) => {
-          const groupContext: EvalContext = {
-            ...globalContext,
-            groupRows: group.rows,
-            currentRow: group.rows[0] || {},
-          };
-
-          return (
-            <View
-              key={`group-${group.key}-${gIdx}`}
-              break={gIdx > 0 && (groupHeaderBand?.pageBreakBefore ?? false)}
-            >
-              {/* Group Header (群組表頭) */}
-              {groupHeaderBand &&
-                renderBand(groupHeaderBand, groupContext, `gh-${gIdx}`)}
-
-              {/* Detail Rows for this group */}
-              {detailBand &&
-                group.rows.map((row, rIdx) => {
-                  const rowContext: EvalContext = {
-                    ...groupContext,
-                    currentRow: row,
-                    rowIndex: rIdx,
-                  };
-                  return renderBand(detailBand, rowContext, `detail-${gIdx}-${rIdx}`);
-                })}
-
-              {/* Group Footer (群組小計/統計) */}
-              {groupFooterBand &&
-                renderBand(groupFooterBand, groupContext, `gf-${gIdx}`)}
-
-              {/* Optional page break after group */}
-              {groupFooterBand?.pageBreakAfter && gIdx < groups.length - 1 && (
-                <View break />
-              )}
-            </View>
-          );
-        })}
+        {detailInstances.map(instance => <React.Fragment key={instance.key}>
+          {renderBand(instance.band, instance.context, instance.key, instance.pageBreakBefore)}
+          {instance.pageBreakAfter && <View break />}
+        </React.Fragment>)}
 
         {/* 4. Report Footer (全表總計與簽章區塊) */}
         {reportFooterBand && renderBand(reportFooterBand, globalContext, 'report-footer')}
@@ -229,7 +187,7 @@ export const ReportPDFDocument: React.FC<PDFCompilerProps> = ({
       </Page>
     </Document>
   );
-};
+}
 
 const styles = StyleSheet.create({
   page: {

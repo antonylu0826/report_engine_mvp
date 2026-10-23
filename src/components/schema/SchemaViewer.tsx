@@ -3,6 +3,7 @@ import { useReportStore } from '@/store/useReportStore';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, Save } from 'lucide-react';
 import { useCurrentLocale } from '@/i18n';
+import { parseReport } from '@/report/schema';
 
 export const SchemaViewer: React.FC = () => {
   const { locale } = useCurrentLocale();
@@ -31,7 +32,7 @@ export const SchemaViewer: React.FC = () => {
 
   const handleApply = () => {
     try {
-      const parsed = JSON.parse(jsonText);
+      const parsed = parseReport(JSON.parse(jsonText));
       if (!parsed.bands || !Array.isArray(parsed.bands)) {
         throw new Error(
           locale === 'zh-TW'

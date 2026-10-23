@@ -1,5 +1,5 @@
+import React from 'react';
 import { Square } from 'lucide-react';
-import { View } from '@react-pdf/renderer';
 import type { ReportControlPlugin } from '../types';
 
 export const PanelControl: ReportControlPlugin = {
@@ -24,7 +24,7 @@ export const PanelControl: ReportControlPlugin = {
     },
     ...overrides,
   }),
-  DesignerComponent: ({ control }) => {
+  DesignerComponent: ({ control }): React.ReactElement => {
     return (
       <div
         className="w-full h-full pointer-events-none"
@@ -34,25 +34,6 @@ export const PanelControl: ReportControlPlugin = {
           borderColor: control.style?.borderColor || '#cbd5e1',
           borderStyle: control.style?.borderStyle || 'solid',
           borderRadius: control.style?.borderRadius ? `${control.style.borderRadius}pt` : undefined,
-        }}
-      />
-    );
-  },
-  renderPdf: ({ control }) => {
-    return (
-      <View
-        key={control.id}
-        style={{
-          position: 'absolute',
-          left: control.x,
-          top: control.y,
-          width: control.width,
-          height: control.height,
-          backgroundColor: control.style?.backgroundColor || 'transparent',
-          borderWidth: control.style?.borderWidth ?? 1,
-          borderColor: control.style?.borderColor || '#cbd5e1',
-          borderStyle: control.style?.borderStyle || 'solid',
-          borderRadius: control.style?.borderRadius || 0,
         }}
       />
     );

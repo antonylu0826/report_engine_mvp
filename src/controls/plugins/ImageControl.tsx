@@ -1,5 +1,5 @@
+import React from 'react';
 import { Image as ImageIcon } from 'lucide-react';
-import { Image as PdfImage, View } from '@react-pdf/renderer';
 import type { ReportControlPlugin } from '../types';
 
 export const ImageControl: ReportControlPlugin = {
@@ -19,7 +19,7 @@ export const ImageControl: ReportControlPlugin = {
     objectFit: 'contain',
     ...overrides,
   }),
-  DesignerComponent: ({ control }) => {
+  DesignerComponent: ({ control }): React.ReactElement => {
     if (!control.src) {
       return (
         <div className="w-full h-full border border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center text-slate-400 p-1 select-none">
@@ -38,37 +38,6 @@ export const ImageControl: ReportControlPlugin = {
           style={{ objectFit: control.objectFit || 'contain' }}
         />
       </div>
-    );
-  },
-  renderPdf: ({ control }) => {
-    if (!control.src) {
-      return (
-        <View
-          key={control.id}
-          style={{
-            position: 'absolute',
-            left: control.x,
-            top: control.y,
-            width: control.width,
-            height: control.height,
-          }}
-        />
-      );
-    }
-
-    return (
-      <PdfImage
-        key={control.id}
-        src={control.src}
-        style={{
-          position: 'absolute',
-          left: control.x,
-          top: control.y,
-          width: control.width,
-          height: control.height,
-          objectFit: control.objectFit || 'contain',
-        }}
-      />
     );
   },
 };

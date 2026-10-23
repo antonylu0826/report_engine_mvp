@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   FileText,
   Eye,
@@ -14,10 +14,9 @@ import {
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { Button } from '@/components/ui/button';
-import { pdf } from '@react-pdf/renderer';
-import { ReportPDFDocument } from '@/compiler/pdfCompiler';
 import { useTranslations, useCurrentLocale } from '@/i18n';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
+import { useReportSync } from '@/sync/useReportSync';
 
 export const Navbar: React.FC = () => {
   const { locale } = useCurrentLocale();
@@ -33,99 +32,22 @@ export const Navbar: React.FC = () => {
     zoom,
     setZoom,
     resetToSample,
-    setReport,
   } = useReportStore();
 
   const [isExporting, setIsExporting] = useState(false);
-  const [mcpSynced, setMcpSynced] = useState(false);
-  const [mcpConnecting, setMcpConnecting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const lastMtimeRef = useRef<number>(0);
-  const isRemoteUpdatingRef = useRef<boolean>(false);
-  const isFirstMountRef = useRef<boolean>(true);
-
-  // Sync with current_report_layout.json from MCP (Inbound: Disk -> UI)
-  const fetchMcpLayout = useCallback(async (force = false) => {
-    try {
-      setMcpConnecting(true);
-      const res = await fetch('/api/report-layout');
-      if (!res.ok) return;
-      const json = await res.json();
-      if (json && json.report) {
-        if (force || json.mtime !== lastMtimeRef.current) {
-          lastMtimeRef.current = json.mtime;
-          isRemoteUpdatingRef.current = true;
-          setReport(json.report);
-          setMcpSynced(true);
-          setTimeout(() => setMcpSynced(false), 2500);
-        }
-      }
-    } catch {
-      // ignore offline or static build
-    } finally {
-      setMcpConnecting(false);
-    }
-  }, [setReport]);
-
-  // Poll for changes made by external MCP Agent every 1.5 seconds
-  useEffect(() => {
-    let active = true;
-    const initialTimer = setTimeout(() => {
-      if (active) fetchMcpLayout(true);
-    }, 0);
-
-    const timer = setInterval(() => {
-      if (active) fetchMcpLayout(false);
-    }, 1500);
-
-    return () => {
-      active = false;
-      clearTimeout(initialTimer);
-      clearInterval(timer);
-    };
-  }, [fetchMcpLayout]);
-
-  // Outbound: Push UI edits to current_report_layout.json (Debounced ~500ms)
-  useEffect(() => {
-    if (isFirstMountRef.current) {
-      isFirstMountRef.current = false;
-      return;
-    }
-
-    if (isRemoteUpdatingRef.current) {
-      isRemoteUpdatingRef.current = false;
-      return;
-    }
-
-    const saveTimer = setTimeout(async () => {
-      try {
-        setIsSaving(true);
-        const res = await fetch('/api/report-layout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(report),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json && json.mtime) {
-            lastMtimeRef.current = json.mtime;
-          }
-          setMcpSynced(true);
-          setTimeout(() => setMcpSynced(false), 1500);
-        }
-      } catch (err) {
-        console.error('Failed to sync report to disk:', err);
-      } finally {
-        setIsSaving(false);
-      }
-    }, 500);
-
-    return () => clearTimeout(saveTimer);
-  }, [report]);
+  const { mcpSynced, mcpConnecting, isSaving, error: syncError, conflict, reload, isDirty } = useReportSync();
+  const fetchMcpLayout = () => {
+    if (isDirty() && !confirm(locale === 'zh-TW' ? '重新載入將捨棄尚未儲存的本機變更，是否繼續？' : 'Reloading discards unsaved local changes. Continue?')) return;
+    void reload();
+  };
 
   const handleExportPDF = async () => {
     try {
       setIsExporting(true);
+      const [{ pdf }, { ReportPDFDocument }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('@/compiler/pdfCompiler'),
+      ]);
       const doc = <ReportPDFDocument report={report} data={data} dataSource={dataSource} />;
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
@@ -163,6 +85,10 @@ export const Navbar: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {syncError && <span role="status" className="text-xs text-red-600 max-w-56 truncate" title={syncError}>
+        {conflict ? (locale === 'zh-TW' ? '同步衝突：本機變更已保留，請重新載入' : 'Sync conflict: local changes preserved; reload to resolve') : (locale === 'zh-TW' ? '同步失敗，將自動重試' : 'Sync failed; retrying automatically')}
+      </span>}
 
       {/* Center Tabs: Mode Switcher */}
       <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
@@ -219,7 +145,7 @@ export const Navbar: React.FC = () => {
       <div className="flex items-center space-x-2">
         {/* MCP Live Sync Status Pill */}
         <button
-          onClick={() => fetchMcpLayout(true)}
+          onClick={() => fetchMcpLayout()}
           className={`flex items-center space-x-1.5 text-[11px] px-2.5 py-1 rounded-full border transition-all ${
             isSaving
               ? 'bg-amber-500/10 text-amber-600 border-amber-400/40 dark:text-amber-400'

@@ -1,65 +1,39 @@
-/**
- * Value formatters for report fields and expressions
- */
+/** Supported formats are explicit so malformed input never reaches Intl options. */
+const numberFormats = new Map<string, Intl.NumberFormat>();
 
 export function formatValue(value: unknown, formatString?: string): string {
-  if (value === null || value === undefined) {
-    return '';
-  }
-
-  if (!formatString) {
-    return String(value);
-  }
-
+  if (value === null || value === undefined) return '';
+  if (!formatString) return String(value);
   const format = formatString.trim();
-
-  // Currency: e.g. "C", "C0", "C2", "currency"
-  if (format.startsWith('C') || format.toLowerCase() === 'currency') {
+  const standard = /^([CNP])(\d{0,2})$/i.exec(format);
+  const numeric = /^(?:number:|#,##)(0)(?:\.(0+))?$/i.exec(format);
+  const alias = format.toLowerCase();
+  if (standard || numeric || alias === 'currency' || alias === 'percent') {
     const num = Number(value);
-    if (isNaN(num)) return String(value);
-    const decimals = format.length > 1 && !isNaN(Number(format.slice(1))) ? Number(format.slice(1)) : 2;
-    return new Intl.NumberFormat('zh-TW', {
-      style: 'currency',
-      currency: 'TWD',
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(num);
+    if (!Number.isFinite(num)) return String(value);
+    const kind = standard?.[1].toUpperCase() ?? (alias === 'currency' ? 'C' : alias === 'percent' ? 'P' : 'N');
+    const decimals = standard ? (standard[2] ? Number(standard[2]) : kind === 'N' ? 0 : 2)
+      : numeric ? (numeric[2]?.length ?? 0) : 2;
+    if (decimals > 20) return String(value);
+    const key = kind + decimals;
+    let formatter = numberFormats.get(key);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat('zh-TW', {
+        ...(kind === 'C' ? { style: 'currency', currency: 'TWD' } : kind === 'P' ? { style: 'percent' } : {}),
+        minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+      });
+      numberFormats.set(key, formatter);
+    }
+    return formatter.format(num);
   }
-
-  // Number with thousand separator: e.g. "N", "N0", "N2"
-  if (format.startsWith('N') || format.startsWith('#,##0')) {
-    const num = Number(value);
-    if (isNaN(num)) return String(value);
-    const decimals = format.startsWith('N') && format.length > 1 && !isNaN(Number(format.slice(1))) 
-      ? Number(format.slice(1)) 
-      : 0;
-    return new Intl.NumberFormat('zh-TW', {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(num);
-  }
-
-  // Percentage: e.g. "P", "P1", "P2"
-  if (format.startsWith('P') || format.toLowerCase() === 'percent') {
-    const num = Number(value);
-    if (isNaN(num)) return String(value);
-    const decimals = format.length > 1 && !isNaN(Number(format.slice(1))) ? Number(format.slice(1)) : 2;
-    return new Intl.NumberFormat('zh-TW', {
-      style: 'percent',
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(num);
-  }
-
-  // Date format: e.g. "date:YYYY-MM-DD" or standard ISO
-  if (format.startsWith('date:') || format.toLowerCase() === 'date') {
+  if (alias === 'date' || alias.startsWith('date:')) {
     const date = value instanceof Date ? value : new Date(String(value));
-    if (isNaN(date.getTime())) return String(value);
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    if (Number.isNaN(date.getTime())) return String(value);
+    const year = String(date.getFullYear());
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const pattern = format.includes(':') ? format.slice(5) : 'YYYY-MM-DD';
+    return pattern.replace(/yyyy|MM|dd/gi, token => token.toLowerCase() === 'yyyy' ? year : token.toLowerCase() === 'mm' ? month : day);
   }
-
   return String(value);
 }
