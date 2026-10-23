@@ -1,5 +1,6 @@
 import type { ReportDefinition, ControlDefinition, BandDefinition } from '../types/report';
 import { evaluateExpression, type EvalContext } from '../compiler/evaluator';
+import { prepareReport } from '../formula/report';
 import { formatValue } from '../compiler/formatters';
 import { expandDetailBands } from '../compiler/bandPipeline';
 import { getPageGeometry, getSubReportGeometry } from '../report/geometry';
@@ -111,7 +112,7 @@ export function renderReportToSvg(
     '<rect width="100%" height="100%" fill="white"/>',
     '<rect x="' + margins.left + '" y="' + margins.top + '" width="' + geometry.printableWidth + '" height="' + geometry.printableHeight + '" fill="none" stroke="#cbd5e1"/>',
   ];
-  const globalContext: EvalContext = { dataSource: rows, reportParameters: parameters };
+  const globalContext: EvalContext = prepareReport(report, { dataSource: rows, reportParameters: parameters });
   const renderBand = (band: BandDefinition, x: number, y: number, context: EvalContext) => {
     band.controls.forEach(control => renderControl(control, x, y, context));
     return measureBandHeight(band, context);

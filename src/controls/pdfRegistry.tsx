@@ -1,13 +1,13 @@
 import React from 'react';
 import { Text, View, Svg, Rect, Image as PdfImage } from '@react-pdf/renderer';
-import type { ControlType } from '../types/report';
-import type { PdfControlRenderer } from './types';
-import { mapControlStyle } from './styleUtils';
-import { evaluateExpression, getNestedValue } from '../compiler/evaluator';
-import { formatValue } from '../compiler/formatters';
-import { getBarcodePattern, generateQrCodeDataUrl } from './barcodeUtils';
-import { getSubReportBands } from '../report/subReport';
-import { getSubReportGeometry } from '../report/geometry';
+import type { ControlType } from '../types/report.ts';
+import type { PdfControlRenderer } from './types.ts';
+import { mapControlStyle } from './styleUtils.ts';
+import { evaluateExpression, getNestedValue } from '../compiler/evaluator.ts';
+import { formatValue } from '../compiler/formatters.ts';
+import { getBarcodePattern, generateQrCodeDataUrl } from './barcodeUtils.ts';
+import { getSubReportBands } from '../report/subReport.ts';
+import { getSubReportGeometry } from '../report/geometry.ts';
 
 // PDF rendering has no dependency on designer components or their state.
 const renderers: Record<ControlType, PdfControlRenderer> = {
@@ -22,7 +22,7 @@ const renderers: Record<ControlType, PdfControlRenderer> = {
   Field: ({ control, context }): React.ReactNode => {
     const style = mapControlStyle(control);
     const rawVal = evaluateExpression(undefined, control.fieldName, context);
-    const text = formatValue(rawVal, control.formatString);
+    const text = formatValue(rawVal, control.formatString, context.timeZone);
     return (
       <Text key={control.id} style={style}>
         {text}
@@ -32,7 +32,7 @@ const renderers: Record<ControlType, PdfControlRenderer> = {
   Expression: ({ control, context }): React.ReactNode => {
     const style = mapControlStyle(control);
     // Dynamic page numbers handled by react-pdf render prop
-    if (control.expression?.includes('[PageNumber]') || control.expression?.includes('[TotalPages]')) {
+    if (control.expression?.includes('[PageNumber]') || control.expression?.includes('[TotalPages]') || control.expression?.includes('[ExecutionTime]')) {
       return (
         <Text
           key={control.id}
@@ -41,14 +41,15 @@ const renderers: Record<ControlType, PdfControlRenderer> = {
             const pattern = control.expression ?? '';
             return pattern
               .replace(/\[PageNumber\]/g, String(pageNumber))
-              .replace(/\[TotalPages\]/g, String(totalPages));
+              .replace(/\[TotalPages\]/g, String(totalPages))
+              .replace(/\[ExecutionTime\]/g, context.executionTime ?? '');
           }}
         />
       );
     }
 
     const rawVal = evaluateExpression(control.expression, undefined, context);
-    const text = formatValue(rawVal, control.formatString);
+    const text = formatValue(rawVal, control.formatString, context.timeZone);
     return (
       <Text key={control.id} style={style}>
         {text}

@@ -1,4 +1,4 @@
-import type { ReportDataSource } from '../types/datasource';
+import type { ReportDataSource } from '../types/datasource.ts';
 
 /**
  * Standard Catalog Items for Realistic Mock Generation
@@ -33,6 +33,7 @@ export const defaultOrderParameters: Record<string, unknown> = {
   poNumber: 'PO-TW-2026-904',
   paymentTerms: '月結 30 天 (電匯付款)',
   currency: '新台幣 NTD',
+  taxRate: 0.05,
   deliveryDate: '2026-10-21',
   salesRep: '張啟銘 (業務部)',
   remark: '抵達廠區前 30 分鐘請先電聯窗口。',
@@ -166,6 +167,7 @@ export const sampleOrderDataSource: ReportDataSource = {
       { name: 'poNumber', label: '客戶採購單號', type: 'string', description: '客戶方發行之採購訂單編號' },
       { name: 'paymentTerms', label: '付款條件', type: 'string', description: '商業會計結算約定條件' },
       { name: 'currency', label: '計價幣別', type: 'string', description: '報表結算基準幣別' },
+      { name: 'taxRate', label: '營業稅率', type: 'number', formatHint: 'P0', nullable: false, description: '用於計算稅額，例如 0.05' },
       { name: 'salesRep', label: '負責業務', type: 'string', description: '專案業務經理' },
       { name: 'remark', label: '單據備註', type: 'string', description: '訂單重要注意事項' },
     ],

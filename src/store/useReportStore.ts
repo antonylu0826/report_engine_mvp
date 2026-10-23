@@ -7,7 +7,7 @@ import { deleteControl, getActiveReport, patchControl, updateReportBand, updateR
 import { parseReport } from '../report/schema';
 import { getSubReportRows } from '../report/subReport';
 
-export type ReportTab = 'designer' | 'preview' | 'schema' | 'agent';
+export type ReportTab = 'designer' | 'preview' | 'schema' | 'agent' | 'formulas';
 
 interface ReportState {
   report: ReportDefinition;

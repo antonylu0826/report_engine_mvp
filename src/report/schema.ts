@@ -4,6 +4,12 @@ import { getPageGeometry } from './geometry.ts';
 
 const dimension = z.number().finite().nonnegative();
 const id = z.string().trim().min(1);
+export const calculatedFieldSchema = z.strictObject({
+  name: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/).max(100),
+  scope: z.enum(['row', 'group', 'report']),
+  type: z.enum(['number', 'string', 'boolean', 'date', 'datetime']),
+  expression: z.string().min(1).max(8192),
+});
 const styleSchema = z.strictObject({
   fontFamily: z.string().optional(),
   fontSize: z.number().finite().positive().optional(),
@@ -51,6 +57,7 @@ export const controlSchema: z.ZodType<ControlDefinition> = z.strictObject({
 export const reportSchema: z.ZodType<ReportDefinition> = z.strictObject({
   id,
   name: z.string(),
+  calculatedFields: z.array(calculatedFieldSchema).max(256).optional(),
   pageSettings: z.strictObject({
     size: z.enum(['A4', 'Letter']),
     orientation: z.enum(['portrait', 'landscape']),

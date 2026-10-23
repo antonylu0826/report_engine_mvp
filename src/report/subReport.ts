@@ -1,6 +1,7 @@
-import type { BandDefinition, ControlDefinition } from '../types/report';
-import { getNestedValue, type EvalContext } from '../compiler/evaluator';
-import { expandDetailBands, type BandInstance } from '../compiler/bandPipeline';
+import type { BandDefinition, ControlDefinition } from '../types/report.ts';
+import type { EvalContext } from '../compiler/evaluator.ts';
+import { getNestedValue } from './dataPath.ts';
+import { expandDetailBands, type BandInstance } from '../compiler/bandPipeline.ts';
 
 export function getSubReportRows(control: ControlDefinition, context: EvalContext): Record<string, unknown>[] {
   const value = getNestedValue(context.currentRow, control.subReportBinding || 'serials');
@@ -9,8 +10,9 @@ export function getSubReportRows(control: ControlDefinition, context: EvalContex
 }
 
 export function getSubReportContext(control: ControlDefinition, context: EvalContext): EvalContext {
+  if (control.subReportDefinition && context.getChildContext) return context.getChildContext(control, context);
   const rows = getSubReportRows(control, context);
-  return { ...context, currentRow: rows[0], dataSource: rows, groupRows: rows, rowIndex: 0 };
+  return { ...context, reportGroups: undefined, groupKey: undefined, currentRow: rows[0], dataSource: rows, groupRows: rows, rowIndex: 0 };
 }
 
 export function getSubReportBands(control: ControlDefinition, context: EvalContext): BandInstance[] {

@@ -75,7 +75,10 @@ export function createReportSync(options: {
             publish({ conflict: true, error: 'Report changed on disk. Reload to resolve the conflict.' });
             return;
           }
-          if (!response.ok) throw new Error(`Save failed (${response.status})`);
+          if (!response.ok) {
+            const detail = await response.json().catch(() => null);
+            throw new Error(detail?.error ?? `Save failed (${response.status})`);
+          }
           const saved = await response.json();
           if (typeof saved.version !== 'string') throw new Error('Invalid saved report version');
           version = saved.version;

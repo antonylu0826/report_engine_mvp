@@ -8,6 +8,7 @@ import { PropertyPanel } from '@/components/designer/PropertyPanel';
 const ReportViewer = lazy(() => import('@/components/viewer/ReportViewer').then(module => ({ default: module.ReportViewer })));
 const SchemaViewer = lazy(() => import('@/components/schema/SchemaViewer').then(module => ({ default: module.SchemaViewer })));
 const AgentCopilot = lazy(() => import('@/components/agent/AgentCopilot').then(module => ({ default: module.AgentCopilot })));
+const CalculatedFieldsPanel = lazy(() => import('@/components/formula/CalculatedFieldsPanel').then(module => ({ default: module.CalculatedFieldsPanel })));
 
 export function App() {
   const activeTab = useReportStore(state => state.activeTab);
@@ -31,6 +32,7 @@ export function App() {
           {activeTab === 'agent' && <AgentCopilot />}
 
           {activeTab === 'schema' && <SchemaViewer />}
+          {activeTab === 'formulas' && <CalculatedFieldsPanel />}
         </Suspense>
       </div>
     </div>

@@ -30,6 +30,13 @@ test('sync HTTP API validates documents and rejects stale saves without data los
     assert.deepEqual(repository.read().report, initial.report);
     const malformed = await fetch(url, { method: 'POST', body: '{bad' });
     assert.equal(malformed.status, 400);
+    const invalidFormula = structuredClone(initial.report);
+    invalidFormula.bands[0].controls[0].type = 'Expression';
+    invalidFormula.bands[0].controls[0].expression = '=IF(TRUE, 1, UNKNOWN())';
+    const rejectedFormula = await fetch(url, { method: 'POST', headers: { 'If-Match': initial.version }, body: JSON.stringify(invalidFormula) });
+    assert.equal(rejectedFormula.status, 422);
+    assert.equal((await rejectedFormula.json()).diagnostics[0].code, 'UNKNOWN_FUNCTION');
+    assert.deepEqual(repository.read().report, initial.report);
     const saved = await fetch(url, {
       method: 'POST', headers: { 'If-Match': initial.version },
       body: JSON.stringify({ ...initial.report, name: 'Saved' }),

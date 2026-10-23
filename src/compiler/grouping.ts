@@ -1,4 +1,16 @@
-import { getNestedValue } from './evaluator';
+import { getNestedValue } from '../report/dataPath.ts';
+import type { ReportDefinition } from '../types/report.ts';
+
+export function getReportGrouping(report: ReportDefinition) {
+  const header = report.bands.find(b => b.type === 'GroupHeader');
+  const footer = report.bands.find(b => b.type === 'GroupFooter');
+  return { field: header?.groupBy || footer?.groupBy, sortOrder: header?.groupSortOrder || footer?.groupSortOrder || 'asc' as const };
+}
+
+export function groupReportRows(report: ReportDefinition, rows: Record<string, unknown>[]) {
+  const grouping = getReportGrouping(report);
+  return groupDataRows(rows, grouping.field, grouping.sortOrder);
+}
 
 export interface ReportGroup {
   key: string;

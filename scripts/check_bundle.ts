@@ -31,4 +31,4 @@ assert.ok(!initial.has('src/components/viewer/ReportViewer.tsx'), 'PDF viewer mu
 const initialBytes = [...initial].reduce((sum, key) => sum + fs.statSync(path.join(output, manifest[key].file)).size, 0);
 assert.ok(initialBytes <= 650_000, `Initial JavaScript exceeds 650 kB (${initialBytes} bytes)`);
 const largest = Math.max(...chunks.map(chunk => chunk.bytes));
-console.log(`Bundle budget passed: largest chunk ${(largest / 1000).toFixed(2)} kB; initial JS ${(initialBytes / 1000).toFixed(2)} kB; PDF loads on demand.`);
+console.log(`Bundle budget passed: largest chunk ${(largest / 1000).toFixed(2)} kB; initial JS ${(initialBytes / 1000).toFixed(2)} kB; PDF renders on the backend.`);

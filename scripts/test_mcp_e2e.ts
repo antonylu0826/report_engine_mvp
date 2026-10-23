@@ -35,7 +35,11 @@ async function read() {
 
 try {
   await client.connect(transport);
-  assert.equal((await client.listTools()).tools.length, 13);
+  assert.equal((await client.listTools()).tools.length, 17);
+  const catalogReply = await call('get_formula_catalog');
+  const catalog = JSON.parse((catalogReply.content as { text: string }[])[0].text);
+  assert.equal(catalog.functions.length, 38);
+  assert.ok(catalog.functions.every((f: { signature: string; examples: unknown[] }) => f.signature && f.examples.length >= 2));
   await call('update_page_settings', { orientation: 'landscape' });
   assert.equal((await read()).pageInfo.printableWidth, 761.89);
   await call('reset_report_layout');
@@ -68,12 +72,41 @@ try {
   const sub = layout.report.bands.flatMap((b: { controls: { id: string }[] }) => b.controls).find((c: { id: string }) => c.id === 'ctl-subreport-serials');
   assert.equal(sub.subReportDefinition.bands.find((b: { id: string }) => b.id === 'sub-band-detail').controls.find((c: { id: string }) => c.id === 'sub-td-qc').style.color, '#123456');
   await call('delete_control', { bandId: 'Detail', controlId: 'test-label' });
+  const originalFields = (await read()).report.calculatedFields;
+  const agentFields = [
+    { name: 'agentLine', scope: 'row', type: 'number', expression: '=quantity * unitPrice' },
+    { name: 'agentSubtotal', scope: 'report', type: 'number', expression: '=SUM(calc.agentLine)' },
+    { name: 'agentTax', scope: 'report', type: 'number', expression: '=ROUND(calc.agentSubtotal * params.taxRate, 2)' },
+    { name: 'agentTotal', scope: 'report', type: 'number', expression: '=calc.agentSubtotal + calc.agentTax' },
+  ];
+  await call('set_calculated_fields', { calculatedFields: [...originalFields, ...agentFields] });
+  const fieldsReply = await call('get_available_data_fields');
+  assert.ok(JSON.parse((fieldsReply.content as { text: string }[])[0].text).calculatedFields.some((f: { name: string }) => f.name === 'agentTotal'));
+  const preview = await call('preview_formula', { expression: '=calc.agentTotal', data: [{ quantity: 2, unitPrice: 10.4 }, { quantity: 1, unitPrice: 10.4 }], parameters: { taxRate: 0.05 }, formatString: 'N2' });
+  const previewResult = JSON.parse((preview.content as { text: string }[])[0].text);
+  assert.equal(previewResult.value, 32.76);
+  assert.equal(previewResult.formatted, '32.76');
+  const childPreview = await call('preview_formula', { expression: '=LEN(serialNo)', scope: 'row', subReportControlId: 'ctl-subreport-serials', data: [{ serials: [{ serialNo: '甲😀乙' }] }] });
+  assert.equal(JSON.parse((childPreview.content as { text: string }[])[0].text).value, 3);
+  const validReply = await call('validate_report_formulas', { execute: true });
+  assert.equal(JSON.parse((validReply.content as { text: string }[])[0].text).valid, true);
+  const beforeCycle = fs.readFileSync(layoutFile, 'utf8');
+  const cycle = await client.callTool({ name: 'set_calculated_fields', arguments: { calculatedFields: [...originalFields, ...agentFields.map(f => f.name === 'agentTax' ? { ...f, expression: '=calc.agentTotal' } : f)] } });
+  assert.equal(cycle.isError, true);
+  assert.match(JSON.stringify(cycle.content), /CIRCULAR_REFERENCE/);
+  assert.equal(fs.readFileSync(layoutFile, 'utf8'), beforeCycle);
   await call('export_pdf', { outputPath: path.join(temporary.directory, 'empty.pdf'), recordCount: 0 });
   await call('export_pdf', { outputPath: path.join(temporary.directory, 'two.pdf'), recordCount: 2 });
   const empty = fs.readFileSync(path.join(temporary.directory, 'empty.pdf'));
   const two = fs.readFileSync(path.join(temporary.directory, 'two.pdf'));
   assert.equal(two.subarray(0, 5).toString(), '%PDF-');
   assert.ok(two.length > empty.length, 'recordCount must change the compiled output');
+  const detail = (await read()).report.bands.find((b: { type: string }) => b.type === 'Detail');
+  await call('update_control', { bandId: 'Detail', controlId: detail.controls.find((c: { type: string }) => c.type === 'Field').id, patch: { type: 'Expression', expression: '=1 / (quantity - quantity)' } });
+  const blocked = await client.callTool({ name: 'export_pdf', arguments: { outputPath: path.join(temporary.directory, 'two.pdf'), recordCount: 2 } });
+  assert.equal(blocked.isError, true);
+  assert.match(JSON.stringify(blocked.content), /DIVISION_BY_ZERO/);
+  assert.deepEqual(fs.readFileSync(path.join(temporary.directory, 'two.pdf')), two);
   const invalidReport = await client.callTool({ name: 'set_full_report', arguments: { report: { bands: [] } } });
   assert.equal(invalidReport.isError, true);
   fs.writeFileSync(layoutFile, '{corrupt');
@@ -81,7 +114,7 @@ try {
   assert.equal(fs.readFileSync(layoutFile, 'utf8'), '{corrupt');
   await call('reset_report_layout');
   assert.equal((await read()).report.id, layout.report.id);
-  console.log('MCP integration passed: 13 tools, nested updates, atomic batches, validation, recovery and real PDF export.');
+  console.log('MCP integration passed: 17 tools, formula discovery, dependency chains, child preview, atomic rejection, recovery and guarded PDF export.');
 } catch (error) {
   console.error(stderr);
   throw error;

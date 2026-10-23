@@ -1,136 +1,40 @@
-import React from 'react';
-import { usePDF } from '@react-pdf/renderer';
+import { useEffect, useState } from 'react';
 import { useReportStore } from '@/store/useReportStore';
-import { ReportPDFDocument } from '@/compiler/pdfCompiler';
-import { Download, RefreshCw, AlertCircle, Loader2, Database } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  sampleOrderData14,
-  sampleOrderData45,
-  sampleOrderData100,
-} from '@/mock/sampleReport';
-import { useTranslations, useCurrentLocale } from '@/i18n';
+import { requestReportPdf } from '@/client/reportPdf';
+import { sampleOrderData14, sampleOrderData45, sampleOrderData100 } from '@/mock/sampleReport';
+import { useCurrentLocale } from '@/i18n';
 
-export const ReportViewer: React.FC = () => {
+export function ReportViewer() {
   const { report, dataSource, data, setData } = useReportStore();
   const { locale } = useCurrentLocale();
-  const tViewer = useTranslations('viewer');
-
-  const [instance, updateInstance] = usePDF({
-    document: <ReportPDFDocument report={report} data={data} dataSource={dataSource} />,
-  });
-
-  // Re-trigger update when report, dataSource, or data changes
-  React.useEffect(() => {
-    updateInstance(<ReportPDFDocument report={report} data={data} dataSource={dataSource} />);
-  }, [report, dataSource, data, updateInstance]);
-
-  return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.25rem)] bg-slate-900 select-none">
-      {/* Viewer Toolbar */}
-      <div className="h-10 bg-slate-800 border-b border-slate-700 px-4 flex items-center justify-between text-xs text-slate-300">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-1.5">
-            <span className="font-semibold text-slate-200">
-              {locale === 'zh-TW' ? '即時 PDF 預覽' : 'Live PDF Preview'}
-            </span>
-            <span className="text-[11px] text-slate-400">
-              • {locale === 'zh-TW' ? '向量排版引擎' : 'Vector Layout Engine'}
-            </span>
-          </div>
-
-          {/* Dataset Size Switcher */}
-          <div className="flex items-center space-x-1 bg-slate-900/80 p-0.5 rounded-md border border-slate-700">
-            <span className="text-[10px] text-slate-400 px-1.5 flex items-center space-x-1">
-              <Database className="h-3 w-3 text-slate-500" />
-              <span>{locale === 'zh-TW' ? '資料筆數:' : 'Rows:'}</span>
-            </span>
-            <button
-              onClick={() => setData(sampleOrderData14)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                data.length === 14
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              {locale === 'zh-TW' ? '14 筆' : '14 Rows'}
-            </button>
-            <button
-              onClick={() => setData(sampleOrderData45)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                data.length === 45
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              {locale === 'zh-TW' ? '45 筆' : '45 Rows'}
-            </button>
-            <button
-              onClick={() => setData(sampleOrderData100)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                data.length === 100
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              {locale === 'zh-TW' ? '100 筆' : '100 Rows'}
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => updateInstance(<ReportPDFDocument report={report} data={data} dataSource={dataSource} />)}
-            className="text-slate-300 hover:text-white hover:bg-slate-700 h-7 text-xs space-x-1"
-          >
-            <RefreshCw className="h-3 w-3" />
-            <span>{tViewer('refresh')}</span>
-          </Button>
-
-          {instance.url && (
-            <a
-              href={instance.url}
-              download={`${report.name || 'report'}.pdf`}
-              className="inline-flex items-center space-x-1.5 h-7 px-3 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-xs"
-            >
-              <Download className="h-3 w-3" />
-              <span>{tViewer('downloadPdf')}</span>
-            </a>
-          )}
-        </div>
-      </div>
-
-      {/* PDF Viewer Body */}
-      <div className="flex-1 w-full h-full bg-slate-950 flex justify-center items-center relative overflow-hidden">
-        {instance.loading && (
-          <div className="flex flex-col items-center justify-center space-y-3 text-slate-400">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            <span className="text-xs">正在編譯並算繪 {data.length} 筆資料之 PDF 報表...</span>
-          </div>
-        )}
-
-        {instance.error && (
-          <div className="p-4 max-w-md bg-red-950/60 border border-red-800 rounded-lg text-red-200 text-xs flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <div className="font-semibold text-sm mb-1">PDF 算繪失敗</div>
-              <div className="font-mono text-[11px] text-red-300 break-all">
-                {String(instance.error)}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!instance.loading && !instance.error && instance.url && (
-          <iframe
-            src={`${instance.url}#toolbar=1&navpanes=0`}
-            title="PDF Preview"
-            className="w-full h-full border-none"
-          />
-        )}
+  const zh = locale === 'zh-TW';
+  const [revision, setRevision] = useState(0);
+  const [state, setState] = useState<{ report: typeof report; data: typeof data; dataSource: typeof dataSource; revision: number; url?: string; error?: string }>();
+  useEffect(() => {
+    let active = true, url: string | undefined;
+    void requestReportPdf(report, data, dataSource).then(blob => {
+      if (!active) return;
+      url = URL.createObjectURL(blob);
+      setState({ report, data, dataSource, revision, url });
+    }).catch(error => {
+      if (active) setState({ report, data, dataSource, revision, error: error.message });
+    });
+    return () => { active = false; if (url) URL.revokeObjectURL(url); };
+  }, [report, data, dataSource, revision]);
+  // Hide previous output synchronously when any input changes; an old PDF must never look current.
+  const current = state?.report === report && state?.data === data && state?.dataSource === dataSource && state?.revision === revision ? state : undefined;
+  const refresh = () => { void requestReportPdf(report, data, dataSource, true).catch(() => {}); setRevision(v => v + 1); };
+  return <div className="flex-1 flex flex-col h-[calc(100vh-3.25rem)] bg-slate-950 text-slate-200">
+    <div className="flex items-center justify-between gap-3 p-2 border-b border-slate-700 text-xs">
+      <span>{zh ? 'PDF 預覽' : 'PDF Preview'}</span>
+      <div className="flex items-center gap-2">
+        {[sampleOrderData14, sampleOrderData45, sampleOrderData100].map(rows => <button key={rows.length} onClick={() => setData(rows)} className={`rounded px-3 py-1 ${data.length === rows.length ? 'bg-blue-600' : 'bg-slate-800'}`}>{rows.length} {zh ? '筆' : 'rows'}</button>)}
+        <button onClick={refresh} className="rounded px-3 py-1 bg-slate-800">{zh ? '重新產生' : 'Refresh'}</button>
+        {current?.url && <a href={current.url} download={`${report.name || 'report'}.pdf`} className="rounded px-3 py-1 bg-blue-600">{zh ? '下載 PDF' : 'Download PDF'}</a>}
       </div>
     </div>
-  );
-};
+    {current?.error ? <div role="alert" className="m-6 p-4 max-h-[70vh] overflow-auto rounded border border-red-800 text-red-300 whitespace-pre-wrap text-sm">{current.error}</div>
+      : current?.url ? <iframe src={`${current.url}#toolbar=1&navpanes=0`} title="PDF Preview" className="flex-1 w-full border-none" />
+      : <div role="status" className="m-auto text-sm text-slate-400">{zh ? '正在產生 PDF…' : 'Generating PDF…'}</div>}
+  </div>;
+}

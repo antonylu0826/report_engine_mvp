@@ -15,12 +15,13 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { parseReport } from '@/report/schema';
+import { assertReportFormulas } from '@/formula/report';
 import { getPageGeometry } from '@/report/geometry';
 import { useCurrentLocale } from '@/i18n';
 
 export const AgentCopilot: React.FC = () => {
   const { locale } = useCurrentLocale();
-  const { report, setReport, updateControl, setActiveTab, resetToSample } = useReportStore();
+  const { report, setReport, updateControl, setActiveTab, resetToSample, dataSource } = useReportStore();
   const [jsonText, setJsonText] = useState(() => JSON.stringify(report, null, 2));
   const [copied, setCopied] = useState(false);
   const [promptInput, setPromptInput] = useState('');
@@ -56,6 +57,7 @@ export const AgentCopilot: React.FC = () => {
   const handleApplyJson = () => {
     try {
       const parsed = parseReport(JSON.parse(jsonText));
+      assertReportFormulas(parsed, dataSource.schema);
       if (!parsed.bands || !Array.isArray(parsed.bands)) {
         throw new Error('報表定義格式不正確，缺少 bands 陣列。');
       }

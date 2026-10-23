@@ -4,7 +4,7 @@ import { parseReport } from '../src/report/schema';
 import { getPageGeometry, CSS_PIXELS_PER_POINT } from '../src/report/geometry';
 import { patchControl, updateReportBand, updateReportScope } from '../src/report/operations';
 import { inspectReportLayout, renderReportToSvg } from '../src/inspector/layoutInspector';
-import { sampleOrderReport, sampleOrderData14 } from '../src/mock/sampleReport';
+import { sampleOrderReport, sampleOrderData14, sampleOrderDataSource } from '../src/mock/sampleReport';
 import { useReportStore } from '../src/store/useReportStore';
 import { getSubReportContext, getSubReportRows } from '../src/report/subReport';
 import { evaluateExpression, getNestedValue } from '../src/compiler/evaluator';
@@ -116,9 +116,10 @@ test('empty and malformed nested data never become sample serial numbers', () =>
   assert.equal(evaluateExpression('=SUM(amount)', undefined, context), 8);
 });
 
-test('expressions handle empty aggregates, mixed case and non-finite data', () => {
-  assert.equal(evaluateExpression('=Avg(amount)', undefined, { dataSource: [] }), 0);
-  assert.equal(evaluateExpression('=Sum(amount)', undefined, { dataSource: [{ amount: 2 }, { amount: Infinity }] }), 2);
+test('expressions preserve empty averages, accept mixed case and reject non-finite data', () => {
+  assert.equal(evaluateExpression('=Avg(amount)', undefined, { dataSource: [] }), null);
+  assert.equal(evaluateExpression('=Sum(amount)', undefined, { dataSource: [{ amount: 2 }, { amount: 3 }] }), 5);
+  assert.throws(() => evaluateExpression('=Sum(amount)', undefined, { dataSource: [{ amount: Infinity }] }));
   assert.equal(getNestedValue({}, 'constructor'), undefined);
   assert.equal(evaluateExpression(undefined, 'name', { reportParameters: { name: 'Header' } }), 'Header');
 });
@@ -130,7 +131,7 @@ test('formatters support declared formats and safely reject excessive precision'
   assert.equal(formatValue(1, 'Custom'), '1');
   assert.equal(formatValue(new Date(2026, 9, 23), 'date:yyyy/MM/dd'), '2026/10/23');
   assert.equal(formatValue(null, 'C0'), '');
-  assert.ok(renderReportToSvg(sampleOrderReport, sampleOrderData14).startsWith('<svg'));
+  assert.ok(renderReportToSvg(sampleOrderReport, sampleOrderData14, sampleOrderDataSource.data.parameters).startsWith('<svg'));
 });
 
 test('band expansion groups deterministically and breaks only between groups', () => {

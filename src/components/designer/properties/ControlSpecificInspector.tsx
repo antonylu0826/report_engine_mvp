@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { useReportStore } from '@/store/useReportStore';
 import { useTranslations } from '@/i18n';
 import { FieldSelectInput } from './FieldSelectInput';
 import { ColorPickerField } from './ColorPickerField';
+const ControlFormulaEditor = lazy(() => import('@/components/formula/ControlFormulaEditor').then(m => ({ default: m.ControlFormulaEditor })));
 
 interface ControlSpecificInspectorProps {
   control: ControlDefinition;
@@ -70,14 +71,9 @@ export const ControlSpecificInspector: React.FC<ControlSpecificInspectorProps> =
       {control.type === 'Expression' && (
         <div>
           <Label className="text-[10px] text-slate-500">{tProps('expression')}</Label>
-          <Input
-            value={control.expression ?? ''}
-            onChange={(e) => onUpdate({ expression: e.target.value })}
-            className="bg-white dark:bg-slate-950"
-          />
-          <p className="text-[10px] text-slate-400 mt-1">
-            {tProps('expressionHint')}
-          </p>
+          <Suspense fallback={<p className="text-xs text-slate-400">Loading…</p>}>
+            <ControlFormulaEditor key={control.id} control={control} bandId={bandId} onUpdate={onUpdate} />
+          </Suspense>
         </div>
       )}
 

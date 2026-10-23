@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Copy, Check, Save } from 'lucide-react';
 import { useCurrentLocale } from '@/i18n';
 import { parseReport } from '@/report/schema';
+import { assertReportFormulas } from '@/formula/report';
 
 export const SchemaViewer: React.FC = () => {
   const { locale } = useCurrentLocale();
-  const { report, setReport } = useReportStore();
+  const { report, setReport, dataSource } = useReportStore();
   const [jsonText, setJsonText] = useState(() => JSON.stringify(report, null, 2));
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -33,6 +34,7 @@ export const SchemaViewer: React.FC = () => {
   const handleApply = () => {
     try {
       const parsed = parseReport(JSON.parse(jsonText));
+      assertReportFormulas(parsed, dataSource.schema);
       if (!parsed.bands || !Array.isArray(parsed.bands)) {
         throw new Error(
           locale === 'zh-TW'

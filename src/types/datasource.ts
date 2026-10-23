@@ -3,7 +3,7 @@
  * Standardized data model designed for host application embedding and AI Agent interoperability.
  */
 
-export type FieldDataType = 'string' | 'number' | 'boolean' | 'date' | 'array';
+export type FieldDataType = 'string' | 'number' | 'boolean' | 'date' | 'datetime' | 'array';
 
 export interface DataFieldSchema {
   /** Property key used in binding, e.g. 'unitPrice', 'customerName', 'serials' */
@@ -12,6 +12,8 @@ export interface DataFieldSchema {
   label: string;
   /** Primitive data type */
   type: FieldDataType;
+  /** Missing/null is permitted by default; false makes it a runtime error. */
+  nullable?: boolean;
   /** Suggested formatting string, e.g. 'C0', 'N0', 'yyyy-MM-dd' */
   formatHint?: string;
   /** Optional field description for tooltips and AI prompt context */

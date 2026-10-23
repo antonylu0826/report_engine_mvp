@@ -15,11 +15,10 @@ import {
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { renderToFile } from '@react-pdf/renderer';
+import { renderReportPdf } from '../server/pdfService';
 
 import type { ReportDefinition, ControlDefinition } from '../types/report.js';
 import { sampleOrderReport, generateOrderItems, sampleOrderData14, sampleOrderDataSource } from '../mock/sampleReport.js';
-import { ReportPDFDocument } from '../compiler/pdfCompiler.js';
 import { inspectReportLayout, renderReportToSvg } from '../inspector/layoutInspector.js';
 
 import { reportTools } from './tools';
@@ -27,6 +26,9 @@ import { getPageGeometry } from '../report/geometry';
 import { deleteControl, patchControl, updateReportBand, updateReportScope } from '../report/operations';
 import { parseReport } from '../report/schema';
 import { createReportRepository } from '../server/reportRepository';
+import { getFormulaCatalog } from '../formula/registry';
+import { FormulaError } from '../formula/types';
+import { handleFormulaTool } from './formulaTools';
 
 // Resolve project root based on this script location (src/mcp/index.ts -> root)
 const __filename = fileURLToPath(import.meta.url);
@@ -40,7 +42,7 @@ if (!fs.existsSync(ASSETS_DIR)) {
 
 // State persistence file for pixel-level layout
 const LAYOUT_FILE_PATH = process.env.REPORT_ENGINE_LAYOUT_FILE || path.resolve(PROJECT_ROOT, 'current_report_layout.json');
-const repository = createReportRepository(LAYOUT_FILE_PATH);
+const repository = createReportRepository(LAYOUT_FILE_PATH, sampleOrderDataSource.schema);
 repository.initialize(sampleOrderReport);
 const loadCurrentReport = () => repository.read().report;
 const saveCurrentReport = (report: ReportDefinition) => repository.write(report);
@@ -63,8 +65,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: reportToo
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
   try {
-    let currentReport = name === 'reset_report_layout' || name === 'set_full_report'
+    let currentReport = name === 'reset_report_layout' || name === 'set_full_report' || name === 'get_formula_catalog'
       ? structuredClone(sampleOrderReport) : loadCurrentReport();
+    const formulaResult = handleFormulaTool(name, args, currentReport, sampleOrderDataSource, saveCurrentReport);
+    if (formulaResult !== undefined) return { content: [{ type: 'text', text: JSON.stringify(formulaResult) }] };
     switch (name) {
       case 'get_report_layout': {
         const { printableWidth } = getPageGeometry(currentReport.pageSettings);
@@ -97,17 +101,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           dataSourceName: sampleOrderDataSource.name,
           parameters: sampleOrderDataSource.schema.parameters || [],
           detailFields: sampleOrderDataSource.schema.detailFields || [],
-          aggregateFormulas: [
-            { expression: '=SUM(amount)', description: '計算當前報表明細總金額合計', formatHint: 'C0' },
-            { expression: '=SUM(quantity)', description: '計算出貨品項總數量', formatHint: 'N0' },
-            { expression: '=COUNT()', description: '計算總品項筆數', formatHint: 'N0' },
-            { expression: '=AVG(unitPrice)', description: '計算平均單價', formatHint: 'C0' },
-          ],
-          systemVariables: [
-            { tag: '[PageNumber]', description: '當前頁碼 (如 第 [PageNumber] 頁)' },
-            { tag: '[TotalPages]', description: '總頁數 (如 共 [TotalPages] 頁)' },
-            { tag: '[ExecutionTime]', description: '報表產生列印時間' },
-          ],
+          aggregateFormulas: getFormulaCatalog({ category: 'aggregate' }).functions,
+          formulaCatalogTool: 'get_formula_catalog',
+          calculatedFields: currentReport.calculatedFields ?? [],
+          calculatedReference: 'calc.<name>',
+          childCalculatedFields: currentReport.bands.flatMap(b => b.controls.filter(c => c.subReportDefinition).map(c => ({ subReportControlId: c.id, calculatedFields: c.subReportDefinition!.calculatedFields ?? [], detailFields: sampleOrderDataSource.schema.detailFields.find(f => f.name === c.subReportBinding)?.children ?? [] }))),
+          systemVariables: getFormulaCatalog().systemVariables,
           sampleParameters: sampleOrderDataSource.data.parameters,
           sampleDetailRecord: sampleOrderDataSource.data.items[0],
         };
@@ -218,13 +217,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!Number.isInteger(recordCount) || recordCount < 0 || recordCount > 10000) throw new Error('recordCount must be an integer between 0 and 10000');
         const targetFile = path.isAbsolute(outputPath) ? outputPath : path.resolve(PROJECT_ROOT, outputPath);
 
-        const pdfDocElement = ReportPDFDocument({
+        const pdfBuffer = await renderReportPdf({
           report: currentReport,
           data: generateOrderItems(recordCount),
           dataSource: sampleOrderDataSource,
         });
 
-        await renderToFile(pdfDocElement, targetFile);
+        fs.writeFileSync(targetFile, pdfBuffer);
         const stats = fs.statSync(targetFile);
 
         return {
@@ -247,12 +246,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         // 2. Render and save live PDF
         const pdfPath = path.resolve(ASSETS_DIR, 'agent_live_preview.pdf');
-        const pdfDocElement = ReportPDFDocument({
+        const pdfBuffer = await renderReportPdf({
           report: currentReport,
           data: sampleOrderData14,
           dataSource: sampleOrderDataSource,
         });
-        await renderToFile(pdfDocElement, pdfPath);
+        fs.writeFileSync(pdfPath, pdfBuffer);
         const pdfStats = fs.statSync(pdfPath);
 
         // 3. Construct structured diagnosis report
@@ -295,7 +294,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [
         {
           type: 'text',
-          text: `工具執行失敗: ${(error as Error).message}`,
+          text: error instanceof FormulaError ? JSON.stringify({ error: error.message, diagnostics: error.diagnostics }) : `工具執行失敗: ${(error as Error).message}`,
         },
       ],
     };

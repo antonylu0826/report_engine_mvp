@@ -11,12 +11,14 @@ import {
   Sparkles,
   RefreshCw,
   Radio,
+  Calculator,
 } from 'lucide-react';
 import { useReportStore } from '@/store/useReportStore';
 import { Button } from '@/components/ui/button';
 import { useTranslations, useCurrentLocale } from '@/i18n';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useReportSync } from '@/sync/useReportSync';
+import { requestReportPdf } from '@/client/reportPdf';
 
 export const Navbar: React.FC = () => {
   const { locale } = useCurrentLocale();
@@ -44,21 +46,16 @@ export const Navbar: React.FC = () => {
   const handleExportPDF = async () => {
     try {
       setIsExporting(true);
-      const [{ pdf }, { ReportPDFDocument }] = await Promise.all([
-        import('@react-pdf/renderer'),
-        import('@/compiler/pdfCompiler'),
-      ]);
-      const doc = <ReportPDFDocument report={report} data={data} dataSource={dataSource} />;
-      const blob = await pdf(doc).toBlob();
+      const blob = await requestReportPdf(report, data, dataSource);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `${report.name || 'report'}.pdf`;
       link.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err) {
       console.error('Failed to export PDF:', err);
-      alert(locale === 'zh-TW' ? '產生 PDF 失敗，請檢查控制台錯誤訊息。' : 'Failed to generate PDF. Please check the browser console for details.');
+      alert((locale === 'zh-TW' ? '產生 PDF 失敗：' : 'Failed to generate PDF: ') + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsExporting(false);
     }
@@ -87,11 +84,14 @@ export const Navbar: React.FC = () => {
       </div>
 
       {syncError && <span role="status" className="text-xs text-red-600 max-w-56 truncate" title={syncError}>
-        {conflict ? (locale === 'zh-TW' ? '同步衝突：本機變更已保留，請重新載入' : 'Sync conflict: local changes preserved; reload to resolve') : (locale === 'zh-TW' ? '同步失敗，將自動重試' : 'Sync failed; retrying automatically')}
+        {conflict ? (locale === 'zh-TW' ? '同步衝突：本機變更已保留，請重新載入' : 'Sync conflict: local changes preserved; reload to resolve') : syncError}
       </span>}
 
       {/* Center Tabs: Mode Switcher */}
       <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+        <button onClick={() => setActiveTab('formulas')} className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium ${activeTab === 'formulas' ? 'bg-white shadow-sm dark:bg-slate-800' : 'text-slate-500'}`}>
+          <Calculator className="h-3.5 w-3.5" /><span>{locale === 'zh-TW' ? '計算欄位' : 'Calculations'}</span>
+        </button>
         <button
           onClick={() => setActiveTab('designer')}
           className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${

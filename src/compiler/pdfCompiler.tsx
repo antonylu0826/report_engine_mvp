@@ -12,10 +12,11 @@ import type {
   ReportDefinition,
   BandDefinition,
   ControlDefinition,
-} from '../types/report';
-import { type EvalContext } from './evaluator';
-import { pdfControlRegistry } from '../controls/pdfRegistry';
-import { expandDetailBands } from './bandPipeline';
+} from '../types/report.ts';
+import { type EvalContext } from './evaluator.ts';
+import { pdfControlRegistry } from '../controls/pdfRegistry.tsx';
+import { expandDetailBands } from './bandPipeline.ts';
+import { prepareReport } from '../formula/report.ts';
 
 // Resolve the font independently of the caller's working directory.
 const getFontUrl = () => {
@@ -99,7 +100,9 @@ export interface PDFCompilerProps {
   report: ReportDefinition;
   data?: Record<string, unknown>[];
   parameters?: Record<string, unknown>;
-  dataSource?: import('../types/datasource').ReportDataSource;
+  dataSource?: import('../types/datasource.ts').ReportDataSource;
+  executionTime?: string;
+  timeZone?: string;
 }
 
 /**
@@ -110,6 +113,8 @@ export function ReportPDFDocument({
   data,
   parameters,
   dataSource,
+  executionTime,
+  timeZone,
 }: PDFCompilerProps): React.ReactElement<DocumentProps> {
   const { pageSettings, bands } = report;
 
@@ -124,10 +129,11 @@ export function ReportPDFDocument({
   const reportFooterBand = bands.find((b) => b.type === 'ReportFooter');
   const pageFooterBand = bands.find((b) => b.type === 'PageFooter');
 
-  const globalContext: EvalContext = {
+  const globalContext: EvalContext = prepareReport(report, {
     dataSource: actualData,
     reportParameters: actualParameters,
-  };
+    schema: dataSource?.schema, executionTime, timeZone,
+  });
 
   const pagePadding = {
     paddingTop: pageSettings.margins.top,
@@ -141,7 +147,7 @@ export function ReportPDFDocument({
   const detailInstances = expandDetailBands(report, globalContext);
 
   return (
-    <Document title={report.name}>
+    <Document title={report.name} creationDate={new Date(globalContext.executionTime!)} modificationDate={new Date(globalContext.executionTime!)}>
       <Page
         size={pdfPageSize}
         orientation={pageSettings.orientation}

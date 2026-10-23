@@ -114,6 +114,14 @@ export interface ReportDefinition {
   name: string;
   pageSettings: PageSettings;
   bands: BandDefinition[];
+  calculatedFields?: CalculatedField[];
+}
+
+export interface CalculatedField {
+  name: string;
+  scope: 'row' | 'group' | 'report';
+  type: 'number' | 'string' | 'boolean' | 'date' | 'datetime';
+  expression: string;
 }
 
 /**

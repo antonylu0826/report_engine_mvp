@@ -1,4 +1,6 @@
+import { formulaTools } from './formulaTools';
 export const reportTools = [
+      ...formulaTools,
       {
         name: 'get_report_layout',
         description: 'Get the complete pixel-level report definition (pageSize, printableWidth, bands, and controls with exact x/y/width/height and styles).',

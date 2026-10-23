@@ -1,8 +1,10 @@
 # TypeScript 輕量級 XtraReport 報表引擎 (MVP)
 
-以 **`@react-pdf/renderer`** 為底層向量排版與輸出引擎，打造一套具備 **像素級帶狀模型（Pixel-Level Banded Architecture）**、**可視化設計器（Designer）**、**次級子報表排版（SubReport）**、**完整雙語國際化（i18n）** 與 **即時向量 PDF 預覽器（Viewer）** 的 Web 原生現代企業級報表系統。
+以 **`@react-pdf/renderer`** 為底層向量排版與輸出引擎，提供 **帶狀模型（Banded Architecture）**、**可視化設計器（Designer）**、**一層子報表編輯（SubReport）**、**雙語介面（i18n）** 與 **PDF 預覽器（Viewer）** 的 TypeScript 報表元件 MVP。
 
 風格全面採用 **shadcn/ui** 現代簡潔灰階調色，內建本地完整繁體中文字型支援（Noto Sans TC），並提供專屬 **AI Agent 像素級 MCP 伺服器**。
+
+公式引擎 v1 提供 38 個內建函式、具作用域及依賴關係的計算欄位、設計器即時診斷／試算，以及 MCP 能力目錄。預覽與下載統一使用後端 PDF。詳見[公式引擎使用方式](docs/formula-engine-usage.md)。本輪維持獨立元件，尚未整合 Haneinfo。
 
 ---
 
@@ -16,11 +18,11 @@
 ---
 
 ### 2. 即時 PDF 向量預覽器 (PDF Live Preview)
-直接於瀏覽器內無伺服器（Serverless）即時算繪企業級高水準出貨單：
+由後端統一算繪，瀏覽器顯示並下載相同的 PDF：
 - 完整包含**多欄客戶資訊卡**（左側統編、地址、聯絡人；右側單號、採購單、月結條件）。
 - **精密封閉表格**：垂直貫穿格線、灰底粗框表頭、明細列資料自動對齊。
 - **巢狀次級子報表（SubReport）**：主明細列中支援嵌入多列序號/批號檢驗清單，具備獨立項次 `#`、標題列與動態資料行。
-- **會計結算卡**：交易注意事項、中文大寫金額（`新臺幣陸拾肆萬伍仟柒佰伍拾元整`）、未稅小計、5% 營業稅與雙底線含稅總計。
+- **會計結算卡**：交易注意事項、未稅小計、依稅率參數計算的營業稅與雙底線含稅總計。
 - **四格核決印章矩陣**：製單人員、業務主管、倉管點收、客戶簽收蓋章。
 - 支援多頁跨頁、表頭自動重複（PageHeader）、動態原生頁碼（`第 1 頁，共 2 頁`）以及全表統計總計（`=SUM(amount)`）。
 
@@ -29,7 +31,7 @@
 ---
 
 ### 3. Agent 協作模式 (Pixel-Level Agent Copilot)
-專為 AI Agent 設計的像素級 Banded IR 模型。不同於過度簡化死板的 Template 封裝，系統賦予 Agent 完整控制像素座標（`x`, `y`, `width`, `height`）、邊框粗細與文字對齊的能力，讓 Agent 能排版出 100% 貼近真實人類 ERP / 會計日常使用的複雜企業單據。
+外部 Agent 可透過 MCP 操作 Banded IR，控制座標（`x`, `y`, `width`, `height`）、邊框、文字、資料繫結與計算欄位。畫面中的 AgentCopilot 是關鍵字操作示範，尚未連接即時模型；實際 Agent 整合使用本專案的 MCP server。
 
 ![Agent 協作模式](.assets/agent_preview.png)
 
@@ -49,7 +51,7 @@
   - `PageHeader`：每頁固定重複的表格標題列（跨頁自動重複）。
   - `GroupHeader` / `GroupFooter`：支援依特定欄位（如類別）動態分組小計與分組後換頁。
   - `Detail`：依傳入之資料集逐筆展開資料列範本，具備垂直格線貫穿。
-  - `ReportFooter`：全表會計結算（大寫金額、稅額、雙底線總計）與企業四格簽核矩陣（僅最末頁出現一次）。
+  - `ReportFooter`：全表會計結算（小計、稅額、雙底線總計）與企業四格簽核矩陣（僅最末頁出現一次）。
   - `PageFooter`：固定於每頁底部的頁尾、列印資訊與動態頁碼。
 - **次級子報表排版（SubReport Nested Band Architecture）**：
   - 支援於主報表 Detail 區段內插入 `SubReport` 控制項。
@@ -87,19 +89,21 @@
 - **高標準程式碼品質與效能**：
   - 屬性面板採用高度解耦之微元件架構，移除超過 5 處重複的欄位選單與色彩選擇邏輯。
   - 以 `oxlint`、TypeScript、核心回歸測試及 MCP 整合測試驗證程式行為。
-  - 純前端向量運算直出 PDF；建置體積與效能仍需持續量測及優化。
+  - Node 後端統一輸出向量 PDF，前端共用預覽與下載結果。
 
 ---
 
 ## 程式碼審查與重構
 
-2026-10-23 的審查結果、修正範圍、驗證方式與後續限制，見 [CODE_REVIEW.md](CODE_REVIEW.md)。
+審查、公式引擎 v1 的交付範圍、驗證結果與目前限制，見 [CODE_REVIEW.md](CODE_REVIEW.md)。目前架構及下一階段清單見 [implementation_plan.md](implementation_plan.md)。
 
 ## 🛠️ 技術選型 (Tech Stack)
 
 | 模組 | 選型 | 說明 |
 | :--- | :--- | :--- |
 | **底層 PDF 引擎** | `@react-pdf/renderer` | 提供 PDF 向量繪製、Flexbox 自動流式排版、分頁斷頁能力 |
+| **公式與數值** | 受限語法樹 + `decimal.js` | 38 個內建函式、34 位十進位運算、依賴與作用域驗證 |
+| **日期與時區** | `@js-temporal/polyfill` | 純日期、datetime、日曆運算與明確時區 |
 | **前端框架** | `React 19` + `TypeScript` + `Vite 8` | 極速模組熱重載 (HMR) 與型別安全 |
 | **UI 設計系統** | `shadcn/ui` + `Tailwind CSS v4` | 現代簡約的灰階質感介面與圖示庫（`lucide-react`） |
 | **狀態管理** | `zustand` | 輕量、反應迅速的像素級報表定義與畫布狀態管理 |
@@ -133,7 +137,7 @@ npm run check     # lint、型別、回歸測試、MCP 整合測試與正式建�
 # 分別執行
 npm run lint
 npm run typecheck # 同時檢查 src、scripts、tests
-npm run check:bundle # 建置後驗證 chunk、首頁大小與 PDF 延遲載入
+npm run check:bundle # 建置後驗證 chunk、首頁大小，防止 PDF 引擎進入首頁
 npm test          # 核心、狀態、同步 API／競態及實際 PDF 輸出
 npm run test:mcp  # 啟動隔離的 MCP server，以真正 client 呼叫工具
 ```
@@ -150,7 +154,16 @@ npm run mcp
 npm run build # 同時執行 bundle 預算檢查
 ```
 
-PDF 引擎僅在預覽或匯出時載入。建置維持預設 500 kB chunk 門檻，並檢查首頁全部 JavaScript 不超過 650 kB。設計器控制項登錄在 `src/controls/registry.ts`；PDF renderer 分開登錄於 `src/controls/pdfRegistry.tsx`，新增外掛時需同時提供兩個對應實作。
+PDF 引擎在 Node 後端執行；公式編輯器按需載入。建置維持預設 500 kB chunk 門檻，並檢查首頁全部 JavaScript 不超過 650 kB。設計器控制項登錄在 `src/controls/registry.ts`；PDF renderer 分開登錄於 `src/controls/pdfRegistry.tsx`，新增外掛時需同時提供兩個對應實作。純靜態部署需要另外提供 PDF API；可用 `npm run server` 啟動獨立 Node 服務，或將處理器接入宿主。
+
+```bash
+npm run preview # 正式前端預覽，包含 PDF／公式 API 及本機範本同步
+npm run server  # 僅啟動獨立 PDF／公式 API，預設 127.0.0.1:3001
+```
+
+瀏覽器向同一來源的 `/api/report-pdf` 發送請求。若將前端部署為靜態檔案，需要由宿主或反向代理把 API 路由接到 Node 服務；獨立服務不提供 `/api/report-layout` 範本儲存。部署契約與錯誤回應見[使用方式](docs/formula-engine-usage.md#node-與-http)。
+
+目前完整檢查包含 37 項自動測試與真正 MCP client 的 17 個工具整合驗證。公式引擎 v1 的正式建置：首頁 JS 約 598.04 kB，最大 chunk 約 226.69 kB，均為未壓縮大小；預設大型 bundle 警告門檻維持不變。
 
 ---
 
@@ -158,10 +171,14 @@ PDF 引擎僅在預覽或匯出時載入。建置維持預設 500 kB chunk 門�
 
 本專案內建標準的 **MCP 伺服器**，任何支援 MCP 的 AI Agent（如 Claude Desktop、Cursor、Antigravity Agent、Cline 等）皆可直接透過工具調用（Tool Calling）精準操控整份報表！
 
-### 1. 提供的 13 大像素級 MCP 工具
+### 1. 提供的 17 個 MCP 工具
 
 | MCP 工具名稱 | 說明 |
 | :--- | :--- |
+| `get_formula_catalog` | 查詢實際可執行函式、語法、簽章、型別、作用域、空值／日期規則與範例 |
+| `validate_report_formulas` | 驗證整份範本的公式、型別、依賴及循環，可搭配資料執行 |
+| `preview_formula` | 在指定 row／group／report 或子報表試算，回傳原始值與格式化結果 |
+| `set_calculated_fields` | 原子替換主／子報表計算欄位，靜態錯誤時不寫入 |
 | `get_report_layout` | 讀取當前整份報表規格（包含可繪寬度、所有 Bands 與控制項精確座標、樣式） |
 | `get_available_data_fields` | 取得報表可供綁定的資料集欄位清單（明細欄位型別、範例值、系統聚合函式及格式化建議），方便精準綁定 `fieldName` 或撰寫計算公式 |
 | `add_control` | 在指定 Band 新增精確座標的控制項（支援 `Label`、`Field`、`Expression`、`Line`、`Image`、`Barcode`、`QRCode`、`CheckBox`、`Panel`、`SubReport` 10 大型別） |

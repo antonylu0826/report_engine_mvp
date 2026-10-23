@@ -1,6 +1,6 @@
-import type { BandDefinition, ReportDefinition } from '../types/report';
-import type { EvalContext } from './evaluator';
-import { groupDataRows } from './grouping';
+import type { BandDefinition, ReportDefinition } from '../types/report.ts';
+import type { EvalContext } from './evaluator.ts';
+import { groupReportRows } from './grouping.ts';
 
 export interface BandInstance {
   band: BandDefinition;
@@ -15,10 +15,9 @@ export function expandDetailBands(report: ReportDefinition, context: EvalContext
   const header = report.bands.find(b => b.type === 'GroupHeader');
   const footer = report.bands.find(b => b.type === 'GroupFooter');
   const detail = report.bands.find(b => b.type === 'Detail');
-  const groups = groupDataRows(context.dataSource ?? [], header?.groupBy || footer?.groupBy,
-    header?.groupSortOrder || footer?.groupSortOrder || 'asc');
+  const groups = context.reportGroups ?? groupReportRows(report, context.dataSource ?? []);
   return groups.flatMap((group, groupIndex) => {
-    const groupContext: EvalContext = { ...context, groupRows: group.rows, currentRow: group.rows[0] };
+    const groupContext: EvalContext = { ...context, groupRows: group.rows, groupKey: group.key, currentRow: group.rows[0] };
     const instances: BandInstance[] = [];
     if (header) instances.push({ band: header, context: groupContext, key: `header-${groupIndex}`,
       pageBreakBefore: groupIndex > 0 && header.pageBreakBefore });

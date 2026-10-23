@@ -33,7 +33,8 @@ export const PropertyPanel: React.FC = () => {
   const selectedControl = selectedBand?.controls.find((c) => c.id === selectedControlId);
 
   // Sample dataset fields for auto-suggest
-  const sampleFields = Object.keys(getActiveData()[0] ?? {});
+  const rawFields = Object.keys(getActiveData()[0] ?? {});
+  const sampleFields = [...new Set([...rawFields, ...(activeReport.calculatedFields ?? []).map(f => `calc.${f.name}`)])];
 
   // Update Band properties (e.g. groupBy, pageBreakAfter)
   const updateBandProp = (patch: Record<string, unknown>) => {
@@ -151,7 +152,7 @@ export const PropertyPanel: React.FC = () => {
         {!selectedControl && selectedBand && (
           <BandPropertiesSection
             band={selectedBand}
-            sampleFields={sampleFields}
+            sampleFields={rawFields}
             onUpdateHeight={(height) => updateBandHeight(selectedBand.id, height)}
             onUpdateProp={updateBandProp}
             onRemoveGroup={removeGroupingStructure}
