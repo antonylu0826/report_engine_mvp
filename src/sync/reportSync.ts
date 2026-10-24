@@ -1,4 +1,7 @@
 import type { ReportDefinition } from '../types/report';
+import type { ReportDataSource } from '../types/datasource';
+import type { ReportDocument } from '../types/document';
+import { parseDataSource } from '../data/schema';
 import { parseReport } from '../report/schema';
 
 export interface SyncStatus {
@@ -15,12 +18,17 @@ export const initialSyncStatus: SyncStatus = {
 
 // One request at a time. Dirty local edits are never replaced by a background poll.
 export function createReportSync(options: {
+  endpoint?: string;
+  getDataSource?: () => ReportDataSource;
+  setDocument?: (document: ReportDocument) => void;
   getReport: () => ReportDefinition;
   setReport: (report: ReportDefinition) => void;
   onStatus: (status: SyncStatus) => void;
   fetch: typeof fetch;
 }) {
   let baseline = options.getReport();
+  let baselineSource = options.getDataSource?.();
+  const dirty = () => options.getReport() !== baseline || options.getDataSource?.() !== baselineSource;
   let version: string | undefined;
   let inFlight = false;
   let disposed = false;
@@ -31,14 +39,14 @@ export function createReportSync(options: {
     if (!disposed) options.onStatus(status);
   };
   return {
-    isDirty: () => options.getReport() !== baseline,
+    isDirty: dirty,
     async sync(forceReload = false) {
       if (disposed || inFlight || (status.conflict && !forceReload)) return;
       inFlight = true;
       publish({ mcpConnecting: true, mcpSynced: false });
       try {
-        if (version === undefined || forceReload || options.getReport() === baseline) {
-          const response = await options.fetch('/api/report-layout', { signal: controller.signal });
+        if (version === undefined || forceReload || !dirty()) {
+          const response = await options.fetch(options.endpoint ?? '/api/report-layout', { signal: controller.signal });
           // Static hosting has no sync endpoint. Local editing must still work.
           if (response.status === 404 || (response.ok && !response.headers.get('content-type')?.includes('application/json'))) {
             publish({ error: null });
@@ -49,26 +57,32 @@ export function createReportSync(options: {
           const report = parseReport(remote.report);
           if (typeof remote.version !== 'string') throw new Error('Invalid report version');
           if (disposed) return;
-          const dirty = options.getReport() !== baseline;
-          if (forceReload || !dirty) {
-            if (version !== remote.version || forceReload) options.setReport(report);
+          const locallyDirty = dirty();
+          const source = remote.dataSource === undefined ? options.getDataSource?.() : parseDataSource(remote.dataSource);
+          if (forceReload || !locallyDirty) {
+            if (version !== remote.version || forceReload) {
+              if (options.setDocument && source) options.setDocument({ formatVersion: 1, report, dataSource: source });
+              else options.setReport(report);
+            }
             baseline = options.getReport();
+            baselineSource = options.getDataSource?.();
             publish({ conflict: false, error: null });
           }
           // Do not acknowledge a newer remote version while a local edit was in flight.
-          if (dirty && !forceReload && version !== undefined && version !== remote.version) {
+          if (locallyDirty && !forceReload && version !== undefined && version !== remote.version) {
             publish({ conflict: true, error: 'Report changed on disk. Reload to resolve the conflict.' });
             return;
           }
           version = remote.version;
         }
         const report = options.getReport();
-        if (report !== baseline) {
+        const dataSource = options.getDataSource?.();
+        if (dirty()) {
           publish({ isSaving: true });
-          const response = await options.fetch('/api/report-layout', {
+          const response = await options.fetch(options.endpoint ?? '/api/report-layout', {
             method: 'POST', signal: controller.signal,
             headers: { 'Content-Type': 'application/json', 'If-Match': version! },
-            body: JSON.stringify(report),
+            body: JSON.stringify(dataSource ? { formatVersion: 1, report, dataSource } : report),
           });
           if (disposed) return;
           if (response.status === 409) {
@@ -82,6 +96,7 @@ export function createReportSync(options: {
           const saved = await response.json();
           if (typeof saved.version !== 'string') throw new Error('Invalid saved report version');
           version = saved.version;
+          baselineSource = dataSource;
           baseline = report; // Newer edits remain dirty and will be saved on the next tick.
         }
         publish({ mcpSynced: true, error: null });

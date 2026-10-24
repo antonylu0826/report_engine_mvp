@@ -64,7 +64,7 @@ export function patchControl(
   return updateReportBand(report, bandId, band => {
     if (!band.controls.some(c => c.id === controlId)) throw new Error(`Control not found: ${controlId}`);
     return { ...band, controls: band.controls.map(c => c.id === controlId
-      ? { ...c, ...patch, id: c.id, style: { ...c.style, ...patch.style } }
+      ? { ...c, ...patch, id: c.id, ...(patch.style ? { style: { ...c.style, ...patch.style } } : {}) }
       : c) };
   });
 }

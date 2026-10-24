@@ -1,0 +1,161 @@
+{
+  "formatVersion": 1,
+  "report": {
+    "id": "custom-invoice",
+    "name": "自訂資料來源範例",
+    "pageSettings": {
+      "size": "A4",
+      "orientation": "portrait",
+      "margins": {
+        "top": 30,
+        "right": 30,
+        "bottom": 30,
+        "left": 30
+      }
+    },
+    "calculatedFields": [
+      {
+        "name": "amount",
+        "scope": "row",
+        "type": "number",
+        "expression": "=quantity * price"
+      },
+      {
+        "name": "total",
+        "scope": "report",
+        "type": "number",
+        "expression": "=SUM(calc.amount)"
+      }
+    ],
+    "bands": [
+      {
+        "id": "header",
+        "type": "PageHeader",
+        "height": 32,
+        "controls": [
+          {
+            "id": "title",
+            "type": "Expression",
+            "x": 0,
+            "y": 0,
+            "width": 500,
+            "height": 24,
+            "expression": "=CONCAT(\"客戶：\", params.customer)",
+            "style": {
+              "fontSize": 14
+            }
+          }
+        ]
+      },
+      {
+        "id": "detail",
+        "type": "Detail",
+        "height": 28,
+        "controls": [
+          {
+            "id": "description",
+            "type": "Field",
+            "x": 0,
+            "y": 0,
+            "width": 300,
+            "height": 24,
+            "fieldName": "description",
+            "canGrow": true
+          },
+          {
+            "id": "amount",
+            "type": "Field",
+            "x": 330,
+            "y": 0,
+            "width": 150,
+            "height": 24,
+            "fieldName": "calc.amount",
+            "formatString": "N2"
+          }
+        ]
+      },
+      {
+        "id": "total",
+        "type": "ReportFooter",
+        "height": 32,
+        "controls": [
+          {
+            "id": "grand-total",
+            "type": "Expression",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 24,
+            "expression": "=CONCAT(\"總計：\", TO_TEXT(calc.total))"
+          }
+        ]
+      },
+      {
+        "id": "footer",
+        "type": "PageFooter",
+        "height": 20,
+        "controls": [
+          {
+            "id": "page",
+            "type": "Expression",
+            "x": 0,
+            "y": 0,
+            "width": 400,
+            "height": 18,
+            "expression": "[PageNumber] / [TotalPages]"
+          }
+        ]
+      }
+    ]
+  },
+  "dataSource": {
+    "id": "custom",
+    "name": "自訂訂單 JSON",
+    "schema": {
+      "parameters": [
+        {
+          "name": "customer",
+          "label": "客戶",
+          "type": "string",
+          "nullable": false
+        }
+      ],
+      "detailFields": [
+        {
+          "name": "description",
+          "label": "品項說明",
+          "type": "string"
+        },
+        {
+          "name": "quantity",
+          "label": "數量",
+          "type": "number",
+          "nullable": false
+        },
+        {
+          "name": "price",
+          "label": "單價",
+          "type": "number",
+          "nullable": false
+        }
+      ]
+    },
+    "data": {
+      "parameters": {
+        "customer": "元件測試客戶"
+      },
+      "items": [
+        {
+          "description": "第一個品項：自訂 JSON 資料",
+          "quantity": 2,
+          "price": 12.5
+        },
+        {
+          "description": "第二個品項：此欄位啟用長文字自動增高。\n下一行會推動後續資料列向下排列。",
+          "quantity": 3,
+          "price": 8
+        }
+      ]
+    }
+  }
+}

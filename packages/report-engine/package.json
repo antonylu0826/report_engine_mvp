@@ -1,0 +1,55 @@
+{
+  "name": "@report-engine/report-engine",
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Banded report core, React designer and Node PDF/MCP adapters",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/public/core.d.ts",
+      "import": "./dist/core.js"
+    },
+    "./core": {
+      "types": "./dist/types/public/core.d.ts",
+      "import": "./dist/core.js"
+    },
+    "./pdf": {
+      "types": "./dist/types/public/pdf.d.ts",
+      "import": "./dist/pdf.js"
+    },
+    "./designer": {
+      "types": "./dist/types/public/designer.d.ts",
+      "import": "./dist/designer.js"
+    },
+    "./mcp": {
+      "types": "./dist/types/public/mcp.d.ts",
+      "import": "./dist/mcp.js"
+    },
+    "./styles.css": "./dist/report-engine.css"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@react-pdf/renderer": "^4.9.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "decimal.js": "^10.6.0",
+    "jsbarcode": "^3.12.3",
+    "lucide-react": "^1.60.0",
+    "qrcode": "^1.5.4",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7",
+    "zustand": "^5.0.15",
+    "@types/node": "^24.19.2"
+  }
+}

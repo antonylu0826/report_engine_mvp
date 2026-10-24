@@ -1,6 +1,21 @@
+import { changeTools } from './changeTools';
 import { formulaTools } from './formulaTools';
+import { z } from 'zod';
+import { reportDataSourceSchema } from '../data/schema';
+import { reportSchema } from '../report/schema';
 export const reportTools = [
       ...formulaTools,
+      ...changeTools,
+      {
+        name: 'get_report_data_source',
+        description: 'Read the saved data source, typed field schema, parameters, JSON rows and document version used by validation and PDF rendering.',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'set_report_data_source',
+        description: 'Atomically replace the data source. Supply an optional compatible report when switching schemas. Validation failures preserve the existing report and data.',
+        inputSchema: z.toJSONSchema(z.object({ dataSource: reportDataSourceSchema, report: reportSchema.optional() }), { io: 'input', reused: 'ref' }) as { type: 'object'; properties?: Record<string, unknown> },
+      },
       {
         name: 'get_report_layout',
         description: 'Get the complete pixel-level report definition (pageSize, printableWidth, bands, and controls with exact x/y/width/height and styles).',
@@ -35,6 +50,9 @@ export const reportTools = [
                 y: { type: 'number', description: 'Y position in points (pt) relative to band top' },
                 width: { type: 'number', description: 'Width in points (pt)' },
                 height: { type: 'number', description: 'Height in points (pt)' },
+                visibleWhen: { type: 'string', description: 'Boolean formula controlling visibility; null means hidden.' },
+                styleRules: { type: 'array', items: { type: 'object', properties: { when: { type: 'string' }, style: { type: 'object' } }, required: ['when', 'style'] }, description: 'Ordered conditional styles. Query get_available_data_fields for supported properties per control.' },
+                canGrow: { type: 'boolean', description: 'Grow text and move following rows down; allows long content to continue on later pages.' },
                 text: { type: 'string', description: 'Static text' },
                 fieldName: { type: 'string', description: 'Bound data field name' },
                 expression: { type: 'string', description: 'Calculation formula (e.g. =SUM(amount))' },
@@ -160,7 +178,7 @@ export const reportTools = [
       },
       {
         name: 'reset_report_layout',
-        description: 'Reset report definition back to clean default shipping invoice template.',
+        description: 'Reset both report and data source to the configured initial document. This explicitly replaces saved state.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -191,7 +209,7 @@ export const reportTools = [
               type: 'integer',
               minimum: 0,
               maximum: 10000,
-              description: 'Sample record count (default: 45)',
+              description: 'Maximum saved rows to render (default: all saved rows). Never generates mock records.',
             },
           },
         },
@@ -204,4 +222,7 @@ export const reportTools = [
           properties: {},
         },
       },
-    ];
+    ].map(tool=>{
+      const mutating=['add_control','update_control','delete_control','set_band_height','set_band_controls','batch_update_controls','update_page_settings','reset_report_layout','set_full_report','set_calculated_fields','set_report_data_source'].includes(tool.name);
+      return mutating?{...tool,inputSchema:{...tool.inputSchema,properties:{...tool.inputSchema.properties,expectedVersion:{type:'string',description:'Reject this legacy mutation if the saved document changed since reading this version. Prefer preview_report_changes/apply_report_changes for atomic validated edits.'}}}}:tool;
+    });

@@ -30,7 +30,7 @@ export function CalculatedFieldsPanel() {
     setSelected(draft.fields.length);
     setDraft(d => ({ ...d, fields: [...d.fields, { name: `calculation${i}`, type: 'number', scope: 'row', expression: '=0' }] }));
   };
-  return <div className="flex-1 h-[calc(100vh-3.25rem)] overflow-auto bg-slate-50 p-5 dark:bg-slate-950">
+  return <div className="flex-1 h-full min-h-0 overflow-auto bg-slate-50 p-5 dark:bg-slate-950">
     <div className="max-w-5xl mx-auto space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div><h1 className="font-semibold">{zh ? '計算欄位' : 'Calculated fields'} · {report.name}</h1><p className="text-xs text-slate-500 mt-1">{zh ? '編輯名稱、作用域及公式，驗證後一次套用。儲存立即生效。' : 'Edit names, scope and formulas. Apply the validated collection together.'}</p></div>

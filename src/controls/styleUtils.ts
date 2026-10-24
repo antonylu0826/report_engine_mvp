@@ -7,11 +7,11 @@ import type { ControlDefinition } from '@/types/report';
 export function mapControlStyle(control: ControlDefinition): Style {
   const s = control.style || {};
   return {
-    position: 'absolute',
+    position: control.canGrow && ['Label', 'Field', 'Expression'].includes(control.type) ? 'relative' : 'absolute',
     left: control.x,
     top: control.y,
     width: control.width,
-    height: control.height,
+    ...(control.canGrow && ['Label', 'Field', 'Expression'].includes(control.type) ? { minHeight: control.height, lineHeight: 1.35 } : { height: control.height }),
     fontFamily: s.fontFamily || 'AppChineseFont',
     fontStyle: s.fontStyle,
     borderRadius: s.borderRadius,

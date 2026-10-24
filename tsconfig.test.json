@@ -3,5 +3,10 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo"
   },
-  "include": ["src", "scripts", "tests"]
+  "include": [
+    "src",
+    "scripts",
+    "tests",
+    "playwright.config.ts"
+  ]
 }

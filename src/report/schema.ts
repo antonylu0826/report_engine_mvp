@@ -1,3 +1,4 @@
+import { conditionalStylesByControl } from './presentationCapabilities';
 import { z } from 'zod';
 import type { ReportDefinition, ControlDefinition } from '../types/report.ts';
 import { getPageGeometry } from './geometry.ts';
@@ -10,7 +11,7 @@ export const calculatedFieldSchema = z.strictObject({
   type: z.enum(['number', 'string', 'boolean', 'date', 'datetime']),
   expression: z.string().min(1).max(8192),
 });
-const styleSchema = z.strictObject({
+export const styleSchema = z.strictObject({
   fontFamily: z.string().optional(),
   fontSize: z.number().finite().positive().optional(),
   fontWeight: z.union([z.enum(['normal', 'bold']), z.literal(400), z.literal(700)]).optional(),
@@ -31,11 +32,17 @@ const styleSchema = z.strictObject({
   borderRadius: dimension.optional(),
 });
 
+export const predicateSchema = z.string().trim().min(1).max(8192);
+export const conditionalStyleSchema = styleSchema.pick({ color: true, backgroundColor: true, fontWeight: true, textAlign: true, borderColor: true });
+export const styleRuleSchema = z.strictObject({ when: predicateSchema, style: conditionalStyleSchema });
 export const controlSchema: z.ZodType<ControlDefinition> = z.strictObject({
   id,
   type: z.enum(['Label', 'Field', 'Expression', 'Line', 'Image', 'Barcode', 'QRCode', 'CheckBox', 'Panel', 'SubReport']),
   x: dimension, y: dimension, width: dimension, height: dimension,
   style: styleSchema.optional(),
+  canGrow: z.boolean().optional(),
+  visibleWhen: predicateSchema.optional(),
+  styleRules: z.array(styleRuleSchema).max(32).optional(),
   text: z.string().optional(),
   fieldName: z.string().optional(),
   expression: z.string().optional(),
@@ -52,6 +59,10 @@ export const controlSchema: z.ZodType<ControlDefinition> = z.strictObject({
   subReportBinding: z.string().optional(),
   subReportRefId: z.string().optional(),
   subReportDefinition: z.lazy(() => reportSchema).optional(),
+}).superRefine((control,context)=>{
+  control.styleRules?.forEach((rule,index)=>{
+    for(const key of Object.keys(rule.style)) if(!conditionalStylesByControl[control.type].includes(key as keyof typeof rule.style)) context.addIssue({code:'custom',path:['styleRules',index,'style',key],message:`${key} is not a supported conditional style for ${control.type}`});
+  });
 });
 
 export const reportSchema: z.ZodType<ReportDefinition> = z.strictObject({
@@ -71,6 +82,7 @@ export const reportSchema: z.ZodType<ReportDefinition> = z.strictObject({
     type: z.enum(['ReportHeader', 'PageHeader', 'GroupHeader', 'Detail', 'GroupFooter', 'PageFooter', 'ReportFooter']),
     height: dimension,
     keepTogether: z.boolean().optional(),
+    visibleWhen: predicateSchema.optional(),
     controls: z.array(controlSchema),
     groupBy: z.string().optional(),
     groupSortOrder: z.enum(['asc', 'desc']).optional(),

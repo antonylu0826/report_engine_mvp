@@ -2,7 +2,7 @@ import { Buffer } from 'buffer';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import App from './App.tsx';
+import App from './DemoApp.tsx';
 
 // Polyfill Buffer for browser environment (eliminates react-pdf buffer warnings)
 if (typeof window !== 'undefined') {

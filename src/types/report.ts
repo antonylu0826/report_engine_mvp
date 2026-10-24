@@ -49,6 +49,10 @@ export interface ControlStyle {
   borderRadius?: number;
 }
 
+/** Conditional rules intentionally exclude geometry and resource URLs. Later matching rules win. */
+export type ConditionalControlStyle = Pick<ControlStyle, 'color' | 'backgroundColor' | 'fontWeight' | 'textAlign' | 'borderColor'>;
+export interface ConditionalStyleRule { when: string; style: ConditionalControlStyle }
+
 export type ControlType =
   | 'Label'
   | 'Field'
@@ -69,6 +73,10 @@ export interface ControlDefinition {
   width: number; // pt
   height: number; // pt
   style?: ControlStyle;
+  /** Grow text vertically and push following rows down; may continue on another page. */
+  canGrow?: boolean;
+  visibleWhen?: string;
+  styleRules?: ConditionalStyleRule[];
 
   // Specific content and data binding properties
   text?: string;            // Static text for Label, Barcode, QRCode
@@ -99,7 +107,8 @@ export interface BandDefinition {
   id: string;
   type: BandType;
   height: number; // pt
-  keepTogether?: boolean; // Prevent page break inside this band instance
+  keepTogether?: boolean; // Fixed bands: default true; false allows breaks between complete rows. Growing bands always flow.
+  visibleWhen?: string;
   controls: ControlDefinition[];
 
   // Grouping properties (for GroupHeader / GroupFooter)

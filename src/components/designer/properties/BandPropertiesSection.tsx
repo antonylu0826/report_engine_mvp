@@ -1,3 +1,5 @@
+import { isFlowBand } from '@/report/pagination';
+import { useCurrentLocale } from '@/i18n';
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +25,7 @@ export const BandPropertiesSection: React.FC<BandPropertiesSectionProps> = ({
   onRemoveGroup,
 }) => {
   const tProps = useTranslations('propertyGrid');
+  const zh=useCurrentLocale().locale==='zh-TW';
 
   return (
     <div className="space-y-3">
@@ -108,14 +111,8 @@ export const BandPropertiesSection: React.FC<BandPropertiesSectionProps> = ({
 
       {/* Keep Together */}
       <div className="p-2.5 rounded-md bg-white border border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300">
-        <div className="text-[11px] font-medium mb-1">
-          {tProps('keepTogether')}
-        </div>
-        <p className="text-[10px] text-slate-400">
-          {band.keepTogether
-            ? tProps('keepTogetherEnabled')
-            : tProps('keepTogetherDisabled')}
-        </p>
+        <label className="flex gap-2 text-[11px] font-medium mb-1"><input type="checkbox" aria-label={zh?'固定區段保持同頁':'Keep fixed band together'} disabled={isFlowBand(band)} checked={!isFlowBand(band)&&band.keepTogether!==false} onChange={e=>onUpdateProp({keepTogether:e.target.checked})}/>{zh?'固定區段保持同頁':'Keep fixed band together'}</label>
+        <p className="text-[10px] text-slate-400">{isFlowBand(band)?(zh?'含自動增高或子報表的區段依內容續頁，不強制整段同頁。':'Growing content and subreports continue across pages.'):(band.keepTogether!==false?(zh?'整個固定區段移到同一頁。':'The complete fixed band stays on one page.'):(zh?'可在完整資料列之間換頁，列內不分割。':'Breaks are allowed between complete rows.'))}</p>
       </div>
     </div>
   );

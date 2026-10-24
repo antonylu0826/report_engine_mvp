@@ -37,7 +37,7 @@ export const GlobalReportSettings: React.FC = () => {
   };
 
   return (
-    <aside className="w-72 border-l border-slate-200 bg-white flex flex-col h-[calc(100vh-3.25rem)] select-none dark:border-slate-800 dark:bg-slate-950 shadow-2xs overflow-y-auto">
+    <aside className="w-72 border-l border-slate-200 bg-white flex flex-col h-full min-h-0 select-none dark:border-slate-800 dark:bg-slate-950 shadow-2xs overflow-y-auto">
       <div className="p-3 border-b border-slate-200 flex items-center space-x-1.5 dark:border-slate-800">
         <FileText className="h-4 w-4 text-slate-500" />
         <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider">

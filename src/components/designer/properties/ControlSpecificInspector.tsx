@@ -13,7 +13,7 @@ import {
   TableProperties,
 } from 'lucide-react';
 import type { ControlDefinition } from '@/types/report';
-import { useReportStore } from '@/store/useReportStore';
+import { useReportStoreApi } from '@/store/useReportStore';
 import { useTranslations } from '@/i18n';
 import { FieldSelectInput } from './FieldSelectInput';
 import { ColorPickerField } from './ColorPickerField';
@@ -32,6 +32,7 @@ export const ControlSpecificInspector: React.FC<ControlSpecificInspectorProps> =
   sampleFields,
   onUpdate,
 }) => {
+  const store = useReportStoreApi();
   const tProps = useTranslations('propertyGrid');
 
   return (
@@ -424,7 +425,7 @@ export const ControlSpecificInspector: React.FC<ControlSpecificInspectorProps> =
             variant="outline"
             size="sm"
             onClick={() => {
-              const state = useReportStore.getState();
+              const state = store.getState();
               state.enterSubReportEditor(bandId, control.id);
             }}
             className="w-full text-xs font-normal flex items-center justify-center space-x-1.5 mt-2 h-8"

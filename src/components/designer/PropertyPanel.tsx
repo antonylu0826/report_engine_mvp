@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
+const ConditionalPrintSection = lazy(()=>import('./properties/ConditionalPrintSection').then(m=>({default:m.ConditionalPrintSection})));
+import { useFormulaData } from '../formula/useFormulaData';
 import { useReportStore } from '@/store/useReportStore';
 import { Button } from '@/components/ui/button';
 import { Trash2, SlidersHorizontal, Layers } from 'lucide-react';
@@ -17,7 +19,6 @@ export const PropertyPanel: React.FC = () => {
   const tProps = useTranslations('propertyGrid');
 
   const {
-    getActiveData,
     selectedBandId,
     selectedControlId,
     updateControl,
@@ -33,7 +34,7 @@ export const PropertyPanel: React.FC = () => {
   const selectedControl = selectedBand?.controls.find((c) => c.id === selectedControlId);
 
   // Sample dataset fields for auto-suggest
-  const rawFields = Object.keys(getActiveData()[0] ?? {});
+  const rawFields = useFormulaData().schema.detailFields.map(field => field.name);
   const sampleFields = [...new Set([...rawFields, ...(activeReport.calculatedFields ?? []).map(f => `calc.${f.name}`)])];
 
   // Update Band properties (e.g. groupBy, pageBreakAfter)
@@ -69,7 +70,7 @@ export const PropertyPanel: React.FC = () => {
 
   // 2. CONTROL OR BAND INSPECTOR VIEW
   return (
-    <aside className="w-72 border-l border-slate-200 bg-white flex flex-col h-[calc(100vh-3.25rem)] select-none dark:border-slate-800 dark:bg-slate-950 shadow-2xs overflow-y-auto">
+    <aside className="w-72 border-l border-slate-200 bg-white flex flex-col h-full min-h-0 select-none dark:border-slate-800 dark:bg-slate-950 shadow-2xs overflow-y-auto">
       {/* Header */}
       <div className="p-3 border-b border-slate-200 flex items-center justify-between dark:border-slate-800">
         <div className="flex items-center space-x-1.5">
@@ -136,7 +137,8 @@ export const PropertyPanel: React.FC = () => {
             />
 
             {/* Typography & Styling */}
-            {isTextCapable && (
+            {selectedControl && ['Label', 'Field', 'Expression'].includes(selectedControl.type) && <label className="flex gap-2 p-3 text-xs"><input type="checkbox" checked={selectedControl.canGrow ?? false} onChange={e => updateControl(selectedBand!.id, selectedControl.id, { canGrow: e.target.checked })} />{locale === 'zh-TW' ? '長文字自動增高／跨頁' : 'Grow long text across pages'}</label>}
+          {isTextCapable && (
               <TypographySection
                 control={selectedControl}
                 isBackgroundCapable={isBackgroundCapable}
@@ -148,6 +150,7 @@ export const PropertyPanel: React.FC = () => {
           </>
         )}
 
+        {selectedBand&&<Suspense fallback={<p>Loading…</p>}><ConditionalPrintSection key={`${selectedBand.id}:${selectedControl?.id ?? 'band'}`} bandId={selectedBand.id} control={selectedControl} /></Suspense>}
         {/* Band Specific Properties */}
         {!selectedControl && selectedBand && (
           <BandPropertiesSection

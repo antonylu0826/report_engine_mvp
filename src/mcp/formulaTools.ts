@@ -7,15 +7,15 @@ import { getSubReportRows } from '../report/subReport';
 import { getFormulaCatalog } from '../formula/registry';
 import { childSchema, previewFormula, validateReportFormulas } from '../formula/report';
 import { groupReportRows } from '../compiler/grouping';
-import { dataSourceSchema } from '../server/requestSchema';
+import { dataSourceSchema } from '../data/schema';
 import { formatValue } from '../compiler/formatters';
 import { fail } from '../formula/types';
 
 const contextSchema = z.object({
   report: reportSchema.optional().describe('Complete report override for read-only validation/preview; defaults to saved report.'),
-  schema: dataSourceSchema.optional().describe('Caller field definitions; defaults to demo schema.'),
-  data: z.array(z.record(z.string(), z.unknown())).max(10_000).optional().describe('Detail rows; defaults to demo dataset.'),
-  parameters: z.record(z.string(), z.unknown()).optional().describe('Complete master parameters; defaults to demo parameters.'),
+  schema: dataSourceSchema.optional().describe('Caller field definitions; defaults to saved data source schema.'),
+  data: z.array(z.record(z.string(), z.unknown())).max(10_000).optional().describe('Detail rows; defaults to saved JSON rows.'),
+  parameters: z.record(z.string(), z.unknown()).optional().describe('Complete master parameters; defaults to saved parameters.'),
   executionTime: z.string().optional().describe('Fixed ISO datetime with offset for reproducible NOW/TODAY.'),
   timeZone: z.string().optional().describe('IANA time zone; default UTC.'),
 });
@@ -40,12 +40,12 @@ export const formulaTools = Object.entries(schemas).map(([name, schema]) => ({
   name, description: descriptions[name as keyof typeof schemas],
   inputSchema: z.toJSONSchema(schema, { io: 'input', reused: 'ref' }) as { type: 'object'; properties?: Record<string, unknown> },
 }));
-export function handleFormulaTool(name: string, args: unknown, report: ReportDefinition, source: ReportDataSource, save: (report: ReportDefinition) => unknown): unknown {
+export async function handleFormulaTool(name: string, args: unknown, report: ReportDefinition, source: ReportDataSource, save: (report: ReportDefinition) => unknown): Promise<unknown> {
   if (name === 'get_formula_catalog') return getFormulaCatalog(schemas.get_formula_catalog.parse(args ?? {}));
   if (name === 'set_calculated_fields') {
     const input = schemas.set_calculated_fields.parse(args);
     const next = updateReportScope(report, scope => ({ ...scope, calculatedFields: input.calculatedFields }), input.subReportControlId);
-    save(next);
+    await save(next);
     return { success: true, calculatedFields: input.calculatedFields };
   }
   if (name === 'validate_report_formulas') {

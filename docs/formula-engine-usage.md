@@ -88,7 +88,7 @@ npm run dev
 npm run mcp
 ```
 
-先呼叫 `get_formula_catalog` 取得版本、語法、作用域、精度／日期／空值規則、每個函式簽章及可執行範例，再用 `get_available_data_fields` 取得範本的欄位與計算欄位。工具清單現在有 17 個。
+先呼叫 `get_formula_catalog` 取得版本、語法、作用域、精度／日期／空值規則、每個函式簽章及可執行範例，再用 `get_available_data_fields` 取得範本的欄位、計算欄位及條件列印能力。工具清單現在有 22 個。
 
 新增工具：
 
@@ -99,9 +99,9 @@ npm run mcp
 | preview_formula | 傳 expression、scope、groupIndex、rowIndex；子報表加 subReportControlId 與 parentRowIndex。可傳 executionTime、timeZone、formatString。 |
 | set_calculated_fields | 傳完整 calculatedFields 集合，子報表加 subReportControlId；任何靜態錯誤都不寫入。 |
 
-建議順序：查目錄與欄位 → 試算／驗證 → 原子套用 → 匯出。移除被控制項引用的計算欄位會失敗；需要同時變更控制項時，用 set_full_report 一次提交整份範本。
+建議順序：查目錄與欄位 → 試算 → preview_report_changes → apply_report_changes → 匯出。需要同時變更控制項、計算欄位及資料時，可在同一 changes 提交；預檢後帶 baseVersion 套用。詳見 [MCP 變更契約](mcp-changes.md)。公式也能用於 [條件式顯示與樣式](conditional-printing.md)。
 
-目前 MCP 的儲存範本使用示範資料契約。唯讀驗證／試算可明確傳入其他 schema 與資料；宿主自行供應資料時，也可直接使用以下 Node 或 HTTP 入口。
+MCP 的儲存文件現在包含自訂資料契約。使用 get_report_data_source／set_report_data_source 讀寫 schema、參數及 JSON 資料；唯讀驗證／試算仍可明確覆寫。切換 schema 時可一併提交 report。詳見 [嵌入與資料文件契約](embedding.md)。
 
 ## Node 與 HTTP
 
@@ -140,6 +140,7 @@ console.log(`Catalog ${catalog.version}: ${catalog.functions.length} functions`)
 | GET /api/formula-catalog | 可傳 name／category 查詢參數。 |
 | POST /api/validate-report-formulas | JSON body 同 PDF 請求，回傳 valid、diagnostics、dependencyOrder。 |
 | POST /api/report-pdf | `{report, data?, parameters?, dataSource?, executionTime?, timeZone?}`，成功回傳 application/pdf。 |
+| POST /api/preflight-report | `{formatVersion:1, report, dataSource, executionTime?, timeZone?, execute?}`，回傳共用結構／資料／公式／版面健檢。 |
 
 JSON 請求最多 20 MiB，明細最多 10000 筆。形狀錯誤回傳 400，超過大小限制回傳 413。`/api/validate-report-formulas` 以 HTTP 200 回傳檢查結果，公式不合法時為 `valid: false` 與 diagnostics；`/api/report-pdf` 遇到公式錯誤則回傳 HTTP 422 與 diagnostics，不回傳部分 PDF。
 
@@ -157,4 +158,4 @@ npm run check
 
 回歸涵蓋所有目錄範例、全部簽章參數數量、數值／日期／文字邊界、作用域與依賴、子報表、PDF 阻擋、HTTP、真正 MCP client、預覽設定載入、同步衝突及 bundle 預算。測試版面隔離於 scratch，不覆寫使用者範本。
 
-2026-10-24 驗證基準：Node v26.12.1、npm 11.20.0；37 項測試及 MCP 17 個工具整合驗證通過。正式建置首頁 JS 598.04 kB，最大 chunk 226.69 kB，沒有大型 bundle 警告。瀏覽器實測涵蓋循環診斷、套用及持久化、後端 PDF 預覽、下載共用輸出，以及錯誤發生後撤下舊預覽。
+2026-10-24 驗證範圍：Node v26.12.1、npm 11.20.0；56 項核心／整合測試、MCP 22 個工具、10 組共 54 頁 PDF 視覺回歸、獨立 package consumer 及 5 個 Chromium 流程。首頁／chunk 的 650／500 kB 預算維持不變；完整指令與 CI 狀態見 [testing.md](testing.md)。

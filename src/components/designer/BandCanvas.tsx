@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createSubReportForFields } from '@/report/defaultSubReport';
+import { schemaField } from '@/data/schemaField';
+import { useFormulaData } from '../formula/useFormulaData';
 import { useReportStore } from '@/store/useReportStore';
 import type { ControlDefinition, BandDefinition, ControlType } from '@/types/report';
 import {
@@ -35,13 +38,11 @@ const createUniqueId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 export const BandCanvas: React.FC = () => {
   const {
     report,
-    getActiveData,
     selectedBandId,
-    selectedControlId,
+    diagnosticNavigationRevision, selectedControlId, selectedControlIds, toggleControl, beginTransaction, endTransaction, updateBand,
     selectControl,
     updateControl,
     addControl,
-    removeControl,
     updateBandHeight,
     updateActiveReport,
     zoom,
@@ -56,8 +57,22 @@ export const BandCanvas: React.FC = () => {
   const tControls = useTranslations('controls');
 
   const activeReport = getActiveReport();
-  const data = getActiveData();
+  const activeSchema = useFormulaData().schema;
   const { pageSettings, bands } = activeReport;
+  const { width: pageWidth, height: pageHeight, printableWidth } = getPageGeometry(pageSettings);
+  const parentControl = editingSubReportPath && report.bands.find(b => b.id === editingSubReportPath.bandId)
+    ?.controls.find(c => c.id === editingSubReportPath.controlId);
+  const contentWidth = parentControl ? getSubReportGeometry(parentControl).width : printableWidth;
+
+  const canvas = useRef<HTMLElement | null>(null);
+  useEffect(()=>{
+    if(!diagnosticNavigationRevision)return;
+    const selector=selectedControlId?`[data-control-id="${CSS.escape(selectedControlId)}"]`:selectedBandId?`[data-band-id="${CSS.escape(selectedBandId)}"]`:undefined;
+    if(selector)canvas.current?.querySelector(selector)?.scrollIntoView({block:'center',inline:'nearest'});
+  },[diagnosticNavigationRevision,selectedControlId,selectedBandId]);
+  const moved = useRef(false);
+  const suppressClick = useRef(false);
+  const clickReset = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Track hover state when dragging a control from palette over a band
   const [dragOverBandId, setDragOverBandId] = useState<string | null>(null);
@@ -70,6 +85,7 @@ export const BandCanvas: React.FC = () => {
     startY: number;
     initialX: number;
     initialY: number;
+    controls: ControlDefinition[];
   } | null>(null);
 
   // Track resizing of controls
@@ -88,8 +104,15 @@ export const BandCanvas: React.FC = () => {
     control: ControlDefinition
   ) => {
     e.stopPropagation();
-    selectControl(bandId, control.id);
-
+    if (e.button !== 0) return;
+    e.preventDefault();
+    (e.currentTarget.closest('.report-engine-designer') as HTMLElement)?.focus();
+    if (e.shiftKey || e.ctrlKey || e.metaKey) { toggleControl(bandId, control.id); return; }
+    const ids = selectedBandId === bandId && selectedControlIds.includes(control.id) ? selectedControlIds : [control.id];
+    if (!ids.includes(selectedControlId ?? '')) selectControl(bandId, control.id);
+    if (!selectedControlIds.includes(control.id)) selectControl(bandId, control.id);
+    moved.current = false;
+    beginTransaction();
     setDraggingControl({
       bandId,
       controlId: control.id,
@@ -97,6 +120,7 @@ export const BandCanvas: React.FC = () => {
       startY: e.clientY,
       initialX: control.x,
       initialY: control.y,
+      controls: activeReport.bands.find(b => b.id === bandId)!.controls.filter(c => ids.includes(c.id)),
     });
   };
 
@@ -108,8 +132,10 @@ export const BandCanvas: React.FC = () => {
   ) => {
     e.stopPropagation();
     e.preventDefault();
+    (e.currentTarget.closest('.report-engine-designer') as HTMLElement)?.focus();
     selectControl(bandId, control.id);
-
+    moved.current = false;
+    beginTransaction();
     setResizingControl({
       bandId,
       controlId: control.id,
@@ -129,6 +155,8 @@ export const BandCanvas: React.FC = () => {
     currentHeight: number
   ) => {
     e.stopPropagation();
+    moved.current = false;
+    beginTransaction();
     setResizingBand({
       bandId,
       startY: e.clientY,
@@ -143,6 +171,7 @@ export const BandCanvas: React.FC = () => {
       if (resizingControl) {
         const dx = (e.clientX - resizingControl.startX) / (zoom * CSS_PIXELS_PER_POINT);
         const dy = (e.clientY - resizingControl.startY) / (zoom * CSS_PIXELS_PER_POINT);
+        if (dx || dy) moved.current = true;
 
         let newX = resizingControl.initialX;
         let newY = resizingControl.initialY;
@@ -188,25 +217,35 @@ export const BandCanvas: React.FC = () => {
       if (draggingControl) {
         const dx = (e.clientX - draggingControl.startX) / (zoom * CSS_PIXELS_PER_POINT);
         const dy = (e.clientY - draggingControl.startY) / (zoom * CSS_PIXELS_PER_POINT);
-        const nextX = Math.max(0, Math.round(draggingControl.initialX + dx));
-        const nextY = Math.max(0, Math.round(draggingControl.initialY + dy));
-
-        updateControl(draggingControl.bandId, draggingControl.controlId, {
-          x: nextX,
-          y: nextY,
-        });
+        if (dx || dy) moved.current = true;
+        const originals = draggingControl.controls;
+        const printableWidth = contentWidth;
+        const band = activeReport.bands.find(b => b.id === draggingControl.bandId)!;
+        const offsetX = Math.max(-Math.min(...originals.map(c => c.x)), Math.min(Math.round(dx), Math.max(0, printableWidth - Math.max(...originals.map(c => c.x + c.width)))));
+        const offsetY = Math.max(-Math.min(...originals.map(c => c.y)), Math.min(Math.round(dy), Math.max(0, band.height - Math.max(...originals.map(c => c.y + c.height)))));
+        updateBand(band.id, { controls: band.controls.map(c => {
+          const original = originals.find(item => item.id === c.id);
+          return original ? { ...c, x: original.x + offsetX, y: original.y + offsetY } : c;
+        }) });
         return;
       }
 
       // 3. Band Height Resizing
       if (resizingBand) {
         const dy = (e.clientY - resizingBand.startY) / (zoom * CSS_PIXELS_PER_POINT);
+        if (dy) moved.current = true;
         const nextHeight = Math.max(16, Math.round(resizingBand.initialHeight + dy));
         updateBandHeight(resizingBand.bandId, nextHeight);
       }
     };
 
     const handleGlobalMouseUp = () => {
+      endTransaction();
+      if (moved.current) {
+        suppressClick.current = true; moved.current = false;
+        clearTimeout(clickReset.current);
+        clickReset.current = setTimeout(() => { suppressClick.current = false; }, 0);
+      }
       setDraggingControl(null);
       setResizingBand(null);
       setResizingControl(null);
@@ -214,71 +253,19 @@ export const BandCanvas: React.FC = () => {
 
     if (draggingControl || resizingBand || resizingControl) {
       window.addEventListener('mousemove', handleGlobalMouseMove);
-      window.addEventListener('mouseup', handleGlobalMouseUp);
+
     }
 
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('blur', handleGlobalMouseUp);
     return () => {
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('blur', handleGlobalMouseUp);
     };
-  }, [draggingControl, resizingBand, resizingControl, zoom, updateControl, updateBandHeight]);
+  }, [draggingControl, resizingBand, resizingControl, zoom, updateControl, updateBandHeight, updateBand, endTransaction, activeReport, contentWidth]);
 
-  // Global Keyboard Shortcuts (Delete, Escape, Arrow keys nudge)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if user is typing in an input, textarea, or select
-      const activeElement = document.activeElement;
-      const isInputFocused =
-        activeElement instanceof HTMLInputElement ||
-        activeElement instanceof HTMLTextAreaElement ||
-        activeElement instanceof HTMLSelectElement;
-
-      if (isInputFocused) return;
-
-      // 1. Delete or Backspace: Remove selected control
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBandId && selectedControlId) {
-        e.preventDefault();
-        removeControl(selectedBandId, selectedControlId);
-        selectControl(selectedBandId, null);
-        return;
-      }
-
-      // 2. Escape: Deselect all
-      if (e.key === 'Escape') {
-        selectControl(null, null);
-        return;
-      }
-
-      // 3. Arrow keys: Precision Nudge for selected control (1pt, or 5pt if Shift is pressed)
-      if (
-        selectedBandId &&
-        selectedControlId &&
-        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)
-      ) {
-        const band = getActiveReport().bands.find((b) => b.id === selectedBandId);
-        const control = band?.controls.find((c) => c.id === selectedControlId);
-        if (!control) return;
-
-        e.preventDefault();
-        const step = e.shiftKey ? 5 : 1;
-        let newX = control.x;
-        let newY = control.y;
-
-        if (e.key === 'ArrowLeft') newX = Math.max(0, control.x - step);
-        if (e.key === 'ArrowRight') newX = control.x + step;
-        if (e.key === 'ArrowUp') newY = Math.max(0, control.y - step);
-        if (e.key === 'ArrowDown') newY = control.y + step;
-
-        updateControl(selectedBandId, selectedControlId, {
-          x: newX,
-          y: newY,
-        });
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedBandId, selectedControlId, report, getActiveReport, removeControl, selectControl, updateControl]);
+  useEffect(() => () => { endTransaction(); clearTimeout(clickReset.current); }, [endTransaction]);
 
   // Ctrl + Wheel to zoom canvas smoothly
   const handleWheel = (e: React.WheelEvent) => {
@@ -325,7 +312,7 @@ export const BandCanvas: React.FC = () => {
     const rawX = (e.clientX - rect.left) / (zoom * CSS_PIXELS_PER_POINT);
     const rawY = (e.clientY - rect.top) / (zoom * CSS_PIXELS_PER_POINT);
 
-    const width = defaults.width ?? plugin.defaultWidth;
+    const width = Math.min(defaults.width ?? plugin.defaultWidth, contentWidth);
     const height = defaults.height ?? plugin.defaultHeight;
 
     const dropX = Math.max(0, Math.round(rawX - 5));
@@ -334,28 +321,31 @@ export const BandCanvas: React.FC = () => {
     addControl(bandId, {
       ...defaults,
       type: controlType, x: dropX, y: dropY, width, height,
-      fieldName: fieldName || defaults.fieldName,
+      fieldName: controlType === 'SubReport' ? undefined : fieldName || defaults.fieldName,
+      ...(controlType === 'SubReport' ? {
+        subReportBinding: fieldName || '',
+        subReportDefinition: createSubReportForFields(schemaField(activeSchema.detailFields, fieldName)?.label ?? '子報表', schemaField(activeSchema.detailFields, fieldName)?.children ?? [], getSubReportGeometry({ width } as ControlDefinition).width),
+      } : {}),
       text: fieldName ? '[' + fieldName + ']' : defaults.text,
       style: { fontSize: 9, color: '#0f172a', textAlign: 'left', ...defaults.style },
     });
   };
 
-  const { width: pageWidth, height: pageHeight, printableWidth } = getPageGeometry(pageSettings);
-  const parentControl = editingSubReportPath && report.bands.find(b => b.id === editingSubReportPath.bandId)
-    ?.controls.find(c => c.id === editingSubReportPath.controlId);
-  const contentWidth = parentControl ? getSubReportGeometry(parentControl).width : printableWidth;
+
 
   // Available dataset fields for grouping selector
-  const sampleFields = data && data.length > 0 ? Object.keys(data[0]) : ['category', 'sku'];
+  const sampleFields = activeSchema.detailFields.filter(field => field.type !== 'array').map(field => field.name);
 
   // Check if current report has grouping bands
   const hasGrouping = bands.some((b) => b.type === 'GroupHeader' || b.type === 'GroupFooter');
 
   // Contextual Action: Add GroupHeader and GroupFooter wrapping Detail
-  const handleAddGrouping = (defaultField = 'category') => {
+  const handleAddGrouping = (defaultField = sampleFields[0]) => {
     const detailIndex = bands.findIndex((b) => b.type === 'Detail');
-    if (detailIndex === -1) return;
+    if (detailIndex === -1 || !defaultField) return;
 
+    const numeric = activeReport.calculatedFields?.find(field => field.scope === 'row' && field.type === 'number');
+    const aggregateField = numeric ? `calc.${numeric.name}` : activeSchema.detailFields.find(field => field.type === 'number')?.name;
     const groupHeader: BandDefinition = {
       id: createUniqueId('band-group-header'),
       type: 'GroupHeader',
@@ -368,9 +358,9 @@ export const BandCanvas: React.FC = () => {
           type: 'Label',
           x: 6,
           y: 3,
-          width: 65,
+          width: contentWidth*0.3,
           height: 14,
-          text: locale === 'zh-TW' ? '【 類別 】' : '[ Category ]',
+          text: locale === 'zh-TW' ? '【 群組 】' : '[ Group ]',
           style: {
             fontSize: 8.5,
             fontWeight: 'bold',
@@ -381,9 +371,9 @@ export const BandCanvas: React.FC = () => {
           id: createUniqueId('ctl-gh-category'),
           type: 'Field',
           fieldName: defaultField,
-          x: 72,
+          x: contentWidth*0.35,
           y: 3,
-          width: 150,
+          width: contentWidth*0.6,
           height: 14,
           style: {
             fontSize: 9,
@@ -413,11 +403,11 @@ export const BandCanvas: React.FC = () => {
         {
           id: createUniqueId('ctl-gf-label'),
           type: 'Label',
-          x: contentWidth - 175,
+          x: contentWidth*0.5,
           y: 3,
-          width: 80,
+          width: contentWidth*0.3,
           height: 12,
-          text: locale === 'zh-TW' ? '本類別小計：' : 'Category Subtotal:',
+          text: locale === 'zh-TW' ? (aggregateField ? '群組小計：' : '群組筆數：') : (aggregateField ? 'Group subtotal:' : 'Group count:'),
           style: {
             fontSize: 8,
             color: '#64748b',
@@ -427,11 +417,11 @@ export const BandCanvas: React.FC = () => {
         {
           id: createUniqueId('ctl-gf-sum'),
           type: 'Expression',
-          expression: '=SUM(amount)',
+          expression: aggregateField ? `=SUM(${aggregateField})` : `=COUNT(${defaultField})`,
           formatString: 'C0',
-          x: contentWidth - 95,
+          x: contentWidth*0.8,
           y: 3,
-          width: 95,
+          width: contentWidth*0.2,
           height: 12,
           style: {
             fontSize: 8.5,
@@ -493,7 +483,12 @@ export const BandCanvas: React.FC = () => {
 
   return (
     <main
+      ref={canvas}
       className="flex-1 overflow-auto bg-slate-200/80 p-8 flex justify-center items-start select-none dark:bg-slate-950/80 designer-grid"
+      onMouseDown={event => {
+        if (!(event.target as HTMLElement).closest('input,textarea,select,button,a')) (event.currentTarget.closest('.report-engine-designer') as HTMLElement)?.focus();
+      }}
+      onClickCapture={event => { if (suppressClick.current) { event.stopPropagation(); suppressClick.current = false; } }}
       onClick={() => selectControl(null, null)}
       onWheel={handleWheel}
     >
@@ -598,7 +593,7 @@ export const BandCanvas: React.FC = () => {
                           <Layers className="h-2.5 w-2.5 text-slate-500" />
                           <span>{tBands('groupBy')}:</span>
                           <select
-                            value={band.groupBy || 'category'}
+                            value={band.groupBy || sampleFields[0] || ''}
                             onChange={(e) => handleChangeGroupBy(e.target.value)}
                             className="bg-transparent font-semibold font-mono text-[10px] text-slate-800 focus:outline-none cursor-pointer"
                           >
@@ -670,6 +665,7 @@ export const BandCanvas: React.FC = () => {
                         ? 'ring-2 ring-blue-500 ring-inset bg-blue-50/20'
                         : ''
                     }`}
+                    data-band-id={band.id}
                     style={{
                       height: `${band.height}pt`,
                       width: '100%',
@@ -685,17 +681,19 @@ export const BandCanvas: React.FC = () => {
                     )}
                     {/* Render Controls inside Band using standardized registry */}
                     {band.controls.map((control) => {
-                      const isControlSelected = selectedControlId === control.id;
+                      const isControlSelected = selectedBandId === band.id && selectedControlIds.includes(control.id);
                       const plugin = controlRegistry.get(control.type);
                       const baseStyle = mapDesignerControlStyle(control);
 
                       return (
                         <div
                           key={control.id}
+                          data-control-id={control.id}
+                          title={control.visibleWhen || control.styleRules?.length ? (locale === 'zh-TW' ? '含條件式列印設定；輸出以 PDF 為準' : 'Conditional printing configured; see PDF output') : undefined}
+                          aria-selected={isControlSelected}
                           onMouseDown={(e) => handleControlMouseDown(e, band.id, control)}
                           onClick={(e) => {
                             e.stopPropagation();
-                            selectControl(band.id, control.id);
                           }}
                           className={`absolute cursor-move select-none transition-shadow ${
                             isControlSelected
@@ -711,7 +709,7 @@ export const BandCanvas: React.FC = () => {
                           )}
 
                           {/* Interactive Resize Handles (Permanently visible when control is selected) */}
-                          {isControlSelected && (() => {
+                          {isControlSelected && selectedControlIds.length === 1 && (() => {
                             const isLine = control.type === 'Line';
                             const isVerticalLine = isLine && control.lineOrientation === 'vertical';
                             const isHorizontalLine = isLine && !isVerticalLine;

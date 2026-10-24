@@ -1,7 +1,9 @@
 import type { Plugin } from 'vite';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { ZodError } from 'zod';
-import { createReportRepository, ReportConflictError } from './reportRepository.ts';
+import { ReportConflictError } from './reportRepository.ts';
+import { parseReportDocument } from '../report/document';
+import { createDocumentRepository } from './documentRepository.ts';
 import { handleReportApi, readJsonBody } from './reportApi.ts';
 import { FormulaError } from '../formula/types.ts';
 import { sampleOrderDataSource, sampleOrderReport } from '../mock/sampleReport.ts';
@@ -9,9 +11,9 @@ import { sampleOrderDataSource, sampleOrderReport } from '../mock/sampleReport.t
 type MiddlewareServer = { middlewares: { use: (handler: (req: IncomingMessage, res: ServerResponse, next: () => void) => void) => unknown } };
 
 export function reportLayoutPlugin(filePath: string): Plugin {
-  const repository = createReportRepository(filePath, sampleOrderDataSource.schema);
+  const repository = createDocumentRepository(filePath, { formatVersion: 1, report: sampleOrderReport, dataSource: sampleOrderDataSource });
   const install = (server: MiddlewareServer) => {
-    repository.initialize(sampleOrderReport);
+    repository.initialize();
     server.middlewares.use(async (req, res, next) => {
       if (await handleReportApi(req, res)) return;
       if (req.url?.split('?')[0] !== '/api/report-layout') return next();
@@ -23,7 +25,10 @@ export function reportLayoutPlugin(filePath: string): Plugin {
         } else if (req.method === 'POST') {
           const body = await readJsonBody(req);
           const expectedVersion = req.headers['if-match'];
-          const saved = repository.write(body, typeof expectedVersion === 'string' ? expectedVersion : undefined);
+          const current = repository.read();
+          const document = body && typeof body === 'object' && 'formatVersion' in body ? body
+            : { formatVersion: 1, report: body, dataSource: current.dataSource };
+          const saved = repository.write(parseReportDocument(document), typeof expectedVersion === 'string' ? expectedVersion : current.version);
           res.end(JSON.stringify({ success: true, mtime: saved.mtime, version: saved.version }));
         } else {
           res.statusCode = 405;

@@ -1,3 +1,4 @@
+import type { PDFCompilerProps } from '../types/render';
 import React from 'react';
 import {
   Document,
@@ -9,14 +10,17 @@ import {
   type DocumentProps,
 } from '@react-pdf/renderer';
 import type {
-  ReportDefinition,
   BandDefinition,
   ControlDefinition,
 } from '../types/report.ts';
 import { type EvalContext } from './evaluator.ts';
 import { pdfControlRegistry } from '../controls/pdfRegistry.tsx';
 import { expandDetailBands } from './bandPipeline.ts';
-import { prepareReport } from '../formula/report.ts';
+import { renderBandFrame } from './bandLayout';
+import { prepareReportForPrint, ReportValidationError } from '../report/preflight';
+import { bandIsVisible } from '../formula/presentation';
+
+declare const __REPORT_ENGINE_FONT_RELATIVE_PATH__: string;
 
 // Resolve the font independently of the caller's working directory.
 const getFontUrl = () => {
@@ -25,7 +29,7 @@ const getFontUrl = () => {
   }
   if (typeof process !== 'undefined') {
     const moduleUrl = import.meta.url;
-    const url = new URL('../../public/fonts/NotoSansTC.ttf', moduleUrl);
+    const url = new URL(typeof __REPORT_ENGINE_FONT_RELATIVE_PATH__ === 'string' ? __REPORT_ENGINE_FONT_RELATIVE_PATH__ : '../../public/fonts/NotoSansTC.ttf', moduleUrl);
     return decodeURIComponent(url.pathname).replace(/^\/([a-z]:\/)/i, '$1');
   }
   return '/fonts/NotoSansTC.ttf';
@@ -38,7 +42,7 @@ Font.register({
 });
 
 // Avoid line wrapping issues with CJK fonts in react-pdf
-Font.registerHyphenationCallback((word) => [word]);
+Font.registerHyphenationCallback((word) => Array.from(word));
 
 /**
  * Render a single control using standardized Control Registry
@@ -77,33 +81,11 @@ function renderBand(
   context: EvalContext,
   keyPrefix = '',
   pageBreakBefore = band.pageBreakBefore,
-): React.ReactElement {
-  const hasSubReport = band.controls.some((c) => c.type === 'SubReport');
-
-  return (
-    <View
-      key={`${keyPrefix}-${band.id}`}
-      style={{
-        position: 'relative',
-        width: '100%',
-        ...(hasSubReport ? { minHeight: band.height } : { height: band.height }),
-      }}
-      wrap={!band.keepTogether}
-      break={pageBreakBefore}
-    >
-      {band.controls.map((control) => renderControl(control, context))}
-    </View>
-  );
+): React.ReactElement | null {
+  return renderBandFrame(band, context, `${keyPrefix}-${band.id}`, renderControl, pageBreakBefore);
 }
 
-export interface PDFCompilerProps {
-  report: ReportDefinition;
-  data?: Record<string, unknown>[];
-  parameters?: Record<string, unknown>;
-  dataSource?: import('../types/datasource.ts').ReportDataSource;
-  executionTime?: string;
-  timeZone?: string;
-}
+export type { PDFCompilerProps } from '../types/render';
 
 /**
  * Report PDF Document Component with Standardized Band Pipeline
@@ -124,16 +106,13 @@ export function ReportPDFDocument({
     ...(parameters || {}),
   };
 
-  const reportHeaderBand = bands.find((b) => b.type === 'ReportHeader');
-  const pageHeaderBand = bands.find((b) => b.type === 'PageHeader');
-  const reportFooterBand = bands.find((b) => b.type === 'ReportFooter');
-  const pageFooterBand = bands.find((b) => b.type === 'PageFooter');
-
-  const globalContext: EvalContext = prepareReport(report, {
-    dataSource: actualData,
-    reportParameters: actualParameters,
-    schema: dataSource?.schema, executionTime, timeZone,
-  });
+  const prepared=prepareReportForPrint(report,{dataSource:actualData,reportParameters:actualParameters,schema:dataSource?.schema,executionTime,timeZone});
+  if(!prepared.result.valid)throw new ReportValidationError(prepared.result.diagnostics.filter(d=>d.severity==='error'));
+  const globalContext:EvalContext=prepared.context!;
+  const reportHeaderBand=bands.find(b=>b.type==='ReportHeader');
+  const pageHeaderBand=bands.find(b=>b.type==='PageHeader' && bandIsVisible(b,globalContext));
+  const reportFooterBand=bands.find(b=>b.type==='ReportFooter');
+  const pageFooterBand=bands.find(b=>b.type==='PageFooter' && bandIsVisible(b,globalContext));
 
   const pagePadding = {
     paddingTop: pageSettings.margins.top,

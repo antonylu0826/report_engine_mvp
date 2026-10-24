@@ -7,6 +7,7 @@ import { reportLayoutPlugin } from './src/server/layoutPlugin.ts';
 export default defineConfig({
   plugins: [react(), tailwindcss(), reportLayoutPlugin(process.env.REPORT_ENGINE_LAYOUT_FILE || path.resolve(import.meta.dirname, 'current_report_layout.json'))],
   resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },
+  server: { watch: { ignored: ['**/scratch/**', '**/tmp/**', '**/output/**'] } },
   build: {
     manifest: true,
     rolldownOptions: {

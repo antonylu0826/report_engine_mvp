@@ -1,3 +1,4 @@
+import { schemaField } from '../data/schemaField';
 import { Decimal } from 'decimal.js';
 import { Temporal } from '@js-temporal/polyfill';
 import type { DataFieldSchema } from '../types/datasource.ts';
@@ -8,13 +9,8 @@ import { checked, decimal, normalize, numberValue, valueType } from './values.ts
 import { getNestedValue } from '../report/dataPath.ts';
 export { getNestedValue };
 
-export function schemaField(fields: DataFieldSchema[] | undefined, path: string): DataFieldSchema | undefined {
-  const direct = fields?.find(f => f.name === path);
-  if (direct) return direct;
-  const [head, ...tail] = path.split('.');
-  const field = fields?.find(f => f.name === head);
-  return tail.length ? schemaField(field?.children, tail.join('.')) : field;
-}
+export { schemaField } from '../data/schemaField';
+
 function resolveReference(path: string, context: FormulaContext): FormulaValue {
   if (['ROW_INDEX', 'INDEX'].includes(path.toUpperCase())) return decimal((context.rowIndex ?? 0) + 1);
   if (path.startsWith('calc.')) {

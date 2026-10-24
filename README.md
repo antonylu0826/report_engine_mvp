@@ -6,6 +6,18 @@
 
 公式引擎 v1 提供 38 個內建函式、具作用域及依賴關係的計算欄位、設計器即時診斷／試算，以及 MCP 能力目錄。預覽與下載統一使用後端 PDF。詳見[公式引擎使用方式](docs/formula-engine-usage.md)。本輪維持獨立元件，尚未整合 Haneinfo。
 
+本輪另完成：
+
+- **自訂資料來源**：schema、主檔參數與 JSON 資料列隨範本一起儲存；設計器／MCP／PDF 共用。
+- **分頁與長文字**：canGrow、多行表格、子報表續頁表頭及逐頁視覺回歸。
+- **套件與嵌入**：0.2.0 ESM 的 core／designer／pdf／mcp 入口，各設計器實例狀態獨立。
+- **編輯操作**：100 步復原／重做、同 Band 多選、整組拖曳、複製／貼上、對齊與等距分布。
+- **列印健檢與條件**：結構／資料／公式／版面共用診斷，可定位控制項；Band／控制項顯示條件與有序樣式規則沿用公式引擎。
+- **Agent 變更流程**：22 個 MCP 工具，新增唯讀預檢／差異預覽、版本檢查後原子套用，統一 structuredContent。
+- **自動驗證**：56 項核心測試、54 頁 PDF 基準、5 個真實 Chromium 流程；GitHub Actions 設有 Windows／Ubuntu 檢查。
+
+先看[本輪檢視指引](docs/review-guide.md)，API 見[嵌入契約](docs/embedding.md)，新增行為見[條件式列印](docs/conditional-printing.md)、[MCP 變更流程](docs/mcp-changes.md)與[驗證方式](docs/testing.md)。下方範例畫面保留歷史展示；實際功能以目前程式及文件為準。
+
 ---
 
 ## 📸 介面展示 (Screenshots)
@@ -77,13 +89,15 @@
   - **8 向拖拉縮放**：物件選取即顯示高對比實心藍色錨點，支援 8 向縮放並即時顯示尺寸徽章（線段智慧鎖定單軸）。
   - **HTML5 拖拉放置 (Drag & Drop)**：可直接將工具箱中的控制項或資料欄位拖入畫布任意 Band 的精確位置。
   - **完整鍵盤快捷鍵**：
+    - `Ctrl/Cmd+Z`、`Ctrl/Cmd+Shift+Z`：復原／重做；`C`、`V`、`X`、`D` 搭配 Ctrl/Cmd 複製、貼上、剪下、快速複製。
+    - `Shift` 點選可同 Band 多選，整組移動、對齊及等距分布。
     - `Delete` / `Backspace`：一鍵刪除選取的控制項。
     - `↑` `↓` `←` `→`：方向鍵精細微調 1pt（按住 `Shift` 加速 5pt）。
     - `Escape`：取消選取，切換回全域報表版面設定。
     - `Ctrl + 滑鼠滾輪`：畫布 50% ~ 200% 平滑縮放。
 - **旗艦級資料集欄位總管 (Redesigned Field List Drawer)**：
-  - **320px 寬幅抽屜**：自動同步正規化資料模型（`ReportDataSource`）。
-  - **多維度分類頁籤**：提供 `全部`、`主檔 (Header)`、`明細列 (Detail)` 快速切換，支援即時搜尋與手風琴折疊。
+  - **256px 欄位抽屜**：自動同步正規化資料模型（`ReportDataSource`）。
+  - **主檔／明細分類**：支援即時搜尋與折疊；空資料仍由 schema 顯示欄位。
   - **型別色彩編碼**：字串（藍色）、數值（綠色+格式提示）、日期（紫色）、布林（琥珀色）。
   - **真實範例值預覽 (Sample Values)**：卡片內直接呈現當前資料來源的真實範例內容，排版時心智模型極其清晰。
 - **高標準程式碼品質與效能**：
@@ -118,7 +132,8 @@
 ### 1. 安裝依賴
 
 ```bash
-npm install
+npm ci
+npx playwright install --with-deps chromium # 完整 check 所需
 ```
 
 ### 2. 啟動本機開發伺服器
@@ -132,7 +147,7 @@ npm run dev
 ### 3. 程式碼品質與型別檢查
 
 ```bash
-npm run check     # lint、型別、回歸測試、MCP 整合測試與正式建置
+npm run check     # lint、型別、核心／MCP／PDF、建置、獨立套件與瀏覽器測試
 
 # 分別執行
 npm run lint
@@ -140,6 +155,7 @@ npm run typecheck # 同時檢查 src、scripts、tests
 npm run check:bundle # 建置後驗證 chunk、首頁大小，防止 PDF 引擎進入首頁
 npm test          # 核心、狀態、同步 API／競態及實際 PDF 輸出
 npm run test:mcp  # 啟動隔離的 MCP server，以真正 client 呼叫工具
+npm run test:e2e  # 真實 Chromium；單獨執行前先 build:package
 ```
 
 ### 4. 啟動 MCP 伺服器 (供 Claude Desktop / Cursor / Antigravity 調用)
@@ -163,7 +179,7 @@ npm run server  # 僅啟動獨立 PDF／公式 API，預設 127.0.0.1:3001
 
 瀏覽器向同一來源的 `/api/report-pdf` 發送請求。若將前端部署為靜態檔案，需要由宿主或反向代理把 API 路由接到 Node 服務；獨立服務不提供 `/api/report-layout` 範本儲存。部署契約與錯誤回應見[使用方式](docs/formula-engine-usage.md#node-與-http)。
 
-目前完整檢查包含 37 項自動測試與真正 MCP client 的 17 個工具整合驗證。公式引擎 v1 的正式建置：首頁 JS 約 598.04 kB，最大 chunk 約 226.69 kB，均為未壓縮大小；預設大型 bundle 警告門檻維持不變。
+目前完整檢查包含 47 項自動測試、真正 MCP client 的 19 個工具整合驗證、7 組共 48 頁 PDF 視覺回歸及獨立 package consumer 測試。本輪正式建置：首頁 JS 約 616.76 kB，最大 chunk 約 240.24 kB，均為未壓縮大小；預設大型 bundle 警告門檻維持不變。
 
 ---
 
@@ -171,7 +187,7 @@ npm run server  # 僅啟動獨立 PDF／公式 API，預設 127.0.0.1:3001
 
 本專案內建標準的 **MCP 伺服器**，任何支援 MCP 的 AI Agent（如 Claude Desktop、Cursor、Antigravity Agent、Cline 等）皆可直接透過工具調用（Tool Calling）精準操控整份報表！
 
-### 1. 提供的 17 個 MCP 工具
+### 1. 提供的 19 個 MCP 工具
 
 | MCP 工具名稱 | 說明 |
 | :--- | :--- |
@@ -179,6 +195,8 @@ npm run server  # 僅啟動獨立 PDF／公式 API，預設 127.0.0.1:3001
 | `validate_report_formulas` | 驗證整份範本的公式、型別、依賴及循環，可搭配資料執行 |
 | `preview_formula` | 在指定 row／group／report 或子報表試算，回傳原始值與格式化結果 |
 | `set_calculated_fields` | 原子替換主／子報表計算欄位，靜態錯誤時不寫入 |
+| `get_report_data_source` | 讀取儲存中的 schema、參數、JSON 資料及文件版本 |
+| `set_report_data_source` | 原子替換資料來源；可一併提交相容 report，驗證失敗不寫入 |
 | `get_report_layout` | 讀取當前整份報表規格（包含可繪寬度、所有 Bands 與控制項精確座標、樣式） |
 | `get_available_data_fields` | 取得報表可供綁定的資料集欄位清單（明細欄位型別、範例值、系統聚合函式及格式化建議），方便精準綁定 `fieldName` 或撰寫計算公式 |
 | `add_control` | 在指定 Band 新增精確座標的控制項（支援 `Label`、`Field`、`Expression`、`Line`、`Image`、`Barcode`、`QRCode`、`CheckBox`、`Panel`、`SubReport` 10 大型別） |
@@ -188,10 +206,10 @@ npm run server  # 僅啟動獨立 PDF／公式 API，預設 127.0.0.1:3001
 | `set_band_height` | 調整指定 Band 的物理高度（pt） |
 | `set_band_controls` | 批次置換某個 Band 的全部控制項（適合 Agent 一次排好客戶資訊卡或簽核矩陣） |
 | `update_page_settings` | 更新報表全域頁面設定（紙張尺寸 A4/Letter、方向 portrait/landscape、上下左右邊界 margins），自動重新計算可繪寬度 |
-| `reset_report_layout` | 一鍵重置報表版面結構回復為企業標準出貨單範本（若排版錯亂時可安全還原） |
+| `reset_report_layout` | 明確還原初始化文件的範本與資料來源；示範應用的初始化文件為出貨單 |
 | `set_full_report` | 直接替換整份 ReportDefinition（適合 Agent 一次性產生整張新單據） |
 | `inspect_and_preview_layout` | **【Agent 排版感知核心】** 秒級幾何健檢與視覺快照。自動偵測溢出破版、文字碰撞、表格欄位垂直對齊度，並同步輸出版面概覽 SVG 與實體 PDF 檔案（SVG 最多顯示 5 筆主明細，分頁請以 PDF 為準） |
-| `export_pdf` | 使用當前像素架構直接算繪高解析 PDF 輸出至本機磁碟供檢驗 |
+| `export_pdf` | 使用目前儲存的資料產生 PDF；recordCount 為筆數上限，省略即輸出全部資料 |
 
 ---
 
@@ -226,7 +244,7 @@ npm run server  # 僅啟動獨立 PDF／公式 API，預設 127.0.0.1:3001
 
 本專案內建 Vite 即時檔案同步中介層與狀態防抖引擎：
 - **外部 Agent ➔ 前端畫布**：瀏覽器介面每 1.5 秒自動監聽磁碟上的 `current_report_layout.json`。當外部 AI Agent 透過 MCP 執行修改時，**瀏覽器無需手動刷新，下一次輪詢會載入最新版面與即時 PDF 預覽**！
-- **前端畫布 ➔ 外部 Agent**：當使用者在可視化設計器中手動拖曳控制項、微調尺寸或修改樣式時，系統透過 **500ms 防抖自動寫回磁碟**，Agent 呼叫 `get_report_layout` 即可立刻讀取到使用者的最新調整，提供 **雙向協同**！
+- **前端畫布 ➔ 外部 Agent**：當使用者在可視化設計器中手動拖曳控制項、微調尺寸或修改樣式時，系統透過 **500ms 防抖自動寫回磁碟**（包含資料來源），Agent 呼叫 `get_report_layout` 即可立刻讀取到使用者的最新調整，提供 **雙向協同**！
 - **衝突保護**：前端有未儲存變更時不套用背景讀取結果；寫入時以版本雜湊檢查磁碟內容。若外部 Agent 已修改同份報表，顯示同步衝突並保留本機變更，手動重新載入前會確認是否捨棄變更。
 - **測試隔離**：`npm test` 與 `npm run test:mcp` 使用 `scratch/` 下的暫存版面，不會改動使用者的 `current_report_layout.json`。可用 `REPORT_ENGINE_LAYOUT_FILE` 指定測試／開發版面位置。
 - **連線指示燈**：頂部導航列常駐 `🟢 雙向已同步 🔄` 狀態膠囊，寫入與同步狀態一目了然。

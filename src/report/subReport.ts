@@ -1,4 +1,4 @@
-import type { BandDefinition, ControlDefinition } from '../types/report.ts';
+import type { ControlDefinition } from '../types/report.ts';
 import type { EvalContext } from '../compiler/evaluator.ts';
 import { getNestedValue } from './dataPath.ts';
 import { expandDetailBands, type BandInstance } from '../compiler/bandPipeline.ts';
@@ -26,15 +26,4 @@ export function getSubReportBands(control: ControlDefinition, context: EvalConte
     ...expandDetailBands(definition, childContext),
     ...fixed(['ReportFooter', 'PageFooter']),
   ];
-}
-
-export function measureBandHeight(band: BandDefinition, context: EvalContext): number {
-  return band.controls.reduce((height, control) => {
-    if (control.type !== 'SubReport') return height;
-    const rows = getSubReportRows(control, context);
-    if (rows.length === 0 || !control.subReportDefinition) return height;
-    const contentHeight = getSubReportBands(control, context).reduce((sum, instance) =>
-      sum + measureBandHeight(instance.band, instance.context), 0);
-    return Math.max(height, control.y + contentHeight + 7);
-  }, band.height);
 }

@@ -3,7 +3,8 @@ import { ZodError } from 'zod';
 import { FormulaError } from '../formula/types.ts';
 import { getFormulaCatalog } from '../formula/registry.ts';
 import { validateReportFormulas } from '../formula/report.ts';
-import { renderRequestSchema } from './requestSchema.ts';
+import { preflightDocument } from '../report/preflight';
+import { renderRequestSchema, preflightRequestSchema } from './requestSchema.ts';
 import { renderReportPdf } from './pdfService.ts';
 
 export async function readJsonBody(request: IncomingMessage): Promise<unknown> {
@@ -25,14 +26,20 @@ export function respondError(response: ServerResponse, error: unknown) {
 }
 export async function handleReportApi(request: IncomingMessage, response: ServerResponse): Promise<boolean> {
   const url = new URL(request.url ?? '/', 'http://localhost');
-  if (!['/api/report-pdf', '/api/formula-catalog', '/api/validate-report-formulas'].includes(url.pathname)) return false;
+  if (!['/api/report-pdf', '/api/formula-catalog', '/api/validate-report-formulas', '/api/preflight-report'].includes(url.pathname)) return false;
   response.setHeader('Cache-Control', 'no-store');
   response.setHeader('Content-Type', 'application/json');
   try {
     if (url.pathname === '/api/formula-catalog' && request.method === 'GET') {
       response.end(JSON.stringify(getFormulaCatalog({ category: url.searchParams.get('category') ?? undefined, name: url.searchParams.get('name') ?? undefined })));
     } else if (url.pathname !== '/api/formula-catalog' && request.method === 'POST') {
-      const input = renderRequestSchema.parse(await readJsonBody(request));
+      const body=await readJsonBody(request);
+      if(url.pathname==='/api/preflight-report'){
+        const {executionTime,timeZone,execute,...document}=preflightRequestSchema.parse(body);
+        response.end(JSON.stringify(preflightDocument(document,{executionTime,timeZone,execute})));
+        return true;
+      }
+      const input = renderRequestSchema.parse(body);
       if (url.pathname === '/api/validate-report-formulas') {
         response.end(JSON.stringify(validateReportFormulas(input.report, {
           schema: input.dataSource?.schema, dataSource: input.data ?? input.dataSource?.data.items,

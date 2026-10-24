@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { ReportPDFDocument } from '../src/compiler/pdfCompiler';
+import { ReportValidationError } from '../src/report/preflight';
 import { getBarcodePattern } from '../src/controls/barcodeUtils';
 import { sampleOrderReport, sampleOrderData14, sampleOrderDataSource } from '../src/mock/sampleReport';
 import { label, reportFixture } from './helpers';
@@ -41,4 +42,12 @@ test('real PDF compilation succeeds for empty data, nested reports, barcode and 
   assert.equal(codes.subarray(0, 5).toString(), '%PDF-');
   const nested = await renderToBuffer(ReportPDFDocument({ report: sampleOrderReport, data: sampleOrderData14, dataSource: sampleOrderDataSource }));
   assert.ok(nested.length > 10000);
+});
+
+
+test('impossible fixed geometry and growing fixed headers fail before rendering', () => {
+  const report = reportFixture(); report.bands[0].height = 1000;
+  assert.throws(() => ReportPDFDocument({ report, data:[{}] }), error=>error instanceof ReportValidationError&&error.diagnostics.some(d=>d.code==='BAND_TOO_TALL'));
+  report.bands[0].height=30;report.bands.push({id:'header',type:'PageHeader',height:20,controls:[label({id:'growing-header',canGrow:true})]});
+  assert.throws(() => ReportPDFDocument({ report, data:[{}] }), /require fixed controls/);
 });

@@ -18,9 +18,10 @@ import { Button } from '@/components/ui/button';
 import { useTranslations, useCurrentLocale } from '@/i18n';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useReportSync } from '@/sync/useReportSync';
-import { requestReportPdf } from '@/client/reportPdf';
+import { useDesignerServices } from '@/designer/services';
 
 export const Navbar: React.FC = () => {
+  const { renderPdf, syncEndpoint } = useDesignerServices();
   const { locale } = useCurrentLocale();
   const tNav = useTranslations('navbar');
   const tCommon = useTranslations('common');
@@ -46,7 +47,7 @@ export const Navbar: React.FC = () => {
   const handleExportPDF = async () => {
     try {
       setIsExporting(true);
-      const blob = await requestReportPdf(report, data, dataSource);
+      const blob = await renderPdf(report, data, dataSource);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -54,6 +55,7 @@ export const Navbar: React.FC = () => {
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err) {
+      setActiveTab('preflight');
       console.error('Failed to export PDF:', err);
       alert((locale === 'zh-TW' ? '產生 PDF 失敗：' : 'Failed to generate PDF: ') + (err instanceof Error ? err.message : String(err)));
     } finally {
@@ -62,7 +64,7 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="h-13 border-b border-slate-200 bg-white/95 backdrop-blur px-4 flex items-center justify-between z-30 select-none dark:border-slate-800 dark:bg-slate-950/90">
+    <header className="min-h-13 shrink-0 flex-wrap gap-2 py-1 border-b border-slate-200 bg-white/95 backdrop-blur px-4 flex items-center justify-between z-30 select-none dark:border-slate-800 dark:bg-slate-950/90">
       {/* Brand & Document Info */}
       <div className="flex items-center space-x-3">
         <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-slate-900 text-white shadow-sm dark:bg-slate-50 dark:text-slate-900">
@@ -89,6 +91,8 @@ export const Navbar: React.FC = () => {
 
       {/* Center Tabs: Mode Switcher */}
       <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+        <button onClick={() => setActiveTab('preflight')} className={`px-3 py-1 rounded-md text-xs font-medium ${activeTab === 'preflight' ? 'bg-white shadow-sm dark:bg-slate-800' : 'text-slate-500'}`}>{locale === 'zh-TW' ? '列印健檢' : 'Preflight'}</button>
+        <button onClick={() => setActiveTab('data')} className={`px-3 py-1 rounded-md text-xs font-medium ${activeTab === 'data' ? 'bg-white shadow-sm dark:bg-slate-800' : 'text-slate-500'}`}>{locale === 'zh-TW' ? '資料來源' : 'Data source'}</button>
         <button onClick={() => setActiveTab('formulas')} className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium ${activeTab === 'formulas' ? 'bg-white shadow-sm dark:bg-slate-800' : 'text-slate-500'}`}>
           <Calculator className="h-3.5 w-3.5" /><span>{locale === 'zh-TW' ? '計算欄位' : 'Calculations'}</span>
         </button>
@@ -144,7 +148,7 @@ export const Navbar: React.FC = () => {
       {/* Right Controls: MCP Status, Zoom, Locale & Action Buttons */}
       <div className="flex items-center space-x-2">
         {/* MCP Live Sync Status Pill */}
-        <button
+        {syncEndpoint && <button
           onClick={() => fetchMcpLayout()}
           className={`flex items-center space-x-1.5 text-[11px] px-2.5 py-1 rounded-full border transition-all ${
             isSaving
@@ -158,7 +162,7 @@ export const Navbar: React.FC = () => {
           <Radio className={`h-3 w-3 ${isSaving ? 'text-amber-500 animate-spin' : mcpSynced ? 'text-emerald-500' : 'text-blue-500 animate-pulse'}`} />
           <span>{isSaving ? tCommon('syncing') : mcpSynced ? tCommon('synced') : tCommon('mcpLive')}</span>
           <RefreshCw className={`h-2.5 w-2.5 ml-0.5 ${mcpConnecting || isSaving ? 'animate-spin' : ''}`} />
-        </button>
+        </button>}
 
         {activeTab === 'designer' && (
           <div className="flex items-center space-x-1 bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 dark:bg-slate-900 dark:border-slate-800">

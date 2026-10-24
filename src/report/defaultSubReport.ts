@@ -1,3 +1,4 @@
+import type { DataFieldSchema } from '../types/datasource';
 import type { ReportDefinition } from '../types/report';
 
 export function createDefaultSubReportDefinition(title = '序號與檢驗明細'): ReportDefinition {
@@ -125,6 +126,21 @@ export function createDefaultSubReportDefinition(title = '序號與檢驗明細'
           },
         ],
       },
+    ],
+  };
+}
+
+/** Generates a child table from declared fields, including for an empty dataset. */
+export function createSubReportForFields(title: string, fields: DataFieldSchema[], width = 480): ReportDefinition {
+  const columns=fields.filter(field=>field.type!=='array');
+  const columnWidth=columns.length ? Math.max(1,width)/columns.length : 0;
+  const geometry=(index: number)=>({x:index*columnWidth,y:0,width:columnWidth,height:20});
+  return {
+    id:'subreport-'+crypto.randomUUID(), name:title,
+    pageSettings:{size:'A4',orientation:'portrait',margins:{top:0,right:0,bottom:0,left:0}},
+    bands:[
+      {id:'header-'+crypto.randomUUID(),type:'PageHeader',height:20,controls:columns.map((field,index)=>({id:'th-'+crypto.randomUUID(),type:'Label',...geometry(index),text:field.label,style:{fontSize:8,backgroundColor:'#f1f5f9'}}))},
+      {id:'detail-'+crypto.randomUUID(),type:'Detail',height:20,controls:columns.map((field,index)=>({id:'td-'+crypto.randomUUID(),type:'Field',...geometry(index),fieldName:field.name,formatString:field.formatHint,style:{fontSize:8}}))},
     ],
   };
 }

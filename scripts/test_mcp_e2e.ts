@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { temporaryDirectory } from '../tests/helpers';
 
 const temporary = temporaryDirectory();
@@ -35,7 +36,7 @@ async function read() {
 
 try {
   await client.connect(transport);
-  assert.equal((await client.listTools()).tools.length, 17);
+  assert.equal((await client.listTools()).tools.length, 22);
   const catalogReply = await call('get_formula_catalog');
   const catalog = JSON.parse((catalogReply.content as { text: string }[])[0].text);
   assert.equal(catalog.functions.length, 38);
@@ -109,12 +110,38 @@ try {
   assert.deepEqual(fs.readFileSync(path.join(temporary.directory, 'two.pdf')), two);
   const invalidReport = await client.callTool({ name: 'set_full_report', arguments: { report: { bands: [] } } });
   assert.equal(invalidReport.isError, true);
+  const customSource = { id: 'custom', name: 'External invoice', schema: {
+    parameters: [{ name: 'customer', label: 'Customer', type: 'string' }], detailFields: [{ name: 'price', label: 'Price', type: 'number', nullable: false }],
+  }, data: { parameters: { customer: 'CUSTOM-CUSTOMER' }, items: [{ price: 12.5 }, { price: 7.5 }] } };
+  const customReport = { id: 'external', name: 'External', pageSettings: layout.report.pageSettings, bands: [{ id: 'detail', type: 'Detail', height: 24,
+    controls: [{ id: 'price', type: 'Field', x: 0, y: 0, width: 100, height: 20, fieldName: 'price' }] }] };
+  await call('set_report_data_source', { dataSource: customSource, report: customReport });
+  const savedSource = JSON.parse(((await call('get_report_data_source')).content as { text: string }[])[0].text);
+  assert.deepEqual(savedSource.dataSource, customSource);
+  const discovered = JSON.parse(((await call('get_available_data_fields')).content as { text: string }[])[0].text);
+  assert.equal(discovered.dataSourceId, 'custom'); assert.equal(discovered.sampleDetailRecord.price, 12.5);
+  assert.deepEqual(discovered.detailFields.map((f: { name: string }) => f.name), ['price']);
+  const savedPreview = JSON.parse(((await call('preview_formula', { expression: '=SUM(price)' })).content as { text: string }[])[0].text);
+  assert.equal(savedPreview.value, 20);
+  const customBefore = fs.readFileSync(layoutFile, 'utf8');
+  assert.equal((await client.callTool({ name: 'set_report_data_source', arguments: { dataSource: { ...customSource, schema: { detailFields: [] } } } })).isError, true);
+  assert.equal(fs.readFileSync(layoutFile, 'utf8'), customBefore);
+  assert.equal((await client.callTool({ name: 'set_report_data_source', arguments: { dataSource: { ...customSource, data: { items: [{ price: 'invalid' }] } } } })).isError, true);
+  assert.equal(fs.readFileSync(layoutFile, 'utf8'), customBefore);
+  await call('export_pdf', { outputPath: path.join(temporary.directory, 'custom.pdf') });
+  const customPdf = getDocument({ data: new Uint8Array(fs.readFileSync(path.join(temporary.directory, 'custom.pdf'))) });
+  const pdfDocument = await customPdf.promise;
+  assert.equal(pdfDocument.numPages, 1);
+  const pdfText = (await (await pdfDocument.getPage(1)).getTextContent()).items.filter(item => 'str' in item).map(item => item.str).join(' ');
+  assert.match(pdfText, /12\.5/); assert.match(pdfText, /7\.5/);
+  await customPdf.destroy();
+  // Formula execution, schema discovery and PDF all use the persisted custom rows.
   fs.writeFileSync(layoutFile, '{corrupt');
   assert.equal((await client.callTool({ name: 'get_report_layout', arguments: {} })).isError, true);
   assert.equal(fs.readFileSync(layoutFile, 'utf8'), '{corrupt');
   await call('reset_report_layout');
   assert.equal((await read()).report.id, layout.report.id);
-  console.log('MCP integration passed: 17 tools, formula discovery, dependency chains, child preview, atomic rejection, recovery and guarded PDF export.');
+  console.log('MCP integration passed: 22 tools, formula discovery, dependency chains, child preview, atomic rejection, recovery and guarded PDF export.');
 } catch (error) {
   console.error(stderr);
   throw error;

@@ -26,3 +26,12 @@ scratch/
 current_report_layout.json
 current_report_spec.json
 *.pdf
+
+# Generated visual regression previews and package archives
+tmp/
+output/
+*.tgz
+
+# Browser automation output
+playwright-report/
+test-results/

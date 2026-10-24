@@ -51,7 +51,7 @@ export const SchemaViewer: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.25rem)] bg-slate-950 text-slate-100 select-none">
+    <div className="flex-1 flex flex-col h-full min-h-0 bg-slate-950 text-slate-100 select-none">
       {/* Schema Toolbar */}
       <div className="h-10 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs">
         <div className="flex items-center space-x-2">

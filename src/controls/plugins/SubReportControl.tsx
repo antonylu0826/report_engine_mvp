@@ -1,8 +1,11 @@
 import React from 'react';
 import { TableProperties, Layers } from 'lucide-react';
 import type { ReportControlPlugin } from '../types';
-import { useReportStore } from '@/store/useReportStore';
-import { createDefaultSubReportDefinition } from '@/report/defaultSubReport';
+import { useReportStoreApi } from '@/store/useReportStore';
+import { createSubReportForFields } from '@/report/defaultSubReport';
+import { getSubReportRows } from '@/report/subReport';
+import { childSchema } from '@/report/dataSchema';
+import { getNestedValue } from '@/report/dataPath';
 
 export const SubReportControl: ReportControlPlugin = {
   type: 'SubReport',
@@ -19,7 +22,7 @@ export const SubReportControl: ReportControlPlugin = {
     height: 46,
     subReportTitle: '序號與檢驗明細',
     subReportBinding: 'serials',
-    subReportDefinition: createDefaultSubReportDefinition('序號與檢驗明細'),
+    subReportDefinition: createSubReportForFields('子報表', []),
     style: {
       backgroundColor: '#f8fafc',
       borderColor: '#94a3b8',
@@ -31,14 +34,18 @@ export const SubReportControl: ReportControlPlugin = {
   }),
 
   DesignerComponent: ({ control, isSelected }): React.ReactElement => {
-    const title = control.subReportTitle || '序號與檢驗明細';
+    const store = useReportStoreApi();
+    const state = store.getState();
+    const fields = childSchema(control, state.dataSource.schema)?.detailFields.filter(field => field.type !== 'array').slice(0, 4) ?? [];
+    const rows = getSubReportRows(control, { currentRow: state.getActiveData()[0] });
+    const title = control.subReportTitle || '子報表';
     const binding = control.subReportBinding || 'serials';
 
     return (
       <div
         onDoubleClick={(e) => {
           e.stopPropagation();
-          const state = useReportStore.getState();
+          const state = store.getState();
           const parentBand = state.report.bands.find((b) =>
             b.controls.some((c) => c.id === control.id)
           );
@@ -69,20 +76,13 @@ export const SubReportControl: ReportControlPlugin = {
           </div>
         </div>
 
-        {/* Mock Preview Rows for Designer Visibility */}
-        <div className="flex flex-col space-y-0.5 pt-1 text-[8px] text-slate-600 font-mono">
-          <div className="grid grid-cols-4 gap-1 text-[8px] font-semibold text-slate-500 bg-slate-200/50 px-1 py-0.5 rounded-2xs">
-            <span>出廠序號 (S/N)</span>
-            <span>序號條碼 (CODE128)</span>
-            <span>製造批號</span>
-            <span className="text-right">品檢狀態</span>
+        <div className="flex flex-col gap-0.5 pt-1 text-[8px] text-slate-600 font-mono">
+          <div className="grid gap-1 font-semibold" style={{ gridTemplateColumns: `repeat(${Math.max(1,fields.length)}, minmax(0,1fr))` }}>
+            {fields.map(field => <span key={field.name} className="truncate">{field.label}</span>)}
           </div>
-          <div className="grid grid-cols-4 gap-1 px-1 py-0.2 text-slate-700">
-            <span className="truncate">↳ SN26-MBP-001-01</span>
-            <span className="text-blue-600 font-mono">|||||||||||||</span>
-            <span>LOT-20261001</span>
-            <span className="text-right text-emerald-600 font-semibold">合格 PASS</span>
-          </div>
+          {rows.length ? rows.slice(0,2).map((row,i)=><div key={i} className="grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.max(1,fields.length)}, minmax(0,1fr))` }}>
+            {fields.map(field=><span key={field.name} className="truncate">{String(getNestedValue(row,field.name) ?? '')}</span>)}
+          </div>) : <span className="text-slate-400">{fields.length ? '尚無子資料 / No child rows' : '設定陣列綁定 / Bind an array'}</span>}
         </div>
       </div>
     );

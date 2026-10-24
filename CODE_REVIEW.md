@@ -2,7 +2,34 @@
 
 日期：2026-10-23
 
-2026-10-24 更新：以下保留前次審查與 bundle 優化紀錄。公式引擎後續已完成 38 個函式、計算欄位、MCP 發現／驗證／試算及後端統一 PDF，詳見 [v1 使用方式](docs/formula-engine-usage.md)。
+2026-10-24 更新：本輪新增交付見下一節；其後保留前次審查與 bundle 優化紀錄。公式引擎後續已完成 38 個函式、計算欄位、MCP 發現／驗證／試算及後端統一 PDF，詳見 [v1 使用方式](docs/formula-engine-usage.md)。
+
+## 2026-10-24 列印與 Agent 改善交付
+
+- 結構、JSON 資料、繫結、公式、條件、幾何及分頁整合為共用預檢，供設計器、HTTP、MCP 與 PDF 使用；診斷包含主／子控制項路徑及定位。錯誤阻擋輸出，警告保留可列印狀態。
+- Band／控制項支援 visibleWhen，控制項支援有序 styleRules；沿用公式引擎的嚴格 boolean／null、作用域、型別及執行時間。隱藏只影響呈現，彙總仍使用原始資料。
+- MCP 共 22 個工具，新增 preflight_report、preview_report_changes、apply_report_changes。預檢不寫入，套用需帶 baseVersion 並重新驗證；既有寫入工具可傳 expectedVersion。所有工具有統一 structuredContent，版本綁定該次讀寫快照。
+- 修正 react-pdf 將 `fixed: false` 視為固定旗標、導致 keepTogether／換頁失效的問題；普通區段省略此屬性。固定區段可整段換頁，keepTogether=false 可在完整控制項列之間拆分。
+- 0.2.0 套件公開預檢、條件及 MCP 結果／變更型別，加入完整條件範例與文件；獨立 npm consumer 實際驗證新 API、套用與嚴格 NodeNext 宣告。
+- Playwright 使用真實 Vite／PDF／stdio MCP，涵蓋條件文件、定位、拖曳復原、同步衝突及雙實例；測試文件隔離於 scratch。GitHub Actions 設定 Windows／Ubuntu 檢查與失敗產物。
+
+本輪驗證：56 項核心測試、22 工具 MCP 整合、10 組 54 頁 PDF 文字／幾何／視覺基準、獨立 consumer 與 5 個 Chromium 流程通過。逐頁縮圖與關鍵新頁面已檢視。首頁 JS 620.50 kB、最大 chunk 242.30 kB，維持 650／500 kB 預算。遠端 CI 由推送觸發，執行結果以 GitHub Actions 為準；套件尚未發布 npm。
+
+後續檢視見 [review-guide.md](docs/review-guide.md)，契約見 [conditional-printing.md](docs/conditional-printing.md)、[mcp-changes.md](docs/mcp-changes.md)，驗證方式見 [testing.md](docs/testing.md)。以下保留前一輪元件交付及歷史紀錄。
+
+## 2026-10-24 元件改善交付
+
+- 自訂資料來源與範本使用 ReportDocument v1 一起持久化；schema、必填／型別、公式皆在提交時驗證。舊檔唯讀載入，成功儲存才遷移。資料變動也納入版本與同步競態保護。
+- MCP 現在 19 個工具，新增 get_report_data_source／set_report_data_source。發現、試算、儲存與 PDF 共用實際資料；export_pdf 的 recordCount 改為資料上限，沒有自動 mock fallback。
+- 設計器狀態、剪貼簿、歷史與 PDF 快取各實例獨立；多選、整組拖曳、對齊、等距與快捷鍵已完成。一次指標拖曳是一筆歷史，無變化不消耗復原紀錄；子範本複製會遞迴產生新 ID。
+- canGrow 文字與子報表採流式列，後續內容向下推移；固定列完整換頁，子表頭在續頁重複。無法容納的基本高度及 growable 頁首／頁尾先拒絕輸出。
+- 套件提供 0.1.0 core／designer／pdf／mcp 入口與型別宣告，中文字型及 OFL 授權一起打包。以 npm pack 安裝到獨立暫存專案，驗證公開 API、NodeNext 型別、SSR、PDF 與真正 MCP client。
+
+本輪驗證：47 項核心／HTTP／同步／設計器測試、19 工具 MCP 整合、7 組共 48 頁 PDF 文字完整性／幾何／視覺基準、獨立 consumer、lint／型別／建置。前端首頁 JS 616.76 kB、最大 chunk 240.24 kB，維持 500／650 kB 預算。依賴稽核已修正 body-parser 間接依賴，npm audit 為 0 個弱點。
+
+瀏覽器檢查含自訂文件匯入與 PDF 預覽、多選對齊及復原、兩個固定高度設計器的文件／歷史隔離。檢視方式見 [review-guide.md](docs/review-guide.md)，邊界與 API 見 [embedding.md](docs/embedding.md)、[pdf-pagination.md](docs/pdf-pagination.md)。本輪沒有發布套件或加入外部系統整合。
+
+以下「公式引擎 v1」與原始重構數字為 a3319d7 等前次提交的歷史紀錄。
 
 ## 範圍與結論
 
@@ -60,7 +87,7 @@
 npm run check
 ```
 
-當時此指令依序執行 lint、包含測試程式的 TypeScript 檢查、25 項自動測試、真正 MCP 整合測試與正式建置；目前已增至上方交付紀錄的 37 項測試。
+當時此指令依序執行 lint、包含測試程式的 TypeScript 檢查、25 項自動測試、真正 MCP 整合測試與正式建置；最新驗證數字見上方交付紀錄。
 
 整合測試涵蓋 13 個工具的註冊、主／子控制項更新、樣式合併、同目標多次 patch、整批失敗不寫入、損壞檔案處理、版面驗證及不同筆數的實際 PDF 匯出。MCP 以另一個工作目錄啟動，驗證字型與專案路徑不依賴呼叫端 cwd。
 
@@ -77,8 +104,8 @@ npm run check
 
 ## 留待後續發展討論
 
-1. **核心套件與嵌入介面**：已拆開 Designer 與 PDF 控制項 registry，Node 編譯不再引用設計器元件。後續仍可拆為 headless engine、designer、MCP adapter 三個套件，定義版本、外掛與嵌入介面。
-2. **分頁與長內容規格**：目前已驗證既有範例；極高的 keepTogether 區塊、超長文字、多層子報表跨頁仍需正式定義行為與逐頁視覺回歸。SVG 最多顯示五筆主明細、碼類／圖片以佔位呈現，不能用來斷言實際 PDF 分頁。
+1. **核心套件與嵌入介面**：已拆開 Designer 與 PDF 控制項 registry，Node 編譯不再引用設計器元件。本輪已完成單一 ESM 套件的 core／designer／pdf／mcp 分入口及嵌入契約，實際發布與更完整外掛 API 可再討論。
+2. **分頁與長內容規格**：本輪已加入 growable 長文字、子表頭及 48 頁回歸；更多任意幾何、字型與多層子報表仍可擴充。SVG 最多顯示五筆主明細、碼類／圖片以佔位呈現，不能用來斷言實際 PDF 分頁。
 3. **運算式與業務範本**：此項已由公式引擎 v1 處理。範例的主檔資訊、明細金額、小計、稅額、總計及列印時間均已資料化，固定的中文大寫金額已移除。多層彙總、交叉表與自訂函式仍在目前 MVP 範圍之外。
 4. **儲存與協作**：Vite 同步 API 適用本機開發；純靜態部署不提供寫入。版本保護可處理前端過期寫入，但跨程序的完整交易、多人協作、歷史版本與衝突合併仍需正式儲存服務。
 5. **目前模型邊界**：每份報表同類 Band 僅一個、分組是一層；子畫布編輯是一層；`subReportRefId` 尚無外部範本解析器。資料型別雖可遞迴表示子報表，UI 不應被視為完整的多層編輯器。

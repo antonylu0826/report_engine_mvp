@@ -6,6 +6,7 @@ import { mapControlStyle } from './styleUtils.ts';
 import { evaluateExpression, getNestedValue } from '../compiler/evaluator.ts';
 import { formatValue } from '../compiler/formatters.ts';
 import { getBarcodePattern, generateQrCodeDataUrl } from './barcodeUtils.ts';
+import { renderBandFrame } from '../compiler/bandLayout';
 import { getSubReportBands } from '../report/subReport.ts';
 import { getSubReportGeometry } from '../report/geometry.ts';
 
@@ -254,16 +255,11 @@ const renderers: Record<ControlType, PdfControlRenderer> = {
         marginTop: control.y, marginBottom: 2, paddingLeft: indent,
       }}>
         <View style={{
-          width, borderLeftWidth: 2, borderLeftColor: '#0284c7',
-          borderWidth: 0.5, borderColor: '#cbd5e1', backgroundColor: '#f8fafc', paddingVertical: 2,
+          width, borderLeftWidth: 2, borderLeftColor: control.style?.borderColor ?? '#0284c7',
+          borderWidth: 0.5, borderColor: control.style?.borderColor ?? '#cbd5e1', backgroundColor: control.style?.backgroundColor ?? '#f8fafc', paddingVertical: 2,
         }}>
           {instances.map(instance => <React.Fragment key={instance.key}>
-            <View wrap={!instance.band.keepTogether} break={instance.pageBreakBefore}
-              style={{ position: 'relative', minHeight: instance.band.height, width: '100%' }}>
-              {instance.band.controls.map(child => <React.Fragment key={child.id}>
-                {pdfControlRegistry.get(child.type)?.({ control: child, context: instance.context })}
-              </React.Fragment>)}
-            </View>
+            {renderBandFrame(instance.band, instance.context, instance.key, (child, childContext) => pdfControlRegistry.get(child.type)?.({ control: child, context: childContext }), instance.pageBreakBefore, instance.band.type === 'PageHeader')}
             {instance.pageBreakAfter && <View break />}
           </React.Fragment>)}
 

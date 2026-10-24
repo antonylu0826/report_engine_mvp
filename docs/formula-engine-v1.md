@@ -236,3 +236,8 @@ MCP 的能力發現屬 v1 必要驗收，不等到日後的獨立 AI 產品才�
 | 既有 SUM／COUNT／AVG、ROW_INDEX／INDEX 及頁碼樣板 | 相容案例持續通過；有意改變的空值語意明列於遷移說明。 |
 
 實作已包含 38 個內建函式、計算欄位、4 個新增 MCP 工具、Node／HTTP PDF 入口及設計器編輯介面。本文保留需求與設計推導；最終語法、數值／日期邊界、API 與遷移說明以使用方式及執行中的 MCP 目錄為準。
+
+
+> 2026-10-24 後續交付補記：上方為 v1 範圍討論紀錄。自訂資料來源、套件嵌入、PDF 長內容回歸及設計器復原／重做等操作已在下一輪完成，現況請見 [檢視指引](review-guide.md) 與 [implementation_plan.md](../implementation_plan.md)。
+
+> 0.2.0 追加條件式列印、共用預檢與定位、MCP 版本化變更、瀏覽器測試及 CI 設定。公式語法與 38 個函式維持 v1 契約，新增呈現行為見 [conditional-printing.md](conditional-printing.md)，Agent 流程見 [mcp-changes.md](mcp-changes.md)。

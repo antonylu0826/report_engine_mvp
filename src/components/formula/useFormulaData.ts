@@ -1,5 +1,5 @@
 import { useReportStore } from '@/store/useReportStore';
-import { childSchema } from '@/formula/report';
+import { childSchema } from '@/report/dataSchema';
 
 export function useFormulaData() {
   const state = useReportStore();

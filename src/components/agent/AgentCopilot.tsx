@@ -77,6 +77,11 @@ export const AgentCopilot: React.FC = () => {
     const input = promptInput.trim();
     const newLogs = [...chatLogs, { role: 'user' as const, text: input }];
 
+    // This panel is a local demonstration. Real agents connect through the MCP adapter.
+    if (!report.bands.some(b => b.id === 'band-report-header' && b.controls.some(c => c.id === 'ctl-company-title'))) {
+      newLogs.push({role:'agent',text:locale === 'zh-TW' ? '此聊天面板是內建操作示範。請使用 MCP 的 get_report_layout、get_report_data_source 與 get_formula_catalog 操作目前範本。' : 'This panel is a local demonstration. Use the MCP tools get_report_layout, get_report_data_source and get_formula_catalog for this template.'});
+      setChatLogs(newLogs); setPromptInput(''); return;
+    }
     // Interactive simulated agent responses with real pixel modifications
     if (input.includes('公司') || input.includes('抬頭') || input.includes('名稱')) {
       updateControl('band-report-header', 'ctl-company-title', {
@@ -129,7 +134,7 @@ export const AgentCopilot: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex h-[calc(100vh-3.25rem)] bg-slate-900 text-slate-100 select-none overflow-hidden">
+    <div className="flex-1 flex h-full min-h-0 bg-slate-900 text-slate-100 select-none overflow-hidden">
       {/* Left Column: Pixel-Level Agent Copilot Chat & Quick Actions */}
       <div className="w-1/2 border-r border-slate-800 flex flex-col bg-slate-950">
         {/* Header */}

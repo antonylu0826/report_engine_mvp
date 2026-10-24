@@ -1,10 +1,12 @@
+import { measureBandHeight } from './measureBand';
+import { bandIsVisible, resolveControlAppearance } from '../formula/presentation';
 import type { ReportDefinition, ControlDefinition, BandDefinition } from '../types/report';
 import { evaluateExpression, type EvalContext } from '../compiler/evaluator';
 import { prepareReport } from '../formula/report';
 import { formatValue } from '../compiler/formatters';
 import { expandDetailBands } from '../compiler/bandPipeline';
 import { getPageGeometry, getSubReportGeometry } from '../report/geometry';
-import { getSubReportBands, measureBandHeight } from '../report/subReport';
+import { getSubReportBands } from '../report/subReport';
 
 export interface LayoutDiagnostic {
   bandId: string;
@@ -114,10 +116,13 @@ export function renderReportToSvg(
   ];
   const globalContext: EvalContext = prepareReport(report, { dataSource: rows, reportParameters: parameters });
   const renderBand = (band: BandDefinition, x: number, y: number, context: EvalContext) => {
+    if (!bandIsVisible(band,context)) return 0;
     band.controls.forEach(control => renderControl(control, x, y, context));
     return measureBandHeight(band, context);
   };
-  const renderControl = (control: ControlDefinition, offsetX: number, offsetY: number, context: EvalContext) => {
+  const renderControl = (original: ControlDefinition, offsetX: number, offsetY: number, context: EvalContext) => {
+    const control=resolveControlAppearance(original,context);
+    if(!control)return;
     const x = offsetX + control.x, y = offsetY + control.y;
     const width = control.width, height = control.height;
     const style = control.style ?? {};

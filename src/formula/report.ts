@@ -1,3 +1,5 @@
+import { bandIsVisible, resolveControlAppearance } from './presentation';
+import { childSchema } from '../report/dataSchema';
 import type { CalculatedField, ControlDefinition, ReportDefinition } from '../types/report.ts';
 import type { DataSourceSchema } from '../types/datasource.ts';
 import { expandDetailBands } from '../compiler/bandPipeline.ts';
@@ -16,13 +18,10 @@ function diagnosticsOf(error: unknown): FormulaDiagnostic[] {
   if (error instanceof FormulaError) return error.diagnostics;
   throw error;
 }
-export function childSchema(control: ControlDefinition, schema?: DataSourceSchema): DataSourceSchema | undefined {
-  if (!schema) return undefined;
-  return { parameters: schema.parameters, detailFields: schemaField(schema.detailFields, control.subReportBinding || 'serials')?.children ?? [] };
-}
+export { childSchema } from '../report/dataSchema';
 const planCache = new WeakMap<ReportDefinition, Map<string, Plan>>();
 function compile(report: ReportDefinition, schema?: DataSourceSchema): Plan {
-  const schemaKey = JSON.stringify([schema ?? null, report.calculatedFields, report.bands.map(b => [b.type, b.controls.map(c => [c.type, c.expression, c.fieldName])])]);
+  const schemaKey = JSON.stringify([schema ?? null, report.calculatedFields, report.bands.map(b => [b.type, b.groupBy, b.visibleWhen, b.controls.map(c => [c.type, c.expression, c.fieldName, c.visibleWhen, c.styleRules, c.subReportBinding])])]);
   const cached = planCache.get(report)?.get(schemaKey);
   if (cached) return cached;
   const fields = new Map<string, CalculatedField>(), asts = new Map<string, Ast>(), dependencies = new Map<string, string[]>();
@@ -58,16 +57,27 @@ function compile(report: ReportDefinition, schema?: DataSourceSchema): Plan {
   };
   fields.forEach((_, name) => visit(name, []));
   report.bands.forEach((band, bi) => {
-    if (band.groupBy && schema && !schemaField(schema.detailFields, band.groupBy)) add([{ code: 'UNKNOWN_FIELD', message: `Unknown grouping field ${band.groupBy}` }], `bands[${bi}].groupBy`, { bandId: band.id });
-    band.controls.forEach((control, ci) => {
-    const context: FormulaContext = { schema, ...(band.type === 'Detail' || band.type.startsWith('Group') ? { currentRow: {}, groupRows: [] } : {}) };
-    for (const [key, expression] of [['expression', control.type === 'Expression' ? control.expression : undefined], ['fieldName', control.fieldName]] as const) {
-      if (!expression || (key === 'expression' && isRenderTemplate(expression))) continue;
+    const context: FormulaContext = { schema, ...(['Detail','GroupHeader','GroupFooter'].includes(band.type) ? { currentRow: {}, groupRows: [] } : {}) };
+    const check = (expression: string | undefined, path: string, controlId?: string, predicate = false) => {
+      if (!expression || (!predicate && isRenderTemplate(expression))) return;
       try {
         const analysis = analyzeFormula(expression, { context, calculatedFields: fields });
-        add(analysis.diagnostics, `bands[${bi}].controls[${ci}].${key}`, { bandId: band.id, controlId: control.id });
-      } catch (error) { add(diagnosticsOf(error), `bands[${bi}].controls[${ci}].${key}`, { bandId: band.id, controlId: control.id }); }
-    }
+        add(analysis.diagnostics, path, { bandId: band.id, controlId });
+        if (predicate && analysis.type.split('|').some(type => !['boolean','null','unknown'].includes(type))) add([{code:'TYPE_MISMATCH',message:'Print conditions must return boolean or null'}], path, {bandId:band.id, controlId});
+      } catch (error) { add(diagnosticsOf(error), path, {bandId:band.id, controlId}); }
+    };
+    if (band.groupBy && schema && !schemaField(schema.detailFields, band.groupBy)) add([{ code: 'UNKNOWN_FIELD', message: `Unknown grouping field ${band.groupBy}` }], `bands[${bi}].groupBy`, { bandId: band.id });
+    check(band.visibleWhen, `bands[${bi}].visibleWhen`, undefined, true);
+    band.controls.forEach((control, ci) => {
+      const path = `bands[${bi}].controls[${ci}]`;
+      check(control.type === 'Expression' ? control.expression : undefined, path+'.expression', control.id);
+      check(control.fieldName, path+'.fieldName', control.id);
+      check(control.visibleWhen, path+'.visibleWhen', control.id, true);
+      control.styleRules?.forEach((rule,index)=>check(rule.when,`${path}.styleRules[${index}].when`,control.id,true));
+      if (control.type === 'SubReport' && control.subReportBinding && schema) {
+        const field = schemaField(schema.detailFields,control.subReportBinding);
+        if (!field || field.type !== 'array') add([{code: field ? 'TYPE_MISMATCH' : 'UNKNOWN_FIELD', message:`Subreport binding ${control.subReportBinding} must reference an array field`}],path+'.subReportBinding',{bandId:band.id,controlId:control.id});
+      }
     });
   });
   const plan = { fields, asts, dependencyOrder, diagnostics };
@@ -171,7 +181,7 @@ function preflight(report: ReportDefinition, context: FormulaContext, diagnostic
   const plan = compile(report, context.schema);
   const capture = (run: () => void, location: Partial<FormulaDiagnostic>) => {
     if (diagnostics.length >= 100) return;
-    try { run(); } catch (error) { diagnostics.push(...diagnosticsOf(error).map(d => ({ ...location, ...d, path: d.path ? prefix + d.path : location.path }))); }
+    try { run(); } catch (error) { diagnostics.push(...diagnosticsOf(error).map(d => ({ ...location, ...d, path: d.path ? (d.path.startsWith(prefix) ? d.path : prefix+d.path) : location.path }))); }
   };
   const calculate = (local: FormulaContext, scope: CalculatedField['scope']) => (report.calculatedFields ?? []).forEach((field, index) => {
     if (field.scope !== scope) return;
@@ -187,22 +197,32 @@ function preflight(report: ReportDefinition, context: FormulaContext, diagnostic
     ...report.bands.filter(b => !['Detail', 'GroupHeader', 'GroupFooter'].includes(b.type)).map(band => ({ band, context })),
     ...expandDetailBands(report, context),
   ];
-  for (const instance of instances) instance.band.controls.forEach((control, ci) => {
-    const bi = report.bands.indexOf(instance.band), path = `${prefix}bands[${bi}].controls[${ci}]`;
-    const location = { bandId: instance.band.id, controlId: control.id, rowIndex: instance.context.rowIndex, groupKey: instance.context.groupKey };
-    for (const [key, source] of [['expression', control.type === 'Expression' ? control.expression : undefined], ['fieldName', control.fieldName]] as const) {
-      if (!source || (key === 'expression' && isRenderTemplate(source))) continue;
-      capture(() => {
-        const analysis = analyzeFormula(source, { context: instance.context, calculatedFields: plan.fields });
-        evaluateAst(analysis.ast, instance.context);
-      }, { ...location, path: `${path}.${key}` });
-    }
-    if (control.subReportDefinition) capture(() => {
-      const before = diagnostics.length;
-      preflight(control.subReportDefinition!, context.getChildContext!(control, instance.context), diagnostics, `${path}.subReportDefinition.`);
-      for (let i = before; i < diagnostics.length; i++) diagnostics[i].subReportControlId ??= control.id;
-    }, { ...location, path });
-  });
+  for (const instance of instances) {
+    const bi = report.bands.indexOf(instance.band), bandPath = `${prefix}bands[${bi}]`;
+    let visible = false;
+    capture(() => { visible = bandIsVisible(instance.band,instance.context,bandPath); }, {bandId:instance.band.id,rowIndex:instance.context.rowIndex,groupKey:instance.context.groupKey,path:bandPath+'.visibleWhen'});
+    if (!visible) continue;
+    instance.band.controls.forEach((control, ci) => {
+      const path = `${bandPath}.controls[${ci}]`;
+      const location = { bandId: instance.band.id, controlId: control.id, rowIndex: instance.context.rowIndex, groupKey: instance.context.groupKey };
+      let resolved: ControlDefinition | null = null;
+      capture(()=>{resolved=resolveControlAppearance(control,instance.context,path);},{...location,path});
+      if (!resolved) return;
+      for (const [key, source] of [['expression', control.type === 'Expression' ? control.expression : undefined], ['fieldName', control.fieldName]] as const) {
+        if (!source || (key === 'expression' && isRenderTemplate(source))) continue;
+        capture(() => {
+          const analysis = analyzeFormula(source, { context: instance.context, calculatedFields: plan.fields });
+          evaluateAst(analysis.ast, instance.context);
+        }, { ...location, path: `${path}.${key}` });
+      }
+      if (control.subReportDefinition) capture(() => {
+        const before = diagnostics.length;
+        preflight(control.subReportDefinition!, context.getChildContext!(control, instance.context), diagnostics, `${path}.subReportDefinition.`);
+        for (let i = before; i < diagnostics.length; i++) diagnostics[i].subReportControlId ??= control.id;
+      }, { ...location, path });
+    });
+  }
+
 }
 export function prepareReport(report: ReportDefinition, input: FormulaContext): FormulaContext {
   assertReportFormulas(report, input.schema);

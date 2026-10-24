@@ -1,4 +1,5 @@
-import type { PDFCompilerProps } from '../compiler/pdfCompiler.tsx';
+import type { PDFCompilerProps } from '../types/render';
+import type { Buffer } from 'node:buffer';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { ReportPDFDocument } from '../compiler/pdfCompiler.tsx';
 

@@ -22,6 +22,9 @@ import {
 import { useReportStore } from '@/store/useReportStore';
 import { controlRegistry } from '@/controls/registry';
 import type { ControlType, BandType } from '@/types/report';
+import { createSubReportForFields } from '@/report/defaultSubReport';
+import { getPageGeometry, getSubReportGeometry } from '@/report/geometry';
+import { useFormulaData } from '../formula/useFormulaData';
 import type { DataFieldSchema } from '@/types/datasource';
 import { DATA_TYPE_NAMES, getBandName } from '@/constants/labels';
 import { useTranslations, useCurrentLocale } from '@/i18n';
@@ -32,9 +35,7 @@ export const Toolbox: React.FC = () => {
   const tControls = useTranslations('controls');
   const tCommon = useTranslations('common');
   const {
-    getActiveReport,
-    getActiveData,
-    editingSubReportPath,
+    report: rootReport, editingSubReportPath, getActiveReport, getActiveData,
     dataSource,
     addControl,
     selectedBandId,
@@ -42,6 +43,7 @@ export const Toolbox: React.FC = () => {
 
   const report = getActiveReport();
   const data = getActiveData();
+  const { schema } = useFormulaData();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [justAddedControlId, setJustAddedControlId] = useState<string | null>(null);
@@ -62,6 +64,15 @@ export const Toolbox: React.FC = () => {
     if (!plugin) return;
 
     const defaults = plugin.createDefault();
+    const array = schema.detailFields.find(field=>field.type==='array');
+    const parent = editingSubReportPath && rootReport.bands.find(b=>b.id===editingSubReportPath.bandId)?.controls.find(c=>c.id===editingSubReportPath.controlId);
+    const availableWidth = parent ? getSubReportGeometry(parent).width : getPageGeometry(report.pageSettings).printableWidth;
+    if (type === 'SubReport') {
+      defaults.width=Math.min(defaults.width ?? 515,availableWidth);
+      defaults.subReportBinding=array?.name ?? '';
+      defaults.subReportTitle=array?.label ?? '子報表';
+      defaults.subReportDefinition=createSubReportForFields(defaults.subReportTitle,array?.children ?? [],getSubReportGeometry({ ...defaults, width:defaults.width } as Parameters<typeof getSubReportGeometry>[0]).width);
+    }
 
     addControl(targetBand.id, {
       ...defaults,
@@ -77,15 +88,7 @@ export const Toolbox: React.FC = () => {
 
   // Normalized Schema fields (Parameters + Detail Fields)
   const parameters = dataSource?.schema?.parameters || [];
-  const detailFields: DataFieldSchema[] =
-    (!editingSubReportPath ? dataSource?.schema?.detailFields : undefined) ||
-    (data && data.length > 0
-      ? Object.keys(data[0]).map((key) => ({
-          name: key,
-          label: key,
-          type: 'string' as const,
-        }))
-      : []);
+  const detailFields: DataFieldSchema[] = schema.detailFields;
 
   const query = fieldSearch.toLowerCase().trim();
   const filteredParameters = query
@@ -184,7 +187,7 @@ export const Toolbox: React.FC = () => {
   return (
     <div className="relative flex select-none z-20">
       {/* 1. Slim 2-Column Icon Palette (56px width, exactly DevExpress/ActiveReports standard - UNTOUCHED) */}
-      <aside className="w-14 border-r border-slate-200 bg-white flex flex-col items-center py-2 h-[calc(100vh-3.25rem)] dark:border-slate-800 dark:bg-slate-950 shadow-2xs">
+      <aside className="w-14 border-r border-slate-200 bg-white flex flex-col items-center py-2 h-full min-h-0 dark:border-slate-800 dark:bg-slate-950 shadow-2xs">
         {/* Top Database Toggle Button for Field List */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -243,7 +246,7 @@ export const Toolbox: React.FC = () => {
 
       {/* 2. Simplified Clean Field List Drawer (256px Compact Tree List) */}
       {isExpanded && (
-        <aside className="w-64 border-r border-slate-200 bg-white h-[calc(100vh-3.25rem)] shadow-lg flex flex-col z-30 animate-in slide-in-from-left-2 duration-150 dark:bg-slate-950 dark:border-slate-800">
+        <aside className="w-64 border-r border-slate-200 bg-white h-full min-h-0 shadow-lg flex flex-col z-30 animate-in slide-in-from-left-2 duration-150 dark:bg-slate-950 dark:border-slate-800">
           {/* Header */}
           <div className="px-3 py-2.5 border-b border-slate-200 flex items-center justify-between dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
             <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 min-w-0">
@@ -434,6 +437,7 @@ export const Toolbox: React.FC = () => {
                                       height: 38,
                                       subReportTitle: field.label,
                                       subReportBinding: field.name,
+                                      subReportDefinition: createSubReportForFields(field.label, field.children ?? [], getSubReportGeometry({ width: Math.min(515, getPageGeometry(report.pageSettings).printableWidth) } as Parameters<typeof getSubReportGeometry>[0]).width),
                                     });
                                   } else {
                                     addControl(target.id, {
